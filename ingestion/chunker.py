@@ -36,6 +36,9 @@ LANGUAGE_MAP = {
     ".rb": "ruby",
     ".php": "php",
     ".kt": "kotlin",
+    # Config files -- no AST grammar, char-fallback only
+    ".yaml": None,
+    ".yml": None,
 }
 
 # AST node types that represent logical chunk boundaries per language.

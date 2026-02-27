@@ -22,6 +22,7 @@ SKIP_DIRS: Set[str] = {
     "__pycache__", ".mypy_cache", ".pytest_cache",
     "dist", "build", ".tox", ".eggs",
     ".idea", ".vscode",
+    "evaluation",
 }
 
 

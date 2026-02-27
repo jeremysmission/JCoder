@@ -215,13 +215,28 @@ class IndexEngine:
                 results.append((idx, -float(rank)))
         return results
 
+    @staticmethod
+    def _is_identifier_heavy(query: str) -> bool:
+        """Detect queries containing code identifiers (snake_case, CamelCase, dots, parens)."""
+        import re
+        patterns = [
+            r'[a-z]+_[a-z]+',      # snake_case
+            r'[a-z][a-zA-Z]*[A-Z]', # camelCase/CamelCase
+            r'\w+\.\w+',            # foo.bar
+            r'\w+\(',               # func(
+        ]
+        return any(re.search(p, query) for p in patterns)
+
     def hybrid_search(self, query_vector: np.ndarray, query_text: str, k: int) -> List[Tuple[float, Dict]]:
         """
         Run both vector and keyword search, fuse with RRF.
         Returns list of (fused_score, metadata_dict).
         """
+        # Widen sparse pool for identifier-heavy queries
+        k_sparse = k * 3 if self._is_identifier_heavy(query_text) else k
+
         vector_results = self.search_vectors(query_vector, k)
-        keyword_results = self.search_keywords(query_text, k)
+        keyword_results = self.search_keywords(query_text, k_sparse)
 
         # Reciprocal Rank Fusion
         rrf_scores: Dict[int, float] = {}
