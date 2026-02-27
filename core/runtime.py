@@ -14,6 +14,7 @@ from typing import List, Optional
 import httpx
 
 from .config import ModelConfig
+from .network_gate import NetworkGate
 
 
 class Runtime:
@@ -28,10 +29,12 @@ class Runtime:
         "information, say so. Cite source files when possible."
     )
 
-    def __init__(self, config: ModelConfig, timeout: int = 120):
+    def __init__(self, config: ModelConfig, timeout: int = 120,
+                 gate: NetworkGate = None):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        self._gate = gate
 
     def generate(
         self,
@@ -59,10 +62,10 @@ class Runtime:
             "max_tokens": 2048,
         }
 
-        response = self._client.post(
-            f"{self.endpoint}/chat/completions",
-            json=payload,
-        )
+        url = f"{self.endpoint}/chat/completions"
+        if self._gate:
+            self._gate.guard(url)
+        response = self._client.post(url, json=payload)
         response.raise_for_status()
 
         return response.json()["choices"][0]["message"]["content"]

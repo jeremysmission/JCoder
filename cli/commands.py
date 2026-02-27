@@ -10,11 +10,14 @@ import click
 from rich.console import Console
 from rich.table import Table
 
+import subprocess
+
 from core.config import load_config, _ms_to_seconds, JCoderConfig
 from core.embedding_engine import EmbeddingEngine
 from core.eval_guard import save_hashes, verify_hashes
 from core.index_engine import IndexEngine
 from core.mock_backend import MockEmbedder, MockReranker, MockLLM
+from core.network_gate import NetworkGate
 from core.reranker import Reranker
 from core.retrieval_engine import RetrievalEngine
 from core.runtime import Runtime
@@ -29,15 +32,16 @@ def _build_pipeline(config: JCoderConfig, mock: bool = False):
     """Wire up the full retrieval + generation pipeline from config."""
     p = config.policies
     dim = config.embedder.dimension or 768
+    gate = NetworkGate(mode="localhost")
 
     if mock:
         embedder = MockEmbedder(dimension=dim)
         reranker = MockReranker()
         runtime = MockLLM()
     else:
-        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(p.timeout_embed_ms))
-        reranker = Reranker(config.reranker, _ms_to_seconds(p.timeout_rerank_ms))
-        runtime = Runtime(config.llm, _ms_to_seconds(p.timeout_generate_ms))
+        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(p.timeout_embed_ms), gate=gate)
+        reranker = Reranker(config.reranker, _ms_to_seconds(p.timeout_rerank_ms), gate=gate)
+        runtime = Runtime(config.llm, _ms_to_seconds(p.timeout_generate_ms), gate=gate)
 
     index = IndexEngine(
         dim, config.storage, config.retrieval.rrf_k,
@@ -245,8 +249,10 @@ def seal_benchmarks(ctx, eval_dir: Optional[str]):
 @cli.command(name="eval")
 @click.option("--benchmark", default=None, help="Benchmark JSON file")
 @click.option("--index-name", default="default", help="Index to search")
+@click.option("--diagnose-retrieval", is_flag=True, default=False,
+              help="Print detailed source ranking for retrieval failures")
 @click.pass_context
-def evaluate(ctx, benchmark: Optional[str], index_name: str):
+def evaluate(ctx, benchmark: Optional[str], index_name: str, diagnose_retrieval: bool):
     """Run evaluation benchmark with hash verification."""
     config = ctx.obj["config"]
 
@@ -306,6 +312,16 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str):
             a_tag = "[green]A:P[/green]" if a_score["pass"] else "[yellow]A:F[/yellow]"
             console.print(f"  {item.get('id', '?')}: {r_tag} {a_tag} -- {q[:55]}")
 
+            if diagnose_retrieval and not r_score["pass"]:
+                from core.index_engine import IndexEngine, _normalize_for_search
+                exp = item.get("expected_file_contains", "")
+                console.print(f"    expected: {exp}")
+                sources = result.sources or []
+                for rank, src in enumerate(sources[:5]):
+                    norm = src.replace("\\", "/")
+                    boost = IndexEngine._path_prior_boost(q, src)
+                    console.print(f"    [{rank}] {norm}  boost={boost:.2f}")
+
         elapsed = time.time() - start
         n = len(data)
 
@@ -322,3 +338,78 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str):
     finally:
         embedder.close()
         runtime.close()
+
+
+@cli.command()
+@click.pass_context
+def measure(ctx):
+    """Measure GPU environment and write measurements.json."""
+    measurements = {
+        "torch_version": None,
+        "torch_cuda_version": None,
+        "cuda_available": False,
+        "cuda_device_count": 0,
+        "nvidia_smi": None,
+        "gpus": [],
+        "vllm_perf": {
+            "tok_per_sec_single": None,
+            "p95_latency_4_parallel": None,
+            "embed_throughput_16": None,
+            "embed_throughput_32": None,
+            "rerank_throughput_50": None,
+            "steady_state_degraded": None,
+        },
+    }
+
+    try:
+        import torch
+        measurements["torch_version"] = torch.__version__
+        measurements["torch_cuda_version"] = torch.version.cuda
+        measurements["cuda_available"] = torch.cuda.is_available()
+        measurements["cuda_device_count"] = torch.cuda.device_count()
+    except ImportError:
+        console.print("[WARN] torch not installed")
+
+    try:
+        result = subprocess.run(
+            ["nvidia-smi",
+             "--query-gpu=index,name,driver_version,memory.total,memory.free",
+             "--format=csv,noheader,nounits"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode == 0:
+            measurements["nvidia_smi"] = result.stdout.strip()
+            for line in result.stdout.strip().split("\n"):
+                parts = [p.strip() for p in line.split(",")]
+                if len(parts) >= 5:
+                    measurements["gpus"].append({
+                        "index": int(parts[0]),
+                        "name": parts[1],
+                        "driver_version": parts[2],
+                        "total_mb": int(parts[3]),
+                        "free_mb": int(parts[4]),
+                    })
+    except FileNotFoundError:
+        console.print("[WARN] nvidia-smi not found")
+    except Exception:
+        pass
+
+    table = Table(title="GPU Measurements")
+    table.add_column("Field")
+    table.add_column("Value")
+    table.add_row("torch", str(measurements["torch_version"]))
+    table.add_row("torch.cuda", str(measurements["torch_cuda_version"]))
+    table.add_row("cuda_available", str(measurements["cuda_available"]))
+    table.add_row("device_count", str(measurements["cuda_device_count"]))
+    for g in measurements["gpus"]:
+        table.add_row(f"GPU {g['index']}", f"{g['name']} ({g['total_mb']} MB, free {g['free_mb']} MB)")
+    if not measurements["gpus"]:
+        table.add_row("GPUs", "None detected")
+    for k, v in measurements["vllm_perf"].items():
+        table.add_row(k, str(v) if v is not None else "pending")
+    console.print(table)
+
+    out_path = Path(__file__).resolve().parent.parent / "measurements.json"
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(measurements, f, indent=2)
+    console.print(f"[bold green][OK] Written to {out_path}")
