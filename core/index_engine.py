@@ -15,6 +15,7 @@ both searches and merges the rankings using Reciprocal Rank Fusion (RRF).
 
 import json
 import os
+import re
 import sqlite3
 from typing import Dict, List, Tuple
 
@@ -22,6 +23,20 @@ import faiss
 import numpy as np
 
 from .config import StorageConfig
+
+
+def _normalize_for_search(text: str) -> str:
+    """Normalize code text for FTS5 keyword matching.
+
+    Splits underscore/dot/path identifiers into separate tokens
+    and breaks CamelCase so FTS5 can match partial identifier words.
+    """
+    # Replace _ - . / \ : with spaces
+    out = re.sub(r"[_\-./\\:]", " ", text)
+    # Split CamelCase: "MockReranker" -> "Mock Reranker"
+    out = re.sub(r"([a-z])([A-Z])", r"\1 \2", out)
+    out = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1 \2", out)
+    return out.lower()
 
 
 def _gpu_min_free_mb() -> int:
@@ -93,24 +108,14 @@ class IndexEngine:
         else:
             self.index = self._flat_index
 
-        # SQLite FTS5 for keyword search
-        self._db_path = os.path.join(storage.index_dir, "fts5.db")
+        # FTS5 DB path is set per-index in save()/load()
+        self._db_path: str = ""
         os.makedirs(storage.index_dir, exist_ok=True)
-        self._init_fts5()
-
-    def _init_fts5(self):
-        """Create the FTS5 virtual table if it doesn't exist."""
-        conn = sqlite3.connect(self._db_path)
-        conn.execute(
-            "CREATE VIRTUAL TABLE IF NOT EXISTS chunks "
-            "USING fts5(content, source_path, chunk_id)"
-        )
-        conn.commit()
-        conn.close()
 
     def add_vectors(self, vectors: np.ndarray, metadata: List[Dict]):
         """
-        Add vectors to FAISS and text to FTS5.
+        Add vectors to FAISS and accumulate metadata.
+        FTS5 is built on save() for per-index isolation.
         Validates dimension match before insertion.
         """
         if vectors.shape[1] != self.dimension:
@@ -121,19 +126,6 @@ class IndexEngine:
 
         self.index.add(vectors)
         self.metadata.extend(metadata)
-
-        # Also insert into FTS5 for keyword search
-        conn = sqlite3.connect(self._db_path)
-        rows = [
-            (m.get("content", ""), m.get("source_path", ""), m.get("id", ""))
-            for m in metadata
-        ]
-        conn.executemany(
-            "INSERT INTO chunks(content, source_path, chunk_id) VALUES (?, ?, ?)",
-            rows,
-        )
-        conn.commit()
-        conn.close()
 
     def search_vectors(self, query_vector: np.ndarray, k: int) -> List[Tuple[int, float]]:
         """
@@ -166,44 +158,36 @@ class IndexEngine:
 
     def search_keywords(self, query: str, k: int) -> List[Tuple[int, float]]:
         """
-        Keyword search via SQLite FTS5 BM25.
+        Keyword search via SQLite FTS5 BM25 against normalized search_content.
         Returns list of (metadata_index, bm25_score).
 
-        If the quoted-token query returns 0 results, falls back to
-        OR-joined normalization search (broader match, lower precision).
+        Query is normalized the same way as indexed content so identifiers
+        like memory_safety_margin_mb match query words "safety margin".
         """
-        fts_query = self._sanitize_fts5_query(query)
+        # Normalize query same as indexed content
+        normalized = _normalize_for_search(query)
+        tokens = normalized.split()
+        if not tokens:
+            return []
+
+        # OR-joined query: BM25 ranks docs with more matching terms higher.
+        # AND is too restrictive for short files (config YAML, interfaces).
+        or_query = " OR ".join(f'"{t}"' for t in tokens)
         conn = sqlite3.connect(self._db_path)
         rows = []
 
-        # Primary: quoted literal tokens (high precision)
         try:
             cursor = conn.execute(
-                "SELECT chunk_id, rank FROM chunks WHERE chunks MATCH ? "
+                "SELECT chunk_id, rank FROM chunks "
+                "WHERE search_content MATCH ? "
                 "ORDER BY rank LIMIT ?",
-                (fts_query, k),
+                (or_query, k),
             )
             rows = cursor.fetchall()
         except sqlite3.OperationalError as e:
             if not self._fts5_error_logged:
                 print(f"[WARN] FTS5 query error (logged once): {e}")
                 self._fts5_error_logged = True
-
-        # Fallback: OR-joined tokens (broader recall)
-        if not rows:
-            import re
-            tokens = re.sub(r"[^\w\s]", " ", query).split()
-            if tokens:
-                or_query = " OR ".join(f'"{t}"' for t in tokens)
-                try:
-                    cursor = conn.execute(
-                        "SELECT chunk_id, rank FROM chunks WHERE chunks MATCH ? "
-                        "ORDER BY rank LIMIT ?",
-                        (or_query, k),
-                    )
-                    rows = cursor.fetchall()
-                except sqlite3.OperationalError:
-                    pass
 
         conn.close()
 
@@ -266,8 +250,32 @@ class IndexEngine:
             results.append((score, self.metadata[idx]))
         return results
 
+    def _build_fts5(self):
+        """Build per-index FTS5 DB from current metadata."""
+        conn = sqlite3.connect(self._db_path)
+        conn.execute("DROP TABLE IF EXISTS chunks")
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks "
+            "USING fts5(search_content, source_path, chunk_id)"
+        )
+        rows = [
+            (
+                _normalize_for_search(m.get("content", "")),
+                m.get("source_path", ""),
+                m.get("id", ""),
+            )
+            for m in self.metadata
+        ]
+        conn.executemany(
+            "INSERT INTO chunks(search_content, source_path, chunk_id) "
+            "VALUES (?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        conn.close()
+
     def save(self, name: str):
-        """Save FAISS index and metadata to disk."""
+        """Save FAISS index, metadata, and per-index FTS5 DB to disk."""
         path = os.path.join(self.storage.index_dir, name)
         os.makedirs(self.storage.index_dir, exist_ok=True)
 
@@ -281,8 +289,12 @@ class IndexEngine:
         with open(path + ".meta.json", "w", encoding="utf-8") as f:
             json.dump(self.metadata, f)
 
+        # Build per-index FTS5 DB
+        self._db_path = path + ".fts5.db"
+        self._build_fts5()
+
     def load(self, name: str):
-        """Load FAISS index and metadata from disk, rebuild FTS5."""
+        """Load FAISS index, metadata, and per-index FTS5 DB from disk."""
         path = os.path.join(self.storage.index_dir, name)
 
         cpu_index = faiss.read_index(path + ".faiss")
@@ -297,22 +309,11 @@ class IndexEngine:
         with open(path + ".meta.json", "r", encoding="utf-8") as f:
             self.metadata = json.load(f)
 
-        # Rebuild FTS5 from loaded metadata so keyword search stays in sync
-        conn = sqlite3.connect(self._db_path)
-        conn.execute("DROP TABLE IF EXISTS chunks")
-        conn.execute(
-            "CREATE VIRTUAL TABLE chunks USING fts5(content, source_path, chunk_id)"
-        )
-        rows = [
-            (m.get("content", ""), m.get("source_path", ""), m.get("id", ""))
-            for m in self.metadata
-        ]
-        conn.executemany(
-            "INSERT INTO chunks(content, source_path, chunk_id) VALUES (?, ?, ?)",
-            rows,
-        )
-        conn.commit()
-        conn.close()
+        # Connect to per-index FTS5 DB (built during save)
+        self._db_path = path + ".fts5.db"
+        if not os.path.exists(self._db_path):
+            # Legacy index without per-index FTS5 -- rebuild
+            self._build_fts5()
 
     @property
     def count(self) -> int:
