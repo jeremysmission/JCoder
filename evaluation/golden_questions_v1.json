@@ -1,0 +1,242 @@
+[
+  {
+    "id": "G001",
+    "question": "Where is the Chunker class defined?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["Chunker", "chunk_file"]
+  },
+  {
+    "id": "G002",
+    "question": "What languages does tree-sitter support in the chunker?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["LANGUAGE_MAP", ".py", ".js"]
+  },
+  {
+    "id": "G003",
+    "question": "How does AST-based chunking work?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["_chunk_by_ast", "BOUNDARY_NODES", "tree_sitter"]
+  },
+  {
+    "id": "G004",
+    "question": "What happens when tree-sitter grammar is not installed?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["_chunk_by_chars", "_try_load_language"]
+  },
+  {
+    "id": "G005",
+    "question": "How does the RepoLoader skip directories?",
+    "expected_file_contains": "ingestion/repo_loader.py",
+    "expected_symbols": ["SKIP_DIRS", "node_modules", ".git"]
+  },
+  {
+    "id": "G006",
+    "question": "What file extensions does RepoLoader support?",
+    "expected_file_contains": "ingestion/repo_loader.py",
+    "expected_symbols": ["supported_extensions", "LANGUAGE_MAP"]
+  },
+  {
+    "id": "G007",
+    "question": "How does RRF fusion merge vector and keyword results?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["hybrid_search", "rrf_scores", "rrf_k"]
+  },
+  {
+    "id": "G008",
+    "question": "How does FAISS GPU fallback work?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["index_cpu_to_all_gpus", "_gpu_available", "gpu_safety_margin"]
+  },
+  {
+    "id": "G009",
+    "question": "How does FTS5 keyword search work in IndexEngine?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["search_keywords", "fts5", "MATCH"]
+  },
+  {
+    "id": "G010",
+    "question": "What does the FTS5 query sanitizer do?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["_sanitize_fts5_query"]
+  },
+  {
+    "id": "G011",
+    "question": "How are vectors added to the index?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["add_vectors", "dimension"]
+  },
+  {
+    "id": "G012",
+    "question": "How is the index saved and loaded from disk?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["save", "load", "write_index", "meta.json"]
+  },
+  {
+    "id": "G013",
+    "question": "How does the EmbeddingEngine call vLLM?",
+    "expected_file_contains": "core/embedding_engine.py",
+    "expected_symbols": ["embed", "httpx", "/embeddings"]
+  },
+  {
+    "id": "G014",
+    "question": "How are embeddings normalized?",
+    "expected_file_contains": "core/embedding_engine.py",
+    "expected_symbols": ["normalize", "norms", "linalg"]
+  },
+  {
+    "id": "G015",
+    "question": "How does the Runtime module communicate with the LLM?",
+    "expected_file_contains": "core/runtime.py",
+    "expected_symbols": ["generate", "chat/completions", "httpx"]
+  },
+  {
+    "id": "G016",
+    "question": "What system prompt does the Runtime use?",
+    "expected_file_contains": "core/runtime.py",
+    "expected_symbols": ["SYSTEM_PROMPT", "code assistant"]
+  },
+  {
+    "id": "G017",
+    "question": "How does the reranker score documents?",
+    "expected_file_contains": "core/reranker.py",
+    "expected_symbols": ["rerank", "/score", "top_n"]
+  },
+  {
+    "id": "G018",
+    "question": "What happens when the reranker is disabled?",
+    "expected_file_contains": "core/reranker.py",
+    "expected_symbols": ["enabled", "pass-through"]
+  },
+  {
+    "id": "G019",
+    "question": "How does the retrieval pipeline orchestrate search?",
+    "expected_file_contains": "core/retrieval_engine.py",
+    "expected_symbols": ["retrieve", "hybrid_search", "rerank"]
+  },
+  {
+    "id": "G020",
+    "question": "What does the Orchestrator return?",
+    "expected_file_contains": "core/orchestrator.py",
+    "expected_symbols": ["AnswerResult", "answer", "sources"]
+  },
+  {
+    "id": "G021",
+    "question": "How does the eval guard verify benchmark integrity?",
+    "expected_file_contains": "core/eval_guard.py",
+    "expected_symbols": ["verify_hashes", "SHA-256", "compute_file_hash"]
+  },
+  {
+    "id": "G022",
+    "question": "Where are benchmark hashes stored?",
+    "expected_file_contains": "core/eval_guard.py",
+    "expected_symbols": ["config/", "benchmark_hashes.json", "HASH_FILENAME"]
+  },
+  {
+    "id": "G023",
+    "question": "How does the eval guard detect unlisted benchmark files?",
+    "expected_file_contains": "core/eval_guard.py",
+    "expected_symbols": ["Unlisted", "listed"]
+  },
+  {
+    "id": "G024",
+    "question": "How does the config loader find YAML files?",
+    "expected_file_contains": "core/config.py",
+    "expected_symbols": ["_find_config_dir", "JCODER_CONFIG_DIR", "load_config"]
+  },
+  {
+    "id": "G025",
+    "question": "What happens when config files are missing?",
+    "expected_file_contains": "core/config.py",
+    "expected_symbols": ["missing", "_load_yaml", "defaults"]
+  },
+  {
+    "id": "G026",
+    "question": "What policy caps are enforced?",
+    "expected_file_contains": "core/config.py",
+    "expected_symbols": ["PoliciesConfig", "max_parallel_requests", "max_context_tokens"]
+  },
+  {
+    "id": "G027",
+    "question": "How does timeout conversion work?",
+    "expected_file_contains": "core/config.py",
+    "expected_symbols": ["_ms_to_seconds", "ceil"]
+  },
+  {
+    "id": "G028",
+    "question": "What Protocol interfaces are defined?",
+    "expected_file_contains": "core/interfaces.py",
+    "expected_symbols": ["IEmbedder", "IRetriever", "IReranker", "ILLM"]
+  },
+  {
+    "id": "G029",
+    "question": "How does the mock embedder generate deterministic vectors?",
+    "expected_file_contains": "core/mock_backend.py",
+    "expected_symbols": ["MockEmbedder", "SHA-256", "_hash_to_vector"]
+  },
+  {
+    "id": "G030",
+    "question": "How does the mock reranker score results?",
+    "expected_file_contains": "core/mock_backend.py",
+    "expected_symbols": ["MockReranker", "overlap", "query_words"]
+  },
+  {
+    "id": "G031",
+    "question": "What CLI commands are available?",
+    "expected_file_contains": "cli/commands.py",
+    "expected_symbols": ["doctor", "ingest", "ask", "eval", "seal-benchmarks"]
+  },
+  {
+    "id": "G032",
+    "question": "How does the --mock flag work in the CLI?",
+    "expected_file_contains": "cli/commands.py",
+    "expected_symbols": ["mock", "MockEmbedder", "_build_pipeline"]
+  },
+  {
+    "id": "G033",
+    "question": "How does the ingest command batch embeddings?",
+    "expected_file_contains": "cli/commands.py",
+    "expected_symbols": ["batch_size", "embed_batch_size", "concatenate"]
+  },
+  {
+    "id": "G034",
+    "question": "What does the doctor command check?",
+    "expected_file_contains": "cli/doctor.py",
+    "expected_symbols": ["_check_endpoint", "_check_gpu", "_check_faiss"]
+  },
+  {
+    "id": "G035",
+    "question": "How does doctor detect GPU memory?",
+    "expected_file_contains": "cli/doctor.py",
+    "expected_symbols": ["nvidia-smi", "pynvml", "free_mb"]
+  },
+  {
+    "id": "G036",
+    "question": "What vLLM ports are configured?",
+    "expected_file_contains": "config/ports.yaml",
+    "expected_symbols": ["8000", "8001", "8002"]
+  },
+  {
+    "id": "G037",
+    "question": "What GPU safety margin is configured?",
+    "expected_file_contains": "config/policies.yaml",
+    "expected_symbols": ["memory_safety_margin_mb", "2048"]
+  },
+  {
+    "id": "G038",
+    "question": "How does the per-GPU VRAM margin check work?",
+    "expected_file_contains": "core/index_engine.py",
+    "expected_symbols": ["_gpu_min_free_mb", "min", "pynvml"]
+  },
+  {
+    "id": "G039",
+    "question": "What chunk metadata fields are stored?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["content", "source_path", "content_hash", "chunker_version"]
+  },
+  {
+    "id": "G040",
+    "question": "How are chunk IDs made deterministic across OS?",
+    "expected_file_contains": "ingestion/chunker.py",
+    "expected_symbols": ["_hash", "sha256", "replace"]
+  }
+]
