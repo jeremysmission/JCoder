@@ -86,6 +86,31 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 - `config/policies.yaml` -- timeouts, batch sizes, caps, GPU safety margin
 - `config/ports.yaml` -- vLLM server port assignments
 
+## Session 2: Measure Hardening (6108f7c)
+
+### Changes
+- `jcoder measure` now outputs structured JSON at `JCoder_Data/metrics/measurements.json` + pretty terminal table
+- JSON schema: `system` / `endpoints` / `performance` (exact keys locked by tests)
+- Endpoint probing tries `/v1/models` then `/models` fallback (vLLM + OpenAI compatible)
+- `--run-bench` flag: runs perf probes ONLY if all 3 endpoints (llm/embed/rerank) are reachable
+- `--allow-wait` flag: gates the 10-minute drift measurement sleep
+- All failures graceful: no CUDA = system fields empty; no endpoints = nulls; no crash
+
+### Bug Fixes
+- ZeroDivisionError in bench probes: mock HTTP calls return in 0.0s on Windows; fixed via `_safe_elapsed()` (floor 1e-6s) and p95 latency floor of 0.01ms
+- Mock routing order: `/chat/completions` checked before `/models` to prevent substring false matches
+
+### Test Coverage
+- 48/48 tests passing (35 original + 5 new bench tests + 8 schema tests)
+- Tests cover: schema keys/types, graceful degradation (no CUDA, no endpoints), bench with unreachable endpoints, bench with reachable mocked endpoints
+
+### Commits
+```
+6108f7c Measure: optional --run-bench perf probes (graceful + tested)
+88c8932 Measure: robust /v1/models probing + schema tests
+801fe24 Harden measure command: structured JSON output, endpoint probes, graceful degradation
+```
+
 ## No Remote
 JCoder has no git remote configured. To add one:
 ```bash
