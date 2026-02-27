@@ -341,16 +341,28 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str, diagnose_retrieval:
 
 
 def _probe_endpoint(url: str, timeout: float = 5.0) -> tuple:
-    """Probe a vLLM endpoint. Returns (ok: bool, latency_ms: float | None)."""
+    """Probe a vLLM/OpenAI endpoint.
+
+    Tries GET {base}/v1/models first, falls back to GET {base}/models.
+    Returns (ok: bool, latency_ms: float | None, path_used: str | None).
+    """
     import httpx
-    try:
-        t0 = time.time()
-        with httpx.Client(timeout=timeout) as client:
-            r = client.get(f"{url}/models")
-        elapsed_ms = round((time.time() - t0) * 1000, 1)
-        return (r.status_code == 200, elapsed_ms)
-    except Exception:
-        return (False, None)
+    base = url.rstrip("/")
+    # Strip trailing /v1 so we can try both paths cleanly
+    if base.endswith("/v1"):
+        base = base[:-3]
+    paths = ["/v1/models", "/models"]
+    for path in paths:
+        try:
+            t0 = time.time()
+            with httpx.Client(timeout=timeout) as client:
+                r = client.get(f"{base}{path}")
+            elapsed_ms = round((time.time() - t0) * 1000, 1)
+            if r.status_code == 200:
+                return (True, elapsed_ms, path)
+        except Exception:
+            continue
+    return (False, None, None)
 
 
 @cli.command()
@@ -405,9 +417,9 @@ def measure(ctx):
         pass
 
     # -- endpoints --
-    llm_ok, llm_ms = _probe_endpoint(config.llm.endpoint)
-    embed_ok, embed_ms = _probe_endpoint(config.embedder.endpoint)
-    rerank_ok, rerank_ms = _probe_endpoint(config.reranker.endpoint)
+    llm_ok, llm_ms, llm_path = _probe_endpoint(config.llm.endpoint)
+    embed_ok, embed_ms, embed_path = _probe_endpoint(config.embedder.endpoint)
+    rerank_ok, rerank_ms, rerank_path = _probe_endpoint(config.reranker.endpoint)
 
     endpoints = {
         "llm_models_ok": llm_ok,
@@ -452,9 +464,9 @@ def measure(ctx):
         table.add_row("GPUs", "None detected")
 
     table.add_row("", "")
-    table.add_row("llm_models_ok", str(endpoints["llm_models_ok"]))
-    table.add_row("embed_models_ok", str(endpoints["embed_models_ok"]))
-    table.add_row("rerank_models_ok", str(endpoints["rerank_models_ok"]))
+    table.add_row("llm_models_ok", f"{endpoints['llm_models_ok']} (via {llm_path})" if llm_path else str(endpoints["llm_models_ok"]))
+    table.add_row("embed_models_ok", f"{endpoints['embed_models_ok']} (via {embed_path})" if embed_path else str(endpoints["embed_models_ok"]))
+    table.add_row("rerank_models_ok", f"{endpoints['rerank_models_ok']} (via {rerank_path})" if rerank_path else str(endpoints["rerank_models_ok"]))
     table.add_row("llm_response_ms", str(endpoints["llm_response_ms"]) if endpoints["llm_response_ms"] else "n/a")
     table.add_row("embed_response_ms", str(endpoints["embed_response_ms"]) if endpoints["embed_response_ms"] else "n/a")
     table.add_row("rerank_response_ms", str(endpoints["rerank_response_ms"]) if endpoints["rerank_response_ms"] else "n/a")
