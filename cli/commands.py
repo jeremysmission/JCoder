@@ -42,6 +42,7 @@ def _build_pipeline(config: JCoderConfig, mock: bool = False):
     index = IndexEngine(
         dim, config.storage, config.retrieval.rrf_k,
         gpu_safety_margin_mb=p.gpu_memory_safety_margin_mb,
+        sparse_only=mock,
     )
     retriever = RetrievalEngine(
         embedder, index, reranker,

@@ -64,12 +64,14 @@ class IndexEngine:
         storage: StorageConfig,
         rrf_k: int = 60,
         gpu_safety_margin_mb: int = 2048,
+        sparse_only: bool = False,
     ):
         self.dimension = dimension
         self.storage = storage
         self.rrf_k = rrf_k
         self.metadata: List[Dict] = []
         self._fts5_error_logged = False
+        self._sparse_only = sparse_only
 
         # FAISS index -- try GPU if enough VRAM, fall back to CPU
         self._flat_index = faiss.IndexFlatIP(dimension)
@@ -230,10 +232,19 @@ class IndexEngine:
     def hybrid_search(self, query_vector: np.ndarray, query_text: str, k: int) -> List[Tuple[float, Dict]]:
         """
         Run both vector and keyword search, fuse with RRF.
+        In sparse_only mode, skip dense retrieval (mock embeddings are noise).
         Returns list of (fused_score, metadata_dict).
         """
         # Widen sparse pool for identifier-heavy queries
         k_sparse = k * 3 if self._is_identifier_heavy(query_text) else k
+
+        # Sparse-only mode: skip dense retrieval entirely
+        if self._sparse_only:
+            keyword_results = self.search_keywords(query_text, k_sparse)
+            results = []
+            for idx, score in keyword_results[:k]:
+                results.append((score, self.metadata[idx]))
+            return results
 
         vector_results = self.search_vectors(query_vector, k)
         keyword_results = self.search_keywords(query_text, k_sparse)
@@ -271,7 +282,7 @@ class IndexEngine:
             json.dump(self.metadata, f)
 
     def load(self, name: str):
-        """Load FAISS index and metadata from disk."""
+        """Load FAISS index and metadata from disk, rebuild FTS5."""
         path = os.path.join(self.storage.index_dir, name)
 
         cpu_index = faiss.read_index(path + ".faiss")
@@ -285,6 +296,23 @@ class IndexEngine:
 
         with open(path + ".meta.json", "r", encoding="utf-8") as f:
             self.metadata = json.load(f)
+
+        # Rebuild FTS5 from loaded metadata so keyword search stays in sync
+        conn = sqlite3.connect(self._db_path)
+        conn.execute("DROP TABLE IF EXISTS chunks")
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks USING fts5(content, source_path, chunk_id)"
+        )
+        rows = [
+            (m.get("content", ""), m.get("source_path", ""), m.get("id", ""))
+            for m in self.metadata
+        ]
+        conn.executemany(
+            "INSERT INTO chunks(content, source_path, chunk_id) VALUES (?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        conn.close()
 
     @property
     def count(self) -> int:
