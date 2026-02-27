@@ -5,6 +5,7 @@ import types
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
+import httpx
 from click.testing import CliRunner
 
 from core.config import JCoderConfig, StorageConfig
@@ -144,3 +145,145 @@ def test_measure_unreachable_endpoints(tmp_path):
     assert endpoints["llm_response_ms"] is None
     assert endpoints["embed_response_ms"] is None
     assert endpoints["rerank_response_ms"] is None
+
+
+# ---------------------------------------------------------------------------
+# --run-bench tests
+# ---------------------------------------------------------------------------
+
+def _run_measure_bench_unreachable(tmp_path):
+    """Invoke measure --run-bench with endpoints unreachable."""
+    data_dir = str(tmp_path / "data")
+    metrics_json = tmp_path / "data" / "metrics" / "measurements.json"
+    fake_torch = _fake_torch()
+
+    cfg = JCoderConfig(
+        storage=StorageConfig(
+            data_dir=data_dir,
+            index_dir=str(tmp_path / "data" / "indexes"),
+        ),
+    )
+
+    with patch.dict("sys.modules", {"torch": fake_torch}), \
+         patch("subprocess.run", side_effect=FileNotFoundError), \
+         patch("httpx.Client") as mock_client_cls, \
+         patch("cli.commands.load_config", return_value=cfg):
+
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.get.side_effect = ConnectionError("unreachable")
+        mock_client_cls.return_value = mock_client
+
+        from cli.commands import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["measure", "--run-bench"])
+
+    return result, metrics_json
+
+
+def test_bench_unreachable_exits_zero(tmp_path):
+    result, _ = _run_measure_bench_unreachable(tmp_path)
+    assert result.exit_code == 0, f"exit_code={result.exit_code}\n{result.output}"
+
+
+def test_bench_unreachable_perf_null(tmp_path):
+    _, json_path = _run_measure_bench_unreachable(tmp_path)
+    perf = json.loads(json_path.read_text(encoding="utf-8"))["performance"]
+    for key in REQUIRED_PERFORMANCE_KEYS:
+        assert perf[key] is None, f"performance[{key}] should be null, got {perf[key]}"
+
+
+def _mock_httpx_response(status_code, json_data):
+    """Build a mock httpx.Response."""
+    resp = MagicMock(spec=httpx.Response)
+    resp.status_code = status_code
+    resp.json.return_value = json_data
+    resp.raise_for_status.return_value = None
+    return resp
+
+
+def _run_measure_bench_reachable(tmp_path):
+    """Invoke measure --run-bench with all endpoints returning mock data."""
+    data_dir = str(tmp_path / "data")
+    metrics_json = tmp_path / "data" / "metrics" / "measurements.json"
+    fake_torch = _fake_torch()
+
+    cfg = JCoderConfig(
+        storage=StorageConfig(
+            data_dir=data_dir,
+            index_dir=str(tmp_path / "data" / "indexes"),
+        ),
+    )
+
+    models_resp = _mock_httpx_response(200, {"data": [{"id": "default"}]})
+    chat_resp = _mock_httpx_response(200, {
+        "choices": [{"message": {"content": "Hello world response text here"}}],
+        "usage": {"completion_tokens": 64, "prompt_tokens": 20, "total_tokens": 84},
+    })
+    embed_resp = _mock_httpx_response(200, {
+        "data": [{"embedding": [0.0] * 768}],
+    })
+    rerank_resp = _mock_httpx_response(200, {
+        "results": [{"index": i, "relevance_score": 0.5} for i in range(50)],
+    })
+
+    def _route_request(url, **kwargs):
+        url_str = str(url)
+        if "/chat/completions" in url_str:
+            return chat_resp
+        if "/embeddings" in url_str:
+            return embed_resp
+        if "/score" in url_str:
+            return rerank_resp
+        if "/models" in url_str:
+            return models_resp
+        return _mock_httpx_response(404, {})
+
+    with patch.dict("sys.modules", {"torch": fake_torch}), \
+         patch("subprocess.run", side_effect=FileNotFoundError), \
+         patch("httpx.Client") as mock_client_cls, \
+         patch("cli.commands.load_config", return_value=cfg):
+
+        mock_client = MagicMock()
+        mock_client.__enter__ = MagicMock(return_value=mock_client)
+        mock_client.__exit__ = MagicMock(return_value=False)
+        mock_client.get.side_effect = _route_request
+        mock_client.post.side_effect = _route_request
+        mock_client_cls.return_value = mock_client
+
+        from cli.commands import cli
+        runner = CliRunner()
+        result = runner.invoke(cli, ["measure", "--run-bench"])
+
+    return result, metrics_json
+
+
+def test_bench_reachable_exits_zero(tmp_path):
+    result, _ = _run_measure_bench_reachable(tmp_path)
+    assert result.exit_code == 0, f"exit_code={result.exit_code}\n{result.output}"
+
+
+def test_bench_reachable_perf_populated(tmp_path):
+    _, json_path = _run_measure_bench_reachable(tmp_path)
+    perf = json.loads(json_path.read_text(encoding="utf-8"))["performance"]
+    for key in ["tok_per_s_single", "p95_latency_ms_4_parallel",
+                "embed_items_per_s_batch16", "embed_items_per_s_batch32",
+                "rerank_pairs_per_s_n50"]:
+        assert isinstance(perf[key], (int, float)), (
+            f"performance[{key}] should be a number, got {perf[key]}"
+        )
+        assert perf[key] > 0, f"performance[{key}] should be > 0, got {perf[key]}"
+    # drift requires --allow-wait (not set), so stays null
+    assert perf["drift_tok_per_s_delta_10min"] is None
+
+
+def test_bench_reachable_endpoints_ok(tmp_path):
+    _, json_path = _run_measure_bench_reachable(tmp_path)
+    endpoints = json.loads(json_path.read_text(encoding="utf-8"))["endpoints"]
+    assert endpoints["llm_models_ok"] is True
+    assert endpoints["embed_models_ok"] is True
+    assert endpoints["rerank_models_ok"] is True
+    assert isinstance(endpoints["llm_response_ms"], (int, float))
+    assert isinstance(endpoints["embed_response_ms"], (int, float))
+    assert isinstance(endpoints["rerank_response_ms"], (int, float))

@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Optional
 
@@ -365,9 +366,149 @@ def _probe_endpoint(url: str, timeout: float = 5.0) -> tuple:
     return (False, None, None)
 
 
+def _safe_elapsed(t0: float) -> float:
+    """Return elapsed seconds since t0, minimum 1e-6 to prevent ZeroDivisionError."""
+    return max(time.time() - t0, 1e-6)
+
+
+def _bench_tok_per_s(llm_endpoint: str, timeout: float) -> float:
+    """Single chat completion, return tokens/sec or raise."""
+    import httpx
+    base = llm_endpoint.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    payload = {
+        "model": "default",
+        "messages": [{"role": "user", "content": "Return exactly 200 tokens of plain ASCII text about indexing."}],
+        "max_tokens": 128,
+        "temperature": 0.0,
+    }
+    t0 = time.time()
+    with httpx.Client(timeout=timeout) as client:
+        r = client.post(f"{base}/chat/completions", json=payload)
+    elapsed = _safe_elapsed(t0)
+    r.raise_for_status()
+    data = r.json()
+    usage = data.get("usage", {})
+    completion_tokens = usage.get("completion_tokens")
+    if completion_tokens and completion_tokens > 0:
+        return round(completion_tokens / elapsed, 2)
+    # Fallback: estimate from response text length divided by 4 chars per token
+    text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    estimated = max(1, len(text) // 4)
+    return round(estimated / elapsed, 2)
+
+
+def _bench_p95_latency(llm_endpoint: str, timeout: float) -> float:
+    """Fire 4 parallel chat completions, return p95 latency in ms."""
+    import httpx
+    base = llm_endpoint.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    payload = {
+        "model": "default",
+        "messages": [{"role": "user", "content": "Say hello."}],
+        "max_tokens": 16,
+        "temperature": 0.0,
+    }
+
+    def _one_request():
+        t0 = time.time()
+        with httpx.Client(timeout=timeout) as client:
+            r = client.post(f"{base}/chat/completions", json=payload)
+        r.raise_for_status()
+        return max((time.time() - t0) * 1000, 0.01)
+
+    latencies = []
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = [pool.submit(_one_request) for _ in range(4)]
+        for f in as_completed(futures):
+            latencies.append(f.result())
+    latencies.sort()
+    # p95 of 4 samples = max (index 3)
+    return round(latencies[-1], 2)
+
+
+def _bench_embed_throughput(embed_endpoint: str, batch_size: int, timeout: float) -> float:
+    """Embed batch_size short strings, return items/sec."""
+    import httpx
+    base = embed_endpoint.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    inputs = [f"sample text number {i}" for i in range(batch_size)]
+    payload = {"model": "default", "input": inputs}
+    t0 = time.time()
+    with httpx.Client(timeout=timeout) as client:
+        r = client.post(f"{base}/embeddings", json=payload)
+    elapsed = _safe_elapsed(t0)
+    r.raise_for_status()
+    return round(batch_size / elapsed, 2)
+
+
+def _bench_rerank_throughput(rerank_endpoint: str, n: int, timeout: float) -> float:
+    """Rerank n document pairs, return pairs/sec."""
+    import httpx
+    base = rerank_endpoint.rstrip("/")
+    if not base.endswith("/v1"):
+        base += "/v1"
+    payload = {
+        "model": "default",
+        "query": "What does this code do?",
+        "documents": [f"Document content number {i}" for i in range(n)],
+    }
+    t0 = time.time()
+    with httpx.Client(timeout=timeout) as client:
+        r = client.post(f"{base}/score", json=payload)
+    elapsed = _safe_elapsed(t0)
+    r.raise_for_status()
+    return round(n / elapsed, 2)
+
+
+def _run_bench_probes(config, performance: dict, allow_wait: bool) -> None:
+    """Fill performance dict in-place. Each probe is best-effort; failures stay null."""
+    timeout = _ms_to_seconds(config.policies.timeout_generate_ms)
+
+    try:
+        performance["tok_per_s_single"] = _bench_tok_per_s(config.llm.endpoint, timeout)
+    except Exception:
+        pass
+
+    try:
+        performance["p95_latency_ms_4_parallel"] = _bench_p95_latency(config.llm.endpoint, timeout)
+    except Exception:
+        pass
+
+    try:
+        performance["embed_items_per_s_batch16"] = _bench_embed_throughput(config.embedder.endpoint, 16, timeout)
+    except Exception:
+        pass
+
+    try:
+        performance["embed_items_per_s_batch32"] = _bench_embed_throughput(config.embedder.endpoint, 32, timeout)
+    except Exception:
+        pass
+
+    try:
+        performance["rerank_pairs_per_s_n50"] = _bench_rerank_throughput(config.reranker.endpoint, 50, timeout)
+    except Exception:
+        pass
+
+    if allow_wait and performance["tok_per_s_single"] is not None:
+        first_tok_s = performance["tok_per_s_single"]
+        console.print("[WARN] Sleeping 10 minutes for drift measurement...")
+        time.sleep(600)
+        try:
+            second_tok_s = _bench_tok_per_s(config.llm.endpoint, timeout)
+            performance["drift_tok_per_s_delta_10min"] = round(second_tok_s - first_tok_s, 2)
+        except Exception:
+            pass
+
+
 @cli.command()
+@click.option("--run-bench", is_flag=True, default=False, help="Run performance benchmarks against live endpoints")
+@click.option("--allow-wait", is_flag=True, default=False, help="Allow 10-minute sleep for drift measurement")
 @click.pass_context
-def measure(ctx):
+def measure(ctx, run_bench: bool, allow_wait: bool):
     """Measure GPU environment and endpoint readiness."""
     config = ctx.obj["config"]
 
@@ -430,7 +571,7 @@ def measure(ctx):
         "rerank_response_ms": rerank_ms,
     }
 
-    # -- performance (null until real benchmarks run) --
+    # -- performance --
     performance = {
         "tok_per_s_single": None,
         "p95_latency_ms_4_parallel": None,
@@ -439,6 +580,14 @@ def measure(ctx):
         "rerank_pairs_per_s_n50": None,
         "drift_tok_per_s_delta_10min": None,
     }
+
+    if run_bench:
+        all_up = llm_ok and embed_ok and rerank_ok
+        if all_up:
+            console.print("Running performance benchmarks...")
+            _run_bench_probes(config, performance, allow_wait)
+        else:
+            console.print("[WARN] --run-bench: not all endpoints reachable, skipping perf probes")
 
     measurements = {
         "system": system,
