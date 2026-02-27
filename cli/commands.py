@@ -340,76 +340,135 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str, diagnose_retrieval:
         runtime.close()
 
 
+def _probe_endpoint(url: str, timeout: float = 5.0) -> tuple:
+    """Probe a vLLM endpoint. Returns (ok: bool, latency_ms: float | None)."""
+    import httpx
+    try:
+        t0 = time.time()
+        with httpx.Client(timeout=timeout) as client:
+            r = client.get(f"{url}/models")
+        elapsed_ms = round((time.time() - t0) * 1000, 1)
+        return (r.status_code == 200, elapsed_ms)
+    except Exception:
+        return (False, None)
+
+
 @cli.command()
 @click.pass_context
 def measure(ctx):
-    """Measure GPU environment and write measurements.json."""
-    measurements = {
-        "torch_version": None,
-        "torch_cuda_version": None,
+    """Measure GPU environment and endpoint readiness."""
+    config = ctx.obj["config"]
+
+    # -- system --
+    system = {
+        "torch_version": "",
+        "torch_cuda_compiled": "",
         "cuda_available": False,
         "cuda_device_count": 0,
-        "nvidia_smi": None,
         "gpus": [],
-        "vllm_perf": {
-            "tok_per_sec_single": None,
-            "p95_latency_4_parallel": None,
-            "embed_throughput_16": None,
-            "embed_throughput_32": None,
-            "rerank_throughput_50": None,
-            "steady_state_degraded": None,
-        },
+        "driver_version": "",
+        "cuda_runtime_version": "",
     }
 
     try:
         import torch
-        measurements["torch_version"] = torch.__version__
-        measurements["torch_cuda_version"] = torch.version.cuda
-        measurements["cuda_available"] = torch.cuda.is_available()
-        measurements["cuda_device_count"] = torch.cuda.device_count()
+        system["torch_version"] = torch.__version__
+        system["torch_cuda_compiled"] = torch.version.cuda or ""
+        system["cuda_available"] = torch.cuda.is_available()
+        system["cuda_device_count"] = torch.cuda.device_count()
+        if system["cuda_available"] and system["cuda_device_count"] > 0:
+            system["cuda_runtime_version"] = str(torch.version.cuda or "")
     except ImportError:
         console.print("[WARN] torch not installed")
 
     try:
         result = subprocess.run(
             ["nvidia-smi",
-             "--query-gpu=index,name,driver_version,memory.total,memory.free",
+             "--query-gpu=name,driver_version,memory.total,memory.free",
              "--format=csv,noheader,nounits"],
             capture_output=True, text=True, timeout=10,
         )
         if result.returncode == 0:
-            measurements["nvidia_smi"] = result.stdout.strip()
             for line in result.stdout.strip().split("\n"):
                 parts = [p.strip() for p in line.split(",")]
-                if len(parts) >= 5:
-                    measurements["gpus"].append({
-                        "index": int(parts[0]),
-                        "name": parts[1],
-                        "driver_version": parts[2],
-                        "total_mb": int(parts[3]),
-                        "free_mb": int(parts[4]),
+                if len(parts) >= 4:
+                    system["gpus"].append({
+                        "name": parts[0],
+                        "total_mb": int(parts[2]),
+                        "free_mb": int(parts[3]),
                     })
+                    if not system["driver_version"]:
+                        system["driver_version"] = parts[1]
     except FileNotFoundError:
         console.print("[WARN] nvidia-smi not found")
     except Exception:
         pass
 
-    table = Table(title="GPU Measurements")
-    table.add_column("Field")
+    # -- endpoints --
+    llm_ok, llm_ms = _probe_endpoint(config.llm.endpoint)
+    embed_ok, embed_ms = _probe_endpoint(config.embedder.endpoint)
+    rerank_ok, rerank_ms = _probe_endpoint(config.reranker.endpoint)
+
+    endpoints = {
+        "llm_models_ok": llm_ok,
+        "embed_models_ok": embed_ok,
+        "rerank_models_ok": rerank_ok,
+        "llm_response_ms": llm_ms,
+        "embed_response_ms": embed_ms,
+        "rerank_response_ms": rerank_ms,
+    }
+
+    # -- performance (null until real benchmarks run) --
+    performance = {
+        "tok_per_s_single": None,
+        "p95_latency_ms_4_parallel": None,
+        "embed_items_per_s_batch16": None,
+        "embed_items_per_s_batch32": None,
+        "rerank_pairs_per_s_n50": None,
+        "drift_tok_per_s_delta_10min": None,
+    }
+
+    measurements = {
+        "system": system,
+        "endpoints": endpoints,
+        "performance": performance,
+    }
+
+    # -- pretty table --
+    table = Table(title="JCoder Measurements")
+    table.add_column("Field", style="bold")
     table.add_column("Value")
-    table.add_row("torch", str(measurements["torch_version"]))
-    table.add_row("torch.cuda", str(measurements["torch_cuda_version"]))
-    table.add_row("cuda_available", str(measurements["cuda_available"]))
-    table.add_row("device_count", str(measurements["cuda_device_count"]))
-    for g in measurements["gpus"]:
-        table.add_row(f"GPU {g['index']}", f"{g['name']} ({g['total_mb']} MB, free {g['free_mb']} MB)")
-    if not measurements["gpus"]:
+
+    table.add_row("torch", system["torch_version"] or "not installed")
+    table.add_row("torch_cuda_compiled", system["torch_cuda_compiled"] or "n/a")
+    table.add_row("cuda_available", str(system["cuda_available"]))
+    table.add_row("device_count", str(system["cuda_device_count"]))
+    table.add_row("driver_version", system["driver_version"] or "n/a")
+    table.add_row("cuda_runtime", system["cuda_runtime_version"] or "n/a")
+
+    for i, g in enumerate(system["gpus"]):
+        table.add_row(f"GPU {i}", f"{g['name']} ({g['total_mb']} MB total, {g['free_mb']} MB free)")
+    if not system["gpus"]:
         table.add_row("GPUs", "None detected")
-    for k, v in measurements["vllm_perf"].items():
+
+    table.add_row("", "")
+    table.add_row("llm_models_ok", str(endpoints["llm_models_ok"]))
+    table.add_row("embed_models_ok", str(endpoints["embed_models_ok"]))
+    table.add_row("rerank_models_ok", str(endpoints["rerank_models_ok"]))
+    table.add_row("llm_response_ms", str(endpoints["llm_response_ms"]) if endpoints["llm_response_ms"] else "n/a")
+    table.add_row("embed_response_ms", str(endpoints["embed_response_ms"]) if endpoints["embed_response_ms"] else "n/a")
+    table.add_row("rerank_response_ms", str(endpoints["rerank_response_ms"]) if endpoints["rerank_response_ms"] else "n/a")
+
+    table.add_row("", "")
+    for k, v in performance.items():
         table.add_row(k, str(v) if v is not None else "pending")
+
     console.print(table)
 
-    out_path = Path(__file__).resolve().parent.parent / "measurements.json"
+    # -- write JSON --
+    metrics_dir = Path(config.storage.data_dir) / "metrics"
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+    out_path = metrics_dir / "measurements.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(measurements, f, indent=2)
     console.print(f"[bold green][OK] Written to {out_path}")
