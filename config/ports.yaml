@@ -1,6 +1,5 @@
 # Port assignments -- single source of truth.
 # Every service reads this file. No hardcoded ports anywhere.
-api: 8080
 llm: 8000
 embedder: 8001
 reranker: 8002

@@ -32,7 +32,9 @@ class EmbeddingEngine:
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.dimension = config.dimension or 768
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        transport = httpx.HTTPTransport(retries=2)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout),
+                                    transport=transport)
         self._gate = gate
 
     def embed(self, texts: List[str]) -> np.ndarray:

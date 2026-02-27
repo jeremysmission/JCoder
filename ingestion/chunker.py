@@ -39,6 +39,10 @@ LANGUAGE_MAP = {
     # Config files -- no AST grammar, char-fallback only
     ".yaml": None,
     ".yml": None,
+    # Documentation / harvested markdown -- char-fallback only
+    ".md": None,
+    ".txt": None,
+    ".json": None,
 }
 
 # AST node types that represent logical chunk boundaries per language.
@@ -186,7 +190,7 @@ class Chunker:
         """
         Chunk a single file. Uses AST parsing when possible, character split otherwise.
         """
-        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
 
         if not content.strip():

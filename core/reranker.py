@@ -29,7 +29,9 @@ class Reranker:
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.enabled = config.enabled
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        transport = httpx.HTTPTransport(retries=2)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout),
+                                    transport=transport)
         self._gate = gate
 
     def rerank(

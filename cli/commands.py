@@ -29,11 +29,13 @@ from ingestion.repo_loader import RepoLoader
 console = Console()
 
 
-def _build_pipeline(config: JCoderConfig, mock: bool = False):
+def _build_pipeline(config: JCoderConfig, mock: bool = False,
+                    eval_mode: bool = False):
     """Wire up the full retrieval + generation pipeline from config."""
     p = config.policies
     dim = config.embedder.dimension or 768
-    gate = NetworkGate(mode="localhost")
+    gate = NetworkGate(mode=config.network.mode, allowlist=config.network.allowlist)
+    temperature = p.eval_temperature if eval_mode else 0.1
 
     if mock:
         embedder = MockEmbedder(dimension=dim)
@@ -42,7 +44,9 @@ def _build_pipeline(config: JCoderConfig, mock: bool = False):
     else:
         embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(p.timeout_embed_ms), gate=gate)
         reranker = Reranker(config.reranker, _ms_to_seconds(p.timeout_rerank_ms), gate=gate)
-        runtime = Runtime(config.llm, _ms_to_seconds(p.timeout_generate_ms), gate=gate)
+        runtime = Runtime(config.llm, _ms_to_seconds(p.timeout_generate_ms), gate=gate,
+                          max_tokens=p.max_generation_tokens,
+                          temperature=temperature)
 
     index = IndexEngine(
         dim, config.storage, config.retrieval.rrf_k,
@@ -54,7 +58,8 @@ def _build_pipeline(config: JCoderConfig, mock: bool = False):
         top_k=min(config.retrieval.top_k, p.max_chunks_retrieved),
         rerank_top_n=min(config.retrieval.rerank_top_n, p.max_rerank_n),
     )
-    orchestrator = Orchestrator(retriever, runtime)
+    timeout = _ms_to_seconds(p.timeout_generate_ms) + _ms_to_seconds(p.timeout_retrieve_ms)
+    orchestrator = Orchestrator(retriever, runtime, timeout=timeout)
     return embedder, index, retriever, runtime, orchestrator
 
 
@@ -97,11 +102,13 @@ def ingest(ctx, path: str, index_name: str):
     mock = ctx.obj.get("mock", False)
     dim = config.embedder.dimension or 768
 
+    gate = NetworkGate(mode=config.network.mode, allowlist=config.network.allowlist)
+
     if mock:
         console.print("Using mock embedder (no vLLM)")
         embedder = MockEmbedder(dimension=dim)
     else:
-        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(config.policies.timeout_embed_ms))
+        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(config.policies.timeout_embed_ms), gate=gate)
 
     console.print(f"Embedding {len(chunks)} chunks...")
 
@@ -157,6 +164,7 @@ def ask(ctx, question: str, index_name: str):
                 table.add_row(src)
             console.print(table)
     finally:
+        index.close()
         embedder.close()
         runtime.close()
 
@@ -277,7 +285,8 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str, diagnose_retrieval:
             return
 
     mock = ctx.obj.get("mock", False)
-    embedder, index, retriever, runtime, orchestrator = _build_pipeline(config, mock=mock)
+    embedder, index, retriever, runtime, orchestrator = _build_pipeline(
+        config, mock=mock, eval_mode=True)
 
     try:
         index.load(index_name)
@@ -337,6 +346,7 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str, diagnose_retrieval:
             for mode, count in sorted(failure_modes.items(), key=lambda x: -x[1])[:5]:
                 console.print(f"  {mode}: {count}")
     finally:
+        index.close()
         embedder.close()
         runtime.close()
 
@@ -633,3 +643,14 @@ def measure(ctx, run_bench: bool, allow_wait: bool):
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(measurements, f, indent=2)
     console.print(f"[bold green][OK] Written to {out_path}")
+
+
+# ---------------------------------------------------------------------------
+# Register subcommands from separate modules
+# ---------------------------------------------------------------------------
+
+from cli.evolve_cmd import evolve_cmd   # noqa: E402
+from cli.harvest_cmd import harvest_cmd  # noqa: E402
+
+cli.add_command(evolve_cmd)
+cli.add_command(harvest_cmd)

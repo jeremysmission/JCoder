@@ -3,7 +3,7 @@
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import yaml
 
@@ -39,8 +39,32 @@ class ChunkingConfig:
 
 @dataclass
 class StorageConfig:
-    data_dir: str = "D:\\JCoder_Data"
-    index_dir: str = "D:\\JCoder_Data\\indexes"
+    data_dir: str = "data"
+    index_dir: str = "data/indexes"
+
+
+@dataclass
+class NetworkConfig:
+    """Network access control policy."""
+    mode: str = "localhost"
+    allowlist: List[str] = field(default_factory=list)
+
+
+@dataclass
+class HarvesterConfig:
+    """Research harvester settings."""
+    out_dir: str = "_harvested"
+    cache_dir: str = ".harvest_cache"
+    user_agent: str = "JCoder-Harvester/1.0"
+    timeout_s: int = 30
+    max_bytes: int = 10_000_000
+    min_interval_s: float = 1.0
+    retries: int = 2
+    backoff_s: float = 2.0
+    github_repos: List[str] = field(default_factory=list)
+    pypi_packages: List[str] = field(default_factory=list)
+    hn_queries: List[str] = field(default_factory=list)
+    arxiv_queries: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -84,6 +108,9 @@ class JCoderConfig:
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     storage: StorageConfig = field(default_factory=StorageConfig)
     policies: PoliciesConfig = field(default_factory=PoliciesConfig)
+    network: NetworkConfig = field(default_factory=NetworkConfig)
+    harvester: HarvesterConfig = field(default_factory=HarvesterConfig)
+    evolver_seed: int = 1337
 
 
 # ---------------------------------------------------------------------------
@@ -108,10 +135,10 @@ def _load_yaml(path: Path) -> dict:
         return yaml.safe_load(f) or {}
 
 
-def _ms_to_seconds(ms: int) -> int:
-    """Convert milliseconds to seconds. Minimum 1 to avoid zero-timeout bugs."""
+def _ms_to_seconds(ms: int) -> float:
+    """Convert milliseconds to seconds. Minimum 1.0 to avoid zero-timeout bugs."""
     import math
-    return max(1, math.ceil(ms / 1000))
+    return float(max(1, math.ceil(ms / 1000)))
 
 
 def _build_model_config(model_raw: dict, port: int) -> ModelConfig:
@@ -121,6 +148,7 @@ def _build_model_config(model_raw: dict, port: int) -> ModelConfig:
         name=model_raw.get("name", ""),
         endpoint=endpoint,
         dimension=model_raw.get("dimension"),
+        enabled=model_raw.get("enabled", True),
         quantization=model_raw.get("quantization", ""),
         tensor_parallel=model_raw.get("tensor_parallel", 1),
         max_model_len=model_raw.get("max_model_len", 32768),
@@ -192,10 +220,13 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
         ports.get("reranker", 8002),
     )
 
-    # Retrieval, chunking, storage from default.yaml
+    # Retrieval, chunking, storage, network, harvester from default.yaml
     retrieval_raw = default.get("retrieval", {})
     chunking_raw = default.get("chunking", {})
     storage_raw = default.get("storage", {})
+    network_raw = default.get("network", {})
+    harvester_raw = default.get("harvester", {})
+    evolver_raw = default.get("evolver", {})
 
     return JCoderConfig(
         llm=llm,
@@ -205,4 +236,7 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
         chunking=ChunkingConfig(**chunking_raw) if chunking_raw else ChunkingConfig(),
         storage=StorageConfig(**storage_raw) if storage_raw else StorageConfig(),
         policies=_build_policies(policies_raw),
+        network=NetworkConfig(**network_raw) if network_raw else NetworkConfig(),
+        harvester=HarvesterConfig(**harvester_raw) if harvester_raw else HarvesterConfig(),
+        evolver_seed=evolver_raw.get("seed", 1337) if evolver_raw else 1337,
     )

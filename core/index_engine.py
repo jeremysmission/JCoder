@@ -87,6 +87,7 @@ class IndexEngine:
         self.metadata: List[Dict] = []
         self._fts5_error_logged = False
         self._sparse_only = sparse_only
+        self._fts_conn: sqlite3.Connection = None
 
         # FAISS index -- try GPU if enough VRAM, fall back to CPU
         self._flat_index = faiss.IndexFlatIP(dimension)
@@ -98,7 +99,8 @@ class IndexEngine:
                 try:
                     self.index = faiss.index_cpu_to_all_gpus(self._flat_index)
                     self._gpu_available = True
-                except Exception:
+                except Exception as e:
+                    print(f"[WARN] FAISS GPU init failed: {e}. Using CPU.")
                     self.index = self._flat_index
             else:
                 reason = (f"free VRAM {free_mb} MB < safety margin {gpu_safety_margin_mb} MB"
@@ -111,6 +113,22 @@ class IndexEngine:
         # FTS5 DB path is set per-index in save()/load()
         self._db_path: str = ""
         os.makedirs(storage.index_dir, exist_ok=True)
+
+    def _get_fts_conn(self) -> sqlite3.Connection:
+        """Return persistent FTS5 connection, opening if needed."""
+        if self._fts_conn is None and self._db_path:
+            self._fts_conn = sqlite3.connect(self._db_path)
+        return self._fts_conn
+
+    def _close_fts_conn(self):
+        """Close persistent FTS5 connection if open."""
+        if self._fts_conn is not None:
+            self._fts_conn.close()
+            self._fts_conn = None
+
+    def close(self):
+        """Release FTS5 connection."""
+        self._close_fts_conn()
 
     def add_vectors(self, vectors: np.ndarray, metadata: List[Dict]):
         """
@@ -143,19 +161,6 @@ class IndexEngine:
                 results.append((int(idx), float(score)))
         return results
 
-    @staticmethod
-    def _sanitize_fts5_query(query: str) -> str:
-        """Strip characters that are invalid in FTS5 MATCH expressions."""
-        import re
-        # Keep only alphanumeric, spaces, and underscores
-        cleaned = re.sub(r"[^\w\s]", " ", query)
-        # Collapse whitespace and strip
-        tokens = cleaned.split()
-        if not tokens:
-            return '""'
-        # Quote each token so FTS5 treats them as literals
-        return " ".join(f'"{t}"' for t in tokens)
-
     def search_keywords(self, query: str, k: int) -> List[Tuple[int, float]]:
         """
         Keyword search via SQLite FTS5 BM25 against normalized search_content.
@@ -173,7 +178,9 @@ class IndexEngine:
         # OR-joined query: BM25 ranks docs with more matching terms higher.
         # AND is too restrictive for short files (config YAML, interfaces).
         or_query = " OR ".join(f'"{t}"' for t in tokens)
-        conn = sqlite3.connect(self._db_path)
+        conn = self._get_fts_conn()
+        if conn is None:
+            return []
         rows = []
 
         try:
@@ -188,8 +195,6 @@ class IndexEngine:
             if not self._fts5_error_logged:
                 print(f"[WARN] FTS5 query error (logged once): {e}")
                 self._fts5_error_logged = True
-
-        conn.close()
 
         # Map chunk_id back to metadata index
         id_to_idx = {m.get("id"): i for i, m in enumerate(self.metadata)}
@@ -242,7 +247,6 @@ class IndexEngine:
     @staticmethod
     def _is_identifier_heavy(query: str) -> bool:
         """Detect queries containing code identifiers (snake_case, CamelCase, dots, parens)."""
-        import re
         patterns = [
             r'[a-z]+_[a-z]+',      # snake_case
             r'[a-z][a-zA-Z]*[A-Z]', # camelCase/CamelCase
@@ -296,6 +300,7 @@ class IndexEngine:
 
     def _build_fts5(self):
         """Build per-index FTS5 DB from current metadata."""
+        self._close_fts_conn()
         conn = sqlite3.connect(self._db_path)
         conn.execute("DROP TABLE IF EXISTS chunks")
         conn.execute(
@@ -317,6 +322,8 @@ class IndexEngine:
         )
         conn.commit()
         conn.close()
+        # Re-open as persistent connection
+        self._fts_conn = sqlite3.connect(self._db_path)
 
     def save(self, name: str):
         """Save FAISS index, metadata, and per-index FTS5 DB to disk."""
@@ -339,13 +346,15 @@ class IndexEngine:
 
     def load(self, name: str):
         """Load FAISS index, metadata, and per-index FTS5 DB from disk."""
+        self._close_fts_conn()
         path = os.path.join(self.storage.index_dir, name)
 
         cpu_index = faiss.read_index(path + ".faiss")
         if self._gpu_available:
             try:
                 self.index = faiss.index_cpu_to_all_gpus(cpu_index)
-            except Exception:
+            except Exception as e:
+                print(f"[WARN] FAISS GPU reload failed: {e}. Using CPU.")
                 self.index = cpu_index
         else:
             self.index = cpu_index

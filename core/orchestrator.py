@@ -11,6 +11,7 @@ It tells each component when to play:
 3. You get an answer grounded in real code.
 """
 
+import concurrent.futures
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -33,14 +34,28 @@ class Orchestrator:
     Composes retrieval + generation with source tracking.
     """
 
-    def __init__(self, retriever: RetrievalEngine, runtime: Runtime):
+    def __init__(self, retriever: RetrievalEngine, runtime: Runtime,
+                 timeout: float = 300.0):
         self.retriever = retriever
         self.runtime = runtime
+        self._timeout = timeout
 
     def answer(self, question: str) -> AnswerResult:
         """
         End-to-end: retrieve context, generate answer, return with sources.
+        Raises TimeoutError if the pipeline exceeds the configured timeout.
         """
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(self._answer_sync, question)
+            try:
+                return future.result(timeout=self._timeout)
+            except concurrent.futures.TimeoutError:
+                raise TimeoutError(
+                    f"Pipeline exceeded {self._timeout}s timeout"
+                )
+
+    def _answer_sync(self, question: str) -> AnswerResult:
+        """Synchronous answer pipeline (runs inside timeout wrapper)."""
         chunks = self.retriever.retrieve(question)
 
         if not chunks:

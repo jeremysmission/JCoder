@@ -13,9 +13,8 @@ This is the part that:
 
 from typing import Dict, List, Optional
 
-from .embedding_engine import EmbeddingEngine
 from .index_engine import IndexEngine
-from .reranker import Reranker
+from .interfaces import IEmbedder, IReranker
 
 
 class RetrievalEngine:
@@ -25,9 +24,9 @@ class RetrievalEngine:
 
     def __init__(
         self,
-        embedder: EmbeddingEngine,
+        embedder: IEmbedder,
         index: IndexEngine,
-        reranker: Optional[Reranker] = None,
+        reranker: Optional[IReranker] = None,
         top_k: int = 50,
         rerank_top_n: int = 10,
     ):

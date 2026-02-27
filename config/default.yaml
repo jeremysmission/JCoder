@@ -1,18 +1,6 @@
 # JCoder Configuration
-# All paths and model names are configured here -- nothing hardcoded in code.
-
-models:
-  llm:
-    name: "Qwen/Qwen3-Coder-Next-80B"
-    endpoint: "http://localhost:8000/v1"
-  embedder:
-    name: "nomic-ai/nomic-embed-code-v1"
-    endpoint: "http://localhost:8001/v1"
-    dimension: 768
-  reranker:
-    name: "Qwen/Qwen3-Reranker-4B"
-    endpoint: "http://localhost:8002/v1"
-    enabled: true
+# Storage paths and retrieval settings.
+# Model definitions live in models.yaml; ports in ports.yaml.
 
 retrieval:
   top_k: 50
@@ -24,8 +12,35 @@ chunking:
   strategy: "tree_sitter"
 
 storage:
-  data_dir: "D:\\JCoder_Data"
-  index_dir: "D:\\JCoder_Data\\indexes"
+  data_dir: "data"
+  index_dir: "data/indexes"
 
 server:
   timeout_seconds: 120
+
+# Network access policy (enforced by NetworkGate).
+# mode: "offline" | "localhost" | "allowlist"
+# allowlist: list of allowed hostnames (only used when mode=allowlist)
+network:
+  mode: "localhost"
+  allowlist: []
+
+# Research harvester -- fetches external sources for ingestion.
+# Only runs when network.mode == "allowlist" and allowlist is populated.
+harvester:
+  out_dir: "_harvested"
+  cache_dir: ".harvest_cache"
+  user_agent: "JCoder-Harvester/1.0"
+  timeout_s: 30
+  max_bytes: 10000000
+  min_interval_s: 1.0
+  retries: 2
+  backoff_s: 2.0
+  github_repos: []
+  pypi_packages: []
+  hn_queries: []
+  arxiv_queries: []
+
+# Evolver -- self-improvement loop (config/prompt tuning only).
+evolver:
+  seed: 1337

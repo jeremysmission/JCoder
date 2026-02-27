@@ -13,3 +13,4 @@ embedder:
 reranker:
   name: "Qwen/Qwen3-Reranker-4B"
   quantization: "Q4_K_M"
+  enabled: true

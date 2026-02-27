@@ -16,6 +16,12 @@ import httpx
 from .config import ModelConfig
 from .network_gate import NetworkGate
 
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a code assistant. Answer the user's question using ONLY "
+    "the provided context. If the context does not contain enough "
+    "information, say so. Cite source files when possible."
+)
+
 
 class Runtime:
     """
@@ -23,31 +29,42 @@ class Runtime:
     Uses vLLM's OpenAI-compatible /v1/chat/completions API.
     """
 
-    SYSTEM_PROMPT = (
-        "You are a code assistant. Answer the user's question using ONLY "
-        "the provided context. If the context does not contain enough "
-        "information, say so. Cite source files when possible."
-    )
-
-    def __init__(self, config: ModelConfig, timeout: int = 120,
-                 gate: NetworkGate = None):
+    def __init__(
+        self,
+        config: ModelConfig,
+        timeout: int = 120,
+        gate: NetworkGate = None,
+        temperature: float = 0.1,
+        max_tokens: int = 2048,
+        system_prompt: str = None,
+    ):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        transport = httpx.HTTPTransport(retries=2)
+        self._client = httpx.Client(timeout=httpx.Timeout(timeout),
+                                    transport=transport)
         self._gate = gate
+        self._temperature = temperature
+        self._max_tokens = max_tokens
+        self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
 
     def generate(
         self,
         question: str,
         context_chunks: List[str],
         system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """
         Send question + retrieved context to the model.
         Returns the model's text response.
+
+        Per-call overrides for temperature/max_tokens/system_prompt
+        take precedence over instance defaults.
         """
         context_block = "\n\n---\n\n".join(context_chunks)
-        prompt = system_prompt or self.SYSTEM_PROMPT
+        prompt = system_prompt or self._system_prompt
 
         payload = {
             "model": self.model_name,
@@ -58,8 +75,8 @@ class Runtime:
                     "content": f"Context:\n{context_block}\n\nQuestion:\n{question}",
                 },
             ],
-            "temperature": 0.1,
-            "max_tokens": 2048,
+            "temperature": temperature if temperature is not None else self._temperature,
+            "max_tokens": max_tokens if max_tokens is not None else self._max_tokens,
         }
 
         url = f"{self.endpoint}/chat/completions"
