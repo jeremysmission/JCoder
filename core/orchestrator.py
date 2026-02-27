@@ -24,6 +24,7 @@ class AnswerResult:
     answer: str
     sources: List[str]
     chunk_count: int
+    chunks: Optional[List[dict]] = None
 
 
 class Orchestrator:
@@ -58,4 +59,5 @@ class Orchestrator:
             answer=response,
             sources=sorted(sources),
             chunk_count=len(chunks),
+            chunks=chunks,
         )

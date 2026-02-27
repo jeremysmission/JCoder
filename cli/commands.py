@@ -155,47 +155,78 @@ def ask(ctx, question: str, index_name: str):
         runtime.close()
 
 
-def _score_item(item: dict, result) -> bool:
-    """Score a benchmark item against orchestrator result.
+def _score_retrieval(item: dict, result) -> dict:
+    """Score A: Retrieval quality (LLM-independent).
 
-    Supports three scoring modes (checked in order):
-    1. expected_file_contains + expected_symbols (golden questions)
-    2. expected_keyword (legacy simple keyword match)
-    3. No criteria = auto-pass
+    Checks source files and chunk excerpt text, NOT the generated answer.
+    Returns dict with file_hit, symbol_hit, pass, failure_mode.
     """
-    # Mode 1: File + symbol matching (golden questions)
     expected_file = item.get("expected_file_contains", "")
     expected_symbols = item.get("expected_symbols", [])
+    expected_phrase = item.get("expected_phrase", "")
+    min_rank = item.get("min_sources_hit_rank", 0)
 
-    if expected_file or expected_symbols:
-        file_hit = True
-        symbol_hit = True
+    if not expected_file and not expected_symbols and not expected_phrase:
+        return {"pass": True, "file_hit": True, "symbol_hit": True, "failure_mode": None}
 
-        if expected_file:
-            # Normalize path separators for cross-OS matching
-            norm_expected = expected_file.replace("\\", "/")
-            file_hit = any(
-                norm_expected in src.replace("\\", "/")
-                for src in result.sources
-            )
+    # File check: expected file in top-K sources (optionally rank-limited)
+    sources = result.sources or []
+    if min_rank > 0:
+        sources = sources[:min_rank]
+    norm_expected = expected_file.replace("\\", "/") if expected_file else ""
+    file_hit = (not expected_file) or any(
+        norm_expected in src.replace("\\", "/") for src in sources
+    )
 
-        if expected_symbols:
-            # Check if any symbol appears in any excerpt
-            answer_lower = result.answer.lower()
-            symbol_hit = any(
-                sym.lower() in answer_lower
-                for sym in expected_symbols
-            )
+    # Symbol/phrase check: look in retrieved CHUNK TEXT, not LLM answer
+    chunk_text = ""
+    if result.chunks:
+        chunk_text = " ".join(c.get("content", "") for c in result.chunks).lower()
 
-        return file_hit and symbol_hit
+    symbol_hit = True
+    if expected_symbols:
+        symbol_hit = any(sym.lower() in chunk_text for sym in expected_symbols)
+    if expected_phrase:
+        symbol_hit = symbol_hit and (expected_phrase.lower() in chunk_text)
 
-    # Mode 2: Legacy keyword match
+    passed = file_hit and symbol_hit
+    failure_mode = None
+    if not passed:
+        if not file_hit and not symbol_hit:
+            failure_mode = "wrong_file+missing_symbol"
+        elif not file_hit:
+            failure_mode = "wrong_file"
+        elif not symbol_hit:
+            failure_mode = "right_file_missing_symbol"
+
+    return {"pass": passed, "file_hit": file_hit, "symbol_hit": symbol_hit, "failure_mode": failure_mode}
+
+
+def _score_answer(item: dict, result) -> dict:
+    """Score B: Answer quality (LLM-dependent).
+
+    Checks the generated answer text for expected symbols/keywords.
+    Returns dict with pass, failure_mode.
+    """
+    expected_symbols = item.get("expected_symbols", [])
+    expected_phrase = item.get("expected_phrase", "")
     expected_kw = item.get("expected_keyword", "")
-    if expected_kw:
-        return expected_kw.lower() in result.answer.lower()
 
-    # Mode 3: No criteria
-    return True
+    if not expected_symbols and not expected_phrase and not expected_kw:
+        return {"pass": True, "failure_mode": None}
+
+    answer_lower = result.answer.lower()
+
+    symbol_hit = True
+    if expected_symbols:
+        symbol_hit = any(sym.lower() in answer_lower for sym in expected_symbols)
+    if expected_phrase:
+        symbol_hit = symbol_hit and (expected_phrase.lower() in answer_lower)
+    if expected_kw:
+        symbol_hit = symbol_hit and (expected_kw.lower() in answer_lower)
+
+    failure_mode = None if symbol_hit else "answer_missing_symbol"
+    return {"pass": symbol_hit, "failure_mode": failure_mode}
 
 
 @cli.command(name="seal-benchmarks")
@@ -248,32 +279,45 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str):
 
         console.print(f"Running {len(data)} benchmark questions...")
 
-        results = []
+        retrieval_passes = 0
+        answer_passes = 0
+        failure_modes = {}
         start = time.time()
 
         for item in data:
             q = item["question"]
             result = orchestrator.answer(q)
 
-            # Score against available criteria
-            hit = _score_item(item, result)
+            r_score = _score_retrieval(item, result)
+            a_score = _score_answer(item, result)
 
-            results.append({
-                "id": item.get("id", "?"),
-                "question": q,
-                "hit": hit,
-                "sources": result.sources,
-            })
+            if r_score["pass"]:
+                retrieval_passes += 1
+            if a_score["pass"]:
+                answer_passes += 1
 
-            status = "[green]PASS[/green]" if hit else "[red]FAIL[/red]"
-            console.print(f"  {item.get('id', '?')}: {status} -- {q[:60]}")
+            # Track failure modes
+            for fm in [r_score["failure_mode"], a_score["failure_mode"]]:
+                if fm:
+                    failure_modes[fm] = failure_modes.get(fm, 0) + 1
+
+            r_tag = "[green]R:P[/green]" if r_score["pass"] else "[red]R:F[/red]"
+            a_tag = "[green]A:P[/green]" if a_score["pass"] else "[yellow]A:F[/yellow]"
+            console.print(f"  {item.get('id', '?')}: {r_tag} {a_tag} -- {q[:55]}")
 
         elapsed = time.time() - start
-        hits = sum(1 for r in results if r["hit"])
+        n = len(data)
 
         console.print()
-        console.print(f"[bold]Score: {hits}/{len(data)} ({100 * hits / len(data):.1f}%)")
-        console.print(f"Time: {elapsed:.1f}s ({elapsed / len(data):.1f}s/question)")
+        console.print(f"[bold]RetrievalScore: {retrieval_passes}/{n} ({100 * retrieval_passes / n:.1f}%)")
+        console.print(f"[bold]AnswerScore:    {answer_passes}/{n} ({100 * answer_passes / n:.1f}%)")
+        console.print(f"Time: {elapsed:.1f}s ({elapsed / n:.1f}s/question)")
+
+        if failure_modes:
+            console.print()
+            console.print("[bold]Failure modes:")
+            for mode, count in sorted(failure_modes.items(), key=lambda x: -x[1])[:5]:
+                console.print(f"  {mode}: {count}")
     finally:
         embedder.close()
         runtime.close()
