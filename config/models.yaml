@@ -1,0 +1,15 @@
+# Model definitions -- names, dimensions, quantization.
+llm:
+  name: "Qwen/Qwen3-Coder-Next-80B"
+  quantization: "Q3_K_M"
+  tensor_parallel: 2
+  max_model_len: 32768
+
+embedder:
+  name: "nomic-ai/nomic-embed-code-v1"
+  dimension: 768
+  quantization: "Q4_K_M"
+
+reranker:
+  name: "Qwen/Qwen3-Reranker-4B"
+  quantization: "Q4_K_M"

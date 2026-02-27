@@ -1,0 +1,30 @@
+# Hard caps -- prevents runaway resource usage.
+# These are enforced at runtime, not advisory.
+
+concurrency:
+  max_parallel_requests: 4
+
+context:
+  max_context_tokens: 8192
+  max_generation_tokens: 800
+  max_chunks_retrieved: 30
+  max_rerank_n: 50
+
+batching:
+  embed_batch_size: 16
+  rerank_batch_size: 32
+
+gpu:
+  memory_safety_margin_mb: 2048
+  memory_utilization: 0.85
+
+timeouts_ms:
+  embed: 30000
+  retrieve: 10000
+  rerank: 30000
+  generate: 120000
+
+eval:
+  temperature: 0.0
+  benchmark_hash_verify: true
+  benchmark_hash_manifest: "config/benchmark_hashes.json"

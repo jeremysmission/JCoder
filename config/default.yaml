@@ -1,0 +1,31 @@
+# JCoder Configuration
+# All paths and model names are configured here -- nothing hardcoded in code.
+
+models:
+  llm:
+    name: "Qwen/Qwen3-Coder-Next-80B"
+    endpoint: "http://localhost:8000/v1"
+  embedder:
+    name: "nomic-ai/nomic-embed-code-v1"
+    endpoint: "http://localhost:8001/v1"
+    dimension: 768
+  reranker:
+    name: "Qwen/Qwen3-Reranker-4B"
+    endpoint: "http://localhost:8002/v1"
+    enabled: true
+
+retrieval:
+  top_k: 50
+  rerank_top_n: 10
+  rrf_k: 60
+
+chunking:
+  max_chars: 4000
+  strategy: "tree_sitter"
+
+storage:
+  data_dir: "D:\\JCoder_Data"
+  index_dir: "D:\\JCoder_Data\\indexes"
+
+server:
+  timeout_seconds: 120

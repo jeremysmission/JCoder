@@ -1,0 +1,17 @@
+[
+  {
+    "id": "001",
+    "question": "What does the main authentication function do?",
+    "expected_keyword": "authenticate"
+  },
+  {
+    "id": "002",
+    "question": "How is logging configured?",
+    "expected_keyword": "logging"
+  },
+  {
+    "id": "003",
+    "question": "What database connection method is used?",
+    "expected_keyword": "connect"
+  }
+]
