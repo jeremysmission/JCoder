@@ -16,6 +16,7 @@ import httpx
 import numpy as np
 
 from .config import ModelConfig
+from .network_gate import NetworkGate
 
 
 class EmbeddingEngine:
@@ -26,19 +27,24 @@ class EmbeddingEngine:
     No indexing logic. No retrieval logic. Just embedding.
     """
 
-    def __init__(self, config: ModelConfig, timeout: int = 120):
+    def __init__(self, config: ModelConfig, timeout: int = 120,
+                 gate: NetworkGate = None):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.dimension = config.dimension or 768
         self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        self._gate = gate
 
     def embed(self, texts: List[str]) -> np.ndarray:
         """
         Convert multiple text chunks into vector form.
         Returns an (N, dimension) numpy array of normalized embeddings.
         """
+        url = f"{self.endpoint}/embeddings"
+        if self._gate:
+            self._gate.guard(url)
         response = self._client.post(
-            f"{self.endpoint}/embeddings",
+            url,
             json={
                 "model": self.model_name,
                 "input": texts,

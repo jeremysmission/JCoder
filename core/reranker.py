@@ -15,6 +15,7 @@ from typing import List, Tuple
 import httpx
 
 from .config import ModelConfig
+from .network_gate import NetworkGate
 
 
 class Reranker:
@@ -23,11 +24,13 @@ class Reranker:
     Takes (query, document) pairs and returns relevance scores.
     """
 
-    def __init__(self, config: ModelConfig, timeout: int = 120):
+    def __init__(self, config: ModelConfig, timeout: int = 120,
+                 gate: NetworkGate = None):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.enabled = config.enabled
         self._client = httpx.Client(timeout=httpx.Timeout(timeout))
+        self._gate = gate
 
     def rerank(
         self,
@@ -43,8 +46,11 @@ class Reranker:
             # Pass-through: return original order with dummy scores
             return [(i, 1.0) for i in range(min(top_n, len(documents)))]
 
+        url = f"{self.endpoint}/score"
+        if self._gate:
+            self._gate.guard(url)
         response = self._client.post(
-            f"{self.endpoint}/score",
+            url,
             json={
                 "model": self.model_name,
                 "text_1": query,

@@ -201,6 +201,44 @@ class IndexEngine:
                 results.append((idx, -float(rank)))
         return results
 
+    # Intent token sets for path-prior boosting
+    _INTENT_CONFIG = {"config", "yaml", "yml", "policy", "policies", "ports",
+                      "models", "timeout", "cap", "budget"}
+    _INTENT_INTERFACE = {"protocol", "interface", "iembedder", "iretriever", "illm"}
+    _INTENT_DOCTOR = {"doctor", "health", "gpu", "nvidia", "endpoint"}
+    _INTENT_MOCK = {"mock", "mockreranker", "mock_backend", "deterministic", "fake"}
+
+    @staticmethod
+    def _path_prior_boost(query_text: str, source_path: str) -> float:
+        """Deterministic additive boost for short files that match query intent."""
+        norm_q = set(_normalize_for_search(query_text).split())
+        norm_p = source_path.replace("\\", "/").lower()
+
+        boost = 0.0
+
+        if norm_q & IndexEngine._INTENT_CONFIG:
+            if "/config/" in norm_p:
+                boost = max(boost, 0.30)
+            for name in ("policies.yaml", "ports.yaml", "models.yaml", "default.yaml"):
+                if norm_p.endswith(name):
+                    boost = max(boost, 0.25)
+            if norm_p.endswith(".yaml") or norm_p.endswith(".yml"):
+                boost = max(boost, 0.20)
+
+        if norm_q & IndexEngine._INTENT_INTERFACE:
+            if norm_p.endswith("interfaces.py"):
+                boost = max(boost, 0.25)
+
+        if norm_q & IndexEngine._INTENT_DOCTOR:
+            if norm_p.endswith("doctor.py"):
+                boost = max(boost, 0.25)
+
+        if norm_q & IndexEngine._INTENT_MOCK:
+            if norm_p.endswith("mock_backend.py"):
+                boost = max(boost, 0.25)
+
+        return boost
+
     @staticmethod
     def _is_identifier_heavy(query: str) -> bool:
         """Detect queries containing code identifiers (snake_case, CamelCase, dots, parens)."""
@@ -225,8 +263,14 @@ class IndexEngine:
         # Sparse-only mode: skip dense retrieval entirely
         if self._sparse_only:
             keyword_results = self.search_keywords(query_text, k_sparse)
+            # Apply path-prior boost before final sort
+            boosted = []
+            for idx, score in keyword_results:
+                path = self.metadata[idx].get("source_path", "")
+                boosted.append((idx, score + self._path_prior_boost(query_text, path)))
+            boosted.sort(key=lambda x: x[1], reverse=True)
             results = []
-            for idx, score in keyword_results[:k]:
+            for idx, score in boosted[:k]:
                 results.append((score, self.metadata[idx]))
             return results
 
