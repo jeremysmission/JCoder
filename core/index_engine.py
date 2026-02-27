@@ -138,6 +138,8 @@ class IndexEngine:
         Dense vector search via FAISS.
         Returns list of (metadata_index, score).
         """
+        if len(self.metadata) == 0:
+            return []
         query_vector = np.array([query_vector], dtype=np.float32)
         scores, indices = self.index.search(query_vector, min(k, len(self.metadata)))
 

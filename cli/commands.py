@@ -155,6 +155,49 @@ def ask(ctx, question: str, index_name: str):
         runtime.close()
 
 
+def _score_item(item: dict, result) -> bool:
+    """Score a benchmark item against orchestrator result.
+
+    Supports three scoring modes (checked in order):
+    1. expected_file_contains + expected_symbols (golden questions)
+    2. expected_keyword (legacy simple keyword match)
+    3. No criteria = auto-pass
+    """
+    # Mode 1: File + symbol matching (golden questions)
+    expected_file = item.get("expected_file_contains", "")
+    expected_symbols = item.get("expected_symbols", [])
+
+    if expected_file or expected_symbols:
+        file_hit = True
+        symbol_hit = True
+
+        if expected_file:
+            # Normalize path separators for cross-OS matching
+            norm_expected = expected_file.replace("\\", "/")
+            file_hit = any(
+                norm_expected in src.replace("\\", "/")
+                for src in result.sources
+            )
+
+        if expected_symbols:
+            # Check if any symbol appears in any excerpt
+            answer_lower = result.answer.lower()
+            symbol_hit = any(
+                sym.lower() in answer_lower
+                for sym in expected_symbols
+            )
+
+        return file_hit and symbol_hit
+
+    # Mode 2: Legacy keyword match
+    expected_kw = item.get("expected_keyword", "")
+    if expected_kw:
+        return expected_kw.lower() in result.answer.lower()
+
+    # Mode 3: No criteria
+    return True
+
+
 @cli.command(name="seal-benchmarks")
 @click.option("--eval-dir", default=None, help="Evaluation directory")
 @click.pass_context
@@ -210,10 +253,10 @@ def evaluate(ctx, benchmark: Optional[str], index_name: str):
 
         for item in data:
             q = item["question"]
-            expected = item.get("expected_keyword", "")
-
             result = orchestrator.answer(q)
-            hit = expected.lower() in result.answer.lower() if expected else True
+
+            # Score against available criteria
+            hit = _score_item(item, result)
 
             results.append({
                 "id": item.get("id", "?"),
