@@ -5,9 +5,13 @@ __pycache__/
 dist/
 build/
 *.zip
+*.zst
+*.xlsx
 .env
 *.db
 *.docx
 .claude/
 .pytest_cache/
+.tmp/
+.tmp_test_arc/
 data/

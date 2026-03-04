@@ -161,6 +161,19 @@ class IndexEngine:
                 results.append((int(idx), float(score)))
         return results
 
+    @staticmethod
+    def _sanitize_fts5_query(raw: str) -> str:
+        """Sanitize arbitrary text into a safe FTS5 MATCH expression.
+
+        Always returns a non-empty string. At minimum returns '""'.
+        Normalizes identifiers, strips special chars, quotes each token.
+        """
+        normalized = _normalize_for_search(raw)
+        tokens = normalized.split()
+        if not tokens:
+            return '""'
+        return " OR ".join(f'"{t}"' for t in tokens)
+
     def search_keywords(self, query: str, k: int) -> List[Tuple[int, float]]:
         """
         Keyword search via SQLite FTS5 BM25 against normalized search_content.
@@ -169,15 +182,9 @@ class IndexEngine:
         Query is normalized the same way as indexed content so identifiers
         like memory_safety_margin_mb match query words "safety margin".
         """
-        # Normalize query same as indexed content
-        normalized = _normalize_for_search(query)
-        tokens = normalized.split()
-        if not tokens:
+        or_query = self._sanitize_fts5_query(query)
+        if or_query == '""':
             return []
-
-        # OR-joined query: BM25 ranks docs with more matching terms higher.
-        # AND is too restrictive for short files (config YAML, interfaces).
-        or_query = " OR ".join(f'"{t}"' for t in tokens)
         conn = self._get_fts_conn()
         if conn is None:
             return []
