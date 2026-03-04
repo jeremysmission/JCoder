@@ -182,11 +182,7 @@ def _parse_args() -> argparse.Namespace:
 def main() -> int:
     args = _parse_args()
     cfg = load_config(None)
-    s_cfg = SanitizationConfig(
-        enabled=True,
-        clean_archive_dir=cfg.sanitization.clean_archive_dir,
-        langdetect_threshold=cfg.sanitization.langdetect_threshold,
-    )
+    s_cfg = SanitizationConfig()
     sanitizer = SanitizationPipeline(s_cfg)
     latest_logs = _latest_sanitize_logs(Path(s_cfg.clean_archive_dir) / "_logs")
     if args.force:
