@@ -17,3 +17,6 @@ tree-sitter-rust>=0.23.0
 tree-sitter-ruby>=0.23.0
 tree-sitter-php>=0.23.0
 tree-sitter-kotlin>=0.23.0
+pyzstd>=0.16.0
+py7zr>=0.22.0
+langdetect>=1.0.9
