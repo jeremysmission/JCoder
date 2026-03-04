@@ -649,8 +649,10 @@ def measure(ctx, run_bench: bool, allow_wait: bool):
 # Register subcommands from separate modules
 # ---------------------------------------------------------------------------
 
-from cli.evolve_cmd import evolve_cmd   # noqa: E402
-from cli.harvest_cmd import harvest_cmd  # noqa: E402
+from cli.evolve_cmd import evolve_cmd       # noqa: E402
+from cli.harvest_cmd import harvest_cmd    # noqa: E402
+from cli.research_cmd import research_cmd  # noqa: E402
 
 cli.add_command(evolve_cmd)
 cli.add_command(harvest_cmd)
+cli.add_command(research_cmd)

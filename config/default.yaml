@@ -41,6 +41,21 @@ harvester:
   hn_queries: []
   arxiv_queries: []
 
+# Advanced research pipeline -- layered triage, credibility scoring,
+# evidence weighting, synthesis, verification, and bias control.
+research:
+  prisma_enabled: true
+  credibility_scoring: true
+  devils_advocate: false
+  claim_verification: false
+  satellite_cutoff: 0.3
+  drone_cutoff: 0.5
+  max_deep_dive: 5
+  max_counter_queries: 3
+  max_verify_claims: 5
+  synthesis_max_themes: 8
+  output_dir: "_research"
+
 # Evolver -- self-improvement loop (config/prompt tuning only).
 evolver:
   seed: 1337

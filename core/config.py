@@ -68,6 +68,22 @@ class HarvesterConfig:
 
 
 @dataclass
+class ResearchConfig:
+    """Advanced research pipeline settings."""
+    prisma_enabled: bool = True
+    credibility_scoring: bool = True
+    devils_advocate: bool = False
+    claim_verification: bool = False
+    satellite_cutoff: float = 0.3
+    drone_cutoff: float = 0.5
+    max_deep_dive: int = 5
+    max_counter_queries: int = 3
+    max_verify_claims: int = 5
+    synthesis_max_themes: int = 8
+    output_dir: str = "_research"
+
+
+@dataclass
 class PoliciesConfig:
     """Hard caps enforced at runtime."""
     max_parallel_requests: int = 4
@@ -110,6 +126,7 @@ class JCoderConfig:
     policies: PoliciesConfig = field(default_factory=PoliciesConfig)
     network: NetworkConfig = field(default_factory=NetworkConfig)
     harvester: HarvesterConfig = field(default_factory=HarvesterConfig)
+    research: ResearchConfig = field(default_factory=ResearchConfig)
     evolver_seed: int = 1337
 
 
@@ -226,6 +243,7 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
     storage_raw = default.get("storage", {})
     network_raw = default.get("network", {})
     harvester_raw = default.get("harvester", {})
+    research_raw = default.get("research", {})
     evolver_raw = default.get("evolver", {})
 
     return JCoderConfig(
@@ -238,5 +256,6 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
         policies=_build_policies(policies_raw),
         network=NetworkConfig(**network_raw) if network_raw else NetworkConfig(),
         harvester=HarvesterConfig(**harvester_raw) if harvester_raw else HarvesterConfig(),
+        research=ResearchConfig(**research_raw) if research_raw else ResearchConfig(),
         evolver_seed=evolver_raw.get("seed", 1337) if evolver_raw else 1337,
     )
