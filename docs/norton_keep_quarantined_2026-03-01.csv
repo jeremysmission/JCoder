@@ -1,0 +1,2 @@
+timestamp_utc,threat_name,action,chest_id,file_path,ext,triage_hint
+2026-01-31T23:36:49+00:00,Win64:Malware-gen,chest,9,C:\Users\jerem\file_search\dist\FastFileSearch.exe,exe,potentially_real_binary_or_script
