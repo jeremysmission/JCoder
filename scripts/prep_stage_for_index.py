@@ -171,6 +171,11 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         help="Optional explicit list of raw roots to process. If omitted, DEFAULT_ROOTS is used.",
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-sanitization even if a cached run exists for the root.",
+    )
     return parser.parse_args()
 
 
@@ -184,6 +189,8 @@ def main() -> int:
     )
     sanitizer = SanitizationPipeline(s_cfg)
     latest_logs = _latest_sanitize_logs(Path(s_cfg.clean_archive_dir) / "_logs")
+    if args.force:
+        latest_logs.clear()
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     prep_root = Path(r"D:\JCoder_Data\prep_stage") / f"prep_{ts}"
