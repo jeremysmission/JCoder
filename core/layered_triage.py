@@ -47,7 +47,7 @@ _METHODOLOGY_KEYWORDS = {
 
 # Source tier defaults (mirrors research_sources.py tiers)
 _SOURCE_TIER_SCORES = {
-    "arxiv_cs_ai": 0.85, "arxiv_cs_cl": 0.80, "arxiv_cs_ir": 0.90,
+    "arxiv_cs_ai": 0.90, "arxiv_cs_cl": 0.80, "arxiv_cs_ir": 0.90,
     "arxiv_cs_se": 0.80, "arxiv_cs_lg": 0.85,
     "semantic_scholar": 0.90, "papers_with_code": 0.85,
     "openreview": 0.80, "acl_anthology": 0.85,

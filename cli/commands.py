@@ -595,8 +595,8 @@ def measure(ctx, run_bench: bool, allow_wait: bool):
                         system["driver_version"] = parts[1]
     except FileNotFoundError:
         console.print("[WARN] nvidia-smi not found")
-    except Exception:
-        pass
+    except Exception as e:
+        console.print(f"[WARN] nvidia-smi probe failed: {e}")
 
     # -- endpoints --
     llm_ok, llm_ms, llm_path = _probe_endpoint(config.llm.endpoint)

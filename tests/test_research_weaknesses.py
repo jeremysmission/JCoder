@@ -130,7 +130,7 @@ def test_keyword_stuffed_title():
     results = lt.triage_batch([stuffed, legitimate], "retrieval")
     # Legitimate paper should score competitively despite fewer keywords
     # because citation count and source tier should help
-    assert results[0].satellite_score >= 0  # doesn't crash at minimum
+    assert abs(results[0].satellite_score - results[1].satellite_score) <= 0.2
 
 
 def test_credibility_punishes_hype():
