@@ -110,7 +110,7 @@ class ClaimVerifier:
         seen_titles: set[str] = set()
         for q in queries:
             for item in self._fetch_fn(q):
-                title = item.get("title", "").lower().strip()
+                title = str(item.get("title") or "").lower().strip()
                 if title and title not in seen_titles:
                     candidates.append(item)
                     seen_titles.add(title)

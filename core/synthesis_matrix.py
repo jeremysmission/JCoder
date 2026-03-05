@@ -114,7 +114,9 @@ def _extract_noun_phrases(texts: List[str], max_phrases: int) -> List[str]:
     }
     filtered = [
         (phrase, c) for phrase, c in counts.items()
-        if phrase not in stops and len(phrase) > 3
+        if phrase not in stops
+        and len(phrase) > 3
+        and not all(w in stops for w in phrase.split())
     ]
     filtered.sort(key=lambda x: x[1], reverse=True)
     return [phrase for phrase, _ in filtered[:max_phrases]]
