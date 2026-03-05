@@ -173,6 +173,8 @@ class TelemetryStore:
 
     def _query_by_confidence(self, op: str, threshold: float,
                               limit: int) -> List[QueryEvent]:
+        if op not in {"<=", ">="}:
+            raise ValueError(f"Unsupported confidence operator: {op}")
         with self._connect() as conn:
             cur = conn.execute(
                 f"SELECT * FROM query_events WHERE confidence {op} ? "

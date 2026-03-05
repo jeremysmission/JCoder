@@ -10,6 +10,7 @@ Pure computation -- no LLM calls. Runs in microseconds.
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Dict, List
 
@@ -44,7 +45,7 @@ class EvidenceSummary:
 # Current reference year for recency decay
 # ---------------------------------------------------------------------------
 
-_CURRENT_YEAR = 2026
+_CURRENT_YEAR = datetime.now(timezone.utc).year
 
 
 # ---------------------------------------------------------------------------
@@ -100,8 +101,18 @@ class EvidenceWeighter:
         # Compute raw weights
         raw_weights: List[float] = []
         for src, cred in zip(sources, credibility_scores):
-            year = src.get("year", _CURRENT_YEAR)
-            citations = src.get("citation_count", 0)
+            try:
+                year = int(src.get("year") or _CURRENT_YEAR)
+            except (ValueError, TypeError, OverflowError):
+                year = _CURRENT_YEAR
+            try:
+                raw_cites = src.get("citation_count") or 0
+                if isinstance(raw_cites, float) and (raw_cites != raw_cites or raw_cites == float('inf') or raw_cites == float('-inf')):
+                    citations = 0
+                else:
+                    citations = max(0, int(raw_cites))
+            except (ValueError, TypeError, OverflowError):
+                citations = 0
             raw_weights.append(self._compute_weight(cred, year, citations))
 
         # Normalise to sum to 1.0 (guard against all-zero edge case)
@@ -179,7 +190,7 @@ class EvidenceWeighter:
 
         weight = composite * recency_factor * citation_factor
 
-        recency_factor  decays 0.15 per year from 2026, floor 0.1.
+        recency_factor  decays 0.15 per year from current year, floor 0.1.
         citation_factor boosts up to 1.5x based on citation count.
         """
         recency_factor = max(0.1, 1.0 - (_CURRENT_YEAR - year) * 0.15)

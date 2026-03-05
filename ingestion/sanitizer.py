@@ -553,7 +553,7 @@ class SanitizationPipeline:
                         stats.compressed_skipped += 1
                         stats.skipped_files.append(f"{fp} [no_supported_members]")
                         return
-                    zf.extractall(path=tmp_dir, members=wanted)
+                    self._extract_zip_members_safe(zf, wanted, tmp_dir, stats, str(fp))
             elif ext in {".tar", ".gz", ".xz"}:
                 try:
                     with tarfile.open(fp, "r:*") as tf:
@@ -563,7 +563,7 @@ class SanitizationPipeline:
                             stats.compressed_skipped += 1
                             stats.skipped_files.append(f"{fp} [no_supported_members]")
                             return
-                        tf.extractall(path=tmp_dir, members=wanted)
+                        self._extract_tar_members_safe(tf, wanted, tmp_dir, stats, str(fp))
                 except tarfile.TarError:
                     # Not a tarball; likely a single compressed stream with .gz/.xz extension.
                     stats.compressed_skipped += 1
@@ -584,6 +584,84 @@ class SanitizationPipeline:
             stats.errors.append(f"{fp} [archive_error] {e}")
         finally:
             shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    def _safe_member_target(self, root: Path, member_name: str) -> Optional[Path]:
+        normalized = (member_name or "").replace("\\", "/")
+        if not normalized:
+            return None
+        if normalized.startswith("/") or normalized.startswith("../"):
+            return None
+        if "/../" in normalized or normalized == "..":
+            return None
+        root_resolved = root.resolve()
+        target = (root / Path(normalized)).resolve()
+        if target == root_resolved:
+            return None
+        if root_resolved not in target.parents:
+            return None
+        return target
+
+    def _extract_zip_members_safe(
+        self,
+        zf: zipfile.ZipFile,
+        names: List[str],
+        dest_dir: Path,
+        stats: SanitizationStats,
+        archive_label: str,
+    ) -> None:
+        blocked = 0
+        extracted = 0
+        for name in names:
+            target = self._safe_member_target(dest_dir, name)
+            if target is None:
+                blocked += 1
+                continue
+            try:
+                info = zf.getinfo(name)
+            except KeyError:
+                continue
+            if info.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with zf.open(info, "r") as src, open(target, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            extracted += 1
+        if blocked:
+            stats.errors.append(f"{archive_label} [zip_path_traversal_blocked:{blocked}]")
+        if extracted == 0:
+            stats.compressed_skipped += 1
+            stats.skipped_files.append(f"{archive_label} [no_safe_supported_members]")
+
+    def _extract_tar_members_safe(
+        self,
+        tf: tarfile.TarFile,
+        members: List[tarfile.TarInfo],
+        dest_dir: Path,
+        stats: SanitizationStats,
+        archive_label: str,
+    ) -> None:
+        blocked = 0
+        extracted = 0
+        for member in members:
+            target = self._safe_member_target(dest_dir, member.name)
+            if target is None:
+                blocked += 1
+                continue
+            if not member.isfile():
+                continue
+            src = tf.extractfile(member)
+            if src is None:
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with src, open(target, "wb") as dst:
+                shutil.copyfileobj(src, dst)
+            extracted += 1
+        if blocked:
+            stats.errors.append(f"{archive_label} [tar_path_traversal_blocked:{blocked}]")
+        if extracted == 0:
+            stats.compressed_skipped += 1
+            stats.skipped_files.append(f"{archive_label} [no_safe_supported_members]")
 
     def _reddit_line_reader(self, fp: Path, stats: SanitizationStats):
         ext = fp.suffix.lower()

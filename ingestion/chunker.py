@@ -127,7 +127,8 @@ class Chunker:
             return []
 
         _language, parser = cached
-        tree = parser.parse(content.encode("utf-8"))
+        content_bytes = content.encode("utf-8")
+        tree = parser.parse(content_bytes)
         root = tree.root_node
         boundaries = BOUNDARY_NODES.get(lang_name, set())
 
@@ -137,13 +138,13 @@ class Chunker:
         for child in root.children:
             if child.type in boundaries:
                 # Capture any code between the last boundary and this one (imports, etc.)
-                preamble = content[last_end:child.start_byte].strip()
+                preamble = content_bytes[last_end:child.start_byte].decode("utf-8", errors="replace").strip()
                 if preamble:
                     chunks.append(self._make_chunk(
                         preamble, file_path, node_type="preamble",
                     ))
 
-                node_text = content[child.start_byte:child.end_byte]
+                node_text = content_bytes[child.start_byte:child.end_byte].decode("utf-8", errors="replace")
                 if len(node_text) <= self.max_chars:
                     chunks.append(self._make_chunk(
                         node_text, file_path, node_type=child.type,
@@ -155,7 +156,7 @@ class Chunker:
                 last_end = child.end_byte
 
         # Trailing code after last boundary
-        trailing = content[last_end:].strip()
+        trailing = content_bytes[last_end:].decode("utf-8", errors="replace").strip()
         if trailing:
             chunks.append(self._make_chunk(trailing, file_path, node_type="trailing"))
 

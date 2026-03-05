@@ -112,17 +112,29 @@ def ingest(ctx, path: str, index_name: str):
 
     console.print(f"Embedding {len(chunks)} chunks...")
 
+    failed_batch_start = None
     try:
         batch_size = config.policies.embed_batch_size
         all_vectors = []
         for i in range(0, len(chunks), batch_size):
+            failed_batch_start = i
             batch = [c["content"] for c in chunks[i:i + batch_size]]
             vectors = embedder.embed(batch)
+            if vectors is None or len(vectors) != len(batch):
+                raise RuntimeError(
+                    f"embedder returned invalid batch shape at offset {i}: "
+                    f"expected {len(batch)} vectors"
+                )
             all_vectors.append(vectors)
             console.print(f"  Embedded {min(i + batch_size, len(chunks))}/{len(chunks)}")
 
         import numpy as np
         all_vectors = np.concatenate(all_vectors, axis=0)
+    except Exception as e:
+        raise click.ClickException(
+            f"Embedding failed at chunk offset {failed_batch_start or 0}; "
+            "index was not built or saved."
+        ) from e
     finally:
         embedder.close()
 
@@ -381,14 +393,14 @@ def _safe_elapsed(t0: float) -> float:
     return max(time.time() - t0, 1e-6)
 
 
-def _bench_tok_per_s(llm_endpoint: str, timeout: float) -> float:
+def _bench_tok_per_s(llm_endpoint: str, model_name: str, timeout: float) -> float:
     """Single chat completion, return tokens/sec or raise."""
     import httpx
     base = llm_endpoint.rstrip("/")
     if not base.endswith("/v1"):
         base += "/v1"
     payload = {
-        "model": "default",
+        "model": model_name,
         "messages": [{"role": "user", "content": "Return exactly 200 tokens of plain ASCII text about indexing."}],
         "max_tokens": 128,
         "temperature": 0.0,
@@ -409,14 +421,14 @@ def _bench_tok_per_s(llm_endpoint: str, timeout: float) -> float:
     return round(estimated / elapsed, 2)
 
 
-def _bench_p95_latency(llm_endpoint: str, timeout: float) -> float:
+def _bench_p95_latency(llm_endpoint: str, model_name: str, timeout: float) -> float:
     """Fire 4 parallel chat completions, return p95 latency in ms."""
     import httpx
     base = llm_endpoint.rstrip("/")
     if not base.endswith("/v1"):
         base += "/v1"
     payload = {
-        "model": "default",
+        "model": model_name,
         "messages": [{"role": "user", "content": "Say hello."}],
         "max_tokens": 16,
         "temperature": 0.0,
@@ -439,14 +451,19 @@ def _bench_p95_latency(llm_endpoint: str, timeout: float) -> float:
     return round(latencies[-1], 2)
 
 
-def _bench_embed_throughput(embed_endpoint: str, batch_size: int, timeout: float) -> float:
+def _bench_embed_throughput(
+    embed_endpoint: str,
+    model_name: str,
+    batch_size: int,
+    timeout: float,
+) -> float:
     """Embed batch_size short strings, return items/sec."""
     import httpx
     base = embed_endpoint.rstrip("/")
     if not base.endswith("/v1"):
         base += "/v1"
     inputs = [f"sample text number {i}" for i in range(batch_size)]
-    payload = {"model": "default", "input": inputs}
+    payload = {"model": model_name, "input": inputs}
     t0 = time.time()
     with httpx.Client(timeout=timeout) as client:
         r = client.post(f"{base}/embeddings", json=payload)
@@ -455,14 +472,19 @@ def _bench_embed_throughput(embed_endpoint: str, batch_size: int, timeout: float
     return round(batch_size / elapsed, 2)
 
 
-def _bench_rerank_throughput(rerank_endpoint: str, n: int, timeout: float) -> float:
+def _bench_rerank_throughput(
+    rerank_endpoint: str,
+    model_name: str,
+    n: int,
+    timeout: float,
+) -> float:
     """Rerank n document pairs, return pairs/sec."""
     import httpx
     base = rerank_endpoint.rstrip("/")
     if not base.endswith("/v1"):
         base += "/v1"
     payload = {
-        "model": "default",
+        "model": model_name,
         "query": "What does this code do?",
         "documents": [f"Document content number {i}" for i in range(n)],
     }
@@ -477,41 +499,50 @@ def _bench_rerank_throughput(rerank_endpoint: str, n: int, timeout: float) -> fl
 def _run_bench_probes(config, performance: dict, allow_wait: bool) -> None:
     """Fill performance dict in-place. Each probe is best-effort; failures stay null."""
     timeout = _ms_to_seconds(config.policies.timeout_generate_ms)
+    llm_model = config.llm.name
+    embed_model = config.embedder.name
+    rerank_model = config.reranker.name
 
     try:
-        performance["tok_per_s_single"] = _bench_tok_per_s(config.llm.endpoint, timeout)
-    except Exception:
-        pass
+        performance["tok_per_s_single"] = _bench_tok_per_s(config.llm.endpoint, llm_model, timeout)
+    except Exception as e:
+        console.print(f"[WARN] tok/s benchmark failed: {e}")
 
     try:
-        performance["p95_latency_ms_4_parallel"] = _bench_p95_latency(config.llm.endpoint, timeout)
-    except Exception:
-        pass
+        performance["p95_latency_ms_4_parallel"] = _bench_p95_latency(config.llm.endpoint, llm_model, timeout)
+    except Exception as e:
+        console.print(f"[WARN] p95 latency benchmark failed: {e}")
 
     try:
-        performance["embed_items_per_s_batch16"] = _bench_embed_throughput(config.embedder.endpoint, 16, timeout)
-    except Exception:
-        pass
+        performance["embed_items_per_s_batch16"] = _bench_embed_throughput(
+            config.embedder.endpoint, embed_model, 16, timeout
+        )
+    except Exception as e:
+        console.print(f"[WARN] embed throughput (batch16) failed: {e}")
 
     try:
-        performance["embed_items_per_s_batch32"] = _bench_embed_throughput(config.embedder.endpoint, 32, timeout)
-    except Exception:
-        pass
+        performance["embed_items_per_s_batch32"] = _bench_embed_throughput(
+            config.embedder.endpoint, embed_model, 32, timeout
+        )
+    except Exception as e:
+        console.print(f"[WARN] embed throughput (batch32) failed: {e}")
 
     try:
-        performance["rerank_pairs_per_s_n50"] = _bench_rerank_throughput(config.reranker.endpoint, 50, timeout)
-    except Exception:
-        pass
+        performance["rerank_pairs_per_s_n50"] = _bench_rerank_throughput(
+            config.reranker.endpoint, rerank_model, 50, timeout
+        )
+    except Exception as e:
+        console.print(f"[WARN] rerank throughput failed: {e}")
 
     if allow_wait and performance["tok_per_s_single"] is not None:
         first_tok_s = performance["tok_per_s_single"]
         console.print("[WARN] Sleeping 10 minutes for drift measurement...")
         time.sleep(600)
         try:
-            second_tok_s = _bench_tok_per_s(config.llm.endpoint, timeout)
+            second_tok_s = _bench_tok_per_s(config.llm.endpoint, llm_model, timeout)
             performance["drift_tok_per_s_delta_10min"] = round(second_tok_s - first_tok_s, 2)
-        except Exception:
-            pass
+        except Exception as e:
+            console.print(f"[WARN] drift benchmark failed: {e}")
 
 
 @cli.command()

@@ -15,11 +15,14 @@ from ingestion.chunker import CHUNKER_VERSION, LANGUAGE_MAP
 def _check_endpoint(name: str, url: str, timeout: int = 5) -> Tuple[str, bool, str]:
     """Ping a vLLM endpoint. Tries /v1/models first, falls back to /models."""
     client = httpx.Client(timeout=timeout)
+    base = url.rstrip("/")
+    if base.endswith("/v1"):
+        base = base[:-3]
     try:
         # vLLM OpenAI-compatible path
         for path in ("/v1/models", "/models"):
             try:
-                response = client.get(f"{url.rstrip('/v1')}{path}")
+                response = client.get(f"{base}{path}")
                 if response.status_code == 200:
                     models = response.json().get("data", [])
                     model_ids = [m.get("id", "?") for m in models]

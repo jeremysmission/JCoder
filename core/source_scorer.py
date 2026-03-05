@@ -11,6 +11,7 @@ Speed-optimized: 3 of 5 dimensions are pure heuristics (no LLM).
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
@@ -71,6 +72,7 @@ _ACADEMIC_URL_PATTERNS = ("arxiv", "acl", "neurips", "openreview", "icml",
                           "iclr", "aaai", "aclweb")
 _IMPL_URL_PATTERNS = ("github", "pypi", "gitlab", "huggingface")
 _OPINION_URL_PATTERNS = ("blog", "medium", "substack", "wordpress", "dev.to")
+_CURRENT_YEAR = datetime.now(timezone.utc).year
 
 
 # ---------------------------------------------------------------------------
@@ -96,13 +98,23 @@ class SourceScorer:
         """Score a single paper dict against *query*."""
         title = paper.get("title", "")
         abstract = paper.get("abstract", "")
-        year = paper.get("year", 0)
-        citations = paper.get("citation_count", 0)
+        try:
+            year = int(paper.get("year", 0) or 0)
+        except (ValueError, TypeError, OverflowError):
+            year = 0
+        try:
+            raw_cites = paper.get("citation_count", 0) or 0
+            if isinstance(raw_cites, float) and (raw_cites != raw_cites or raw_cites == float('inf') or raw_cites == float('-inf')):
+                citations = 0
+            else:
+                citations = int(raw_cites)
+        except (ValueError, TypeError, OverflowError):
+            citations = 0
         source = paper.get("source", "")
         url = paper.get("url", "")
-        has_refs = paper.get("has_refs", False)
-        has_code = paper.get("has_code", False)
-        peer_reviewed = paper.get("peer_reviewed", False)
+        has_refs = bool(paper.get("has_refs", False))
+        has_code = bool(paper.get("has_code", False))
+        peer_reviewed = bool(paper.get("peer_reviewed", False))
 
         currency = self._score_currency(year)
         authority = self._score_authority(source, citations, url)
@@ -114,20 +126,20 @@ class SourceScorer:
         else:
             relevance = self._score_relevance_heuristic(title, abstract, query)
 
-        composite = (
+        composite = max(0.0, min(1.0,
             _W_CURRENCY * currency
             + _W_RELEVANCE * relevance
             + _W_AUTHORITY * authority
             + _W_ACCURACY * accuracy
             + _W_PURPOSE * purpose
-        )
+        ))
 
         return CredibilityScore(
-            currency=round(currency, 4),
-            relevance=round(relevance, 4),
-            authority=round(authority, 4),
-            accuracy=round(accuracy, 4),
-            purpose=round(purpose, 4),
+            currency=round(max(0.0, min(1.0, currency)), 4),
+            relevance=round(max(0.0, min(1.0, relevance)), 4),
+            authority=round(max(0.0, min(1.0, authority)), 4),
+            accuracy=round(max(0.0, min(1.0, accuracy)), 4),
+            purpose=round(max(0.0, min(1.0, purpose)), 4),
             composite=round(composite, 4),
         )
 
@@ -141,8 +153,16 @@ class SourceScorer:
 
     @staticmethod
     def _score_currency(year: int) -> float:
-        """Recency score.  2026=1.0 ... older=0.1."""
-        table = {2026: 1.0, 2025: 0.85, 2024: 0.7, 2023: 0.5, 2022: 0.3}
+        """Recency score anchored to current year."""
+        table = {
+            _CURRENT_YEAR: 1.0,
+            _CURRENT_YEAR - 1: 0.85,
+            _CURRENT_YEAR - 2: 0.7,
+            _CURRENT_YEAR - 3: 0.5,
+            _CURRENT_YEAR - 4: 0.3,
+        }
+        if year > _CURRENT_YEAR:
+            return 1.0
         return table.get(year, 0.1)
 
     @staticmethod
@@ -151,7 +171,7 @@ class SourceScorer:
         base = _SOURCE_TIERS.get(source.lower(), 0.4)
 
         # Citation boost: up to 0.3, scaled by citations/1000
-        citation_boost = min(0.3, citations / 1000)
+        citation_boost = min(0.3, max(0, citations) / 1000)
 
         # TLD boost
         tld_boost = 0.0

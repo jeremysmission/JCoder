@@ -12,6 +12,7 @@ or exclusion, enabling transparent and reproducible research.
 from __future__ import annotations
 
 import sqlite3
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,14 +41,22 @@ class PrismaTracker:
     def __init__(self, db_path: str):
         self._db_path = Path(db_path)
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.RLock()
+        self._conn = sqlite3.connect(
+            str(self._db_path),
+            timeout=30,
+            check_same_thread=False,
+        )
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.execute("PRAGMA busy_timeout=30000")
         self._init_db()
-
-    def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(str(self._db_path))
+        # In-memory title cache to avoid repeated lookups
+        self._title_cache: Dict[str, Tuple[str, str]] = {}
 
     def _init_db(self) -> None:
-        with self._connect() as conn:
-            conn.execute("""
+        with self._lock:
+            self._conn.execute("""
                 CREATE TABLE IF NOT EXISTS prisma_log (
                     content_hash TEXT,
                     title TEXT,
@@ -57,40 +66,52 @@ class PrismaTracker:
                     source TEXT
                 )
             """)
-            conn.execute("""
+            self._conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_prisma_hash
                 ON prisma_log(content_hash)
             """)
-            conn.execute("""
+            self._conn.execute("""
                 CREATE INDEX IF NOT EXISTS idx_prisma_stage
                 ON prisma_log(stage)
             """)
-            conn.commit()
+            self._conn.commit()
 
     def _log(self, content_hash: str, title: str, stage: str,
              reason: str, source: str) -> None:
-        """Insert a single event row."""
-        with self._connect() as conn:
-            conn.execute(
-                "INSERT INTO prisma_log "
-                "(content_hash, title, stage, reason, timestamp, source) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                (content_hash, title, stage, reason, time.time(), source),
-            )
-            conn.commit()
+        """Insert a single event row with retry on database lock."""
+        for attempt in range(5):
+            try:
+                with self._lock:
+                    self._conn.execute(
+                        "INSERT INTO prisma_log "
+                        "(content_hash, title, stage, reason, timestamp, source) "
+                        "VALUES (?, ?, ?, ?, ?, ?)",
+                        (content_hash, title, stage, reason, time.time(), source),
+                    )
+                    self._conn.commit()
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) and attempt < 4:
+                    time.sleep(0.05 * (attempt + 1))
+                else:
+                    raise
 
     def _lookup_title(self, content_hash: str) -> Tuple[str, str]:
         """Return (title, source) for a known hash."""
-        with self._connect() as conn:
-            cur = conn.execute(
+        with self._lock:
+            if content_hash in self._title_cache:
+                return self._title_cache[content_hash]
+            cur = self._conn.execute(
                 "SELECT title, source FROM prisma_log "
                 "WHERE content_hash = ? LIMIT 1",
                 (content_hash,),
             )
             row = cur.fetchone()
-        if row is None:
-            return ("", "")
-        return (row[0], row[1])
+            if row is None:
+                return ("", "")
+            result = (row[0], row[1])
+            self._title_cache[content_hash] = result
+            return result
 
     # ------------------------------------------------------------------
     # Pipeline stage methods
@@ -98,6 +119,8 @@ class PrismaTracker:
 
     def identify(self, title: str, source: str, content_hash: str) -> None:
         """Log a paper entering the pipeline."""
+        with self._lock:
+            self._title_cache[content_hash] = (title, source)
         self._log(content_hash, title, "identified", "initial discovery", source)
 
     def screen(self, content_hash: str, passed: bool, reason: str) -> None:
@@ -132,18 +155,17 @@ class PrismaTracker:
 
     def flow_counts(self) -> Dict[str, int]:
         """Return counts per stage."""
-        with self._connect() as conn:
-            cur = conn.execute(
+        with self._lock:
+            cur = self._conn.execute(
                 "SELECT stage, COUNT(*) FROM prisma_log GROUP BY stage"
             )
             counts = {row[0]: row[1] for row in cur.fetchall()}
-
         return {stage: counts.get(stage, 0) for stage in _ALL_STAGES}
 
     def exclusion_reasons(self, stage: str) -> List[Tuple[str, int]]:
         """Grouped counts of exclusion reasons that mention a given stage."""
-        with self._connect() as conn:
-            cur = conn.execute(
+        with self._lock:
+            cur = self._conn.execute(
                 "SELECT reason, COUNT(*) FROM prisma_log "
                 "WHERE stage = 'excluded' AND reason LIKE ? "
                 "GROUP BY reason ORDER BY COUNT(*) DESC",
@@ -155,9 +177,8 @@ class PrismaTracker:
         """ASCII art PRISMA flow diagram with counts."""
         counts = self.flow_counts()
 
-        # Compute exclusions that happened at each screening/eligibility/inclusion stage
-        with self._connect() as conn:
-            cur = conn.execute(
+        with self._lock:
+            cur = self._conn.execute(
                 "SELECT reason, COUNT(*) FROM prisma_log "
                 "WHERE stage = 'excluded' GROUP BY reason"
             )
@@ -180,5 +201,8 @@ class PrismaTracker:
         return "\n".join(lines)
 
     def close(self) -> None:
-        """No persistent connection to close; included for interface parity."""
-        pass
+        """Close the persistent database connection."""
+        with self._lock:
+            if self._conn:
+                self._conn.close()
+                self._conn = None

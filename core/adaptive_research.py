@@ -34,12 +34,15 @@ import math
 import re
 import sqlite3
 import time
+from datetime import datetime, timezone
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from core.runtime import Runtime
+
+_CURRENT_YEAR = datetime.now(timezone.utc).year
 
 
 # ---------------------------------------------------------------------------
@@ -763,13 +766,19 @@ class AdaptiveResearchEngine:
         """Score paper novelty using adaptive weights."""
         title = paper.get("title", "")
         abstract = paper.get("abstract", "")
-        year = paper.get("year", 2026)
-        citations = paper.get("citation_count", 0)
+        try:
+            year = int(paper.get("year") or _CURRENT_YEAR)
+        except (ValueError, TypeError, OverflowError):
+            year = _CURRENT_YEAR
+        try:
+            citations = max(0, int(paper.get("citation_count") or 0))
+        except (ValueError, TypeError, OverflowError):
+            citations = 0
 
         score = 0.0
 
         # Recency (0-0.25)
-        age = max(0, 2026 - int(year))
+        age = max(0, _CURRENT_YEAR - year)
         score += max(0.0, 0.25 - age * 0.08)
 
         # Keyword relevance (0-0.35) -- uses learned best terms
@@ -792,8 +801,8 @@ class AdaptiveResearchEngine:
             score += min(0.35, hits * 0.05)
 
         # Citation velocity (0-0.15)
-        if int(year) >= 2025 and citations > 0:
-            months = max(1, (2026 - int(year)) * 12 + 6)
+        if year >= (_CURRENT_YEAR - 1) and citations > 0:
+            months = max(1, (_CURRENT_YEAR - year) * 12 + 6)
             velocity = citations / months
             score += min(0.15, velocity * 0.015)
 

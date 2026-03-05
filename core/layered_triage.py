@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import re
 import time
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -56,6 +57,7 @@ _SOURCE_TIER_SCORES = {
     "deepmind_blog": 0.60, "ms_research_blog": 0.60,
     "connected_papers": 0.70,
 }
+_CURRENT_YEAR = datetime.now(timezone.utc).year
 
 
 @dataclass
@@ -116,7 +118,7 @@ class LayeredTriage:
             return []
 
         # Layer 1: Satellite (pure heuristic)
-        results = self._satellite_pass(papers, query)
+        results = self._satellite_pass(papers, query, cutoff=satellite_cutoff)
 
         # Filter
         survivors = [r for r in results if r.satellite_pass]
@@ -182,17 +184,24 @@ class LayeredTriage:
         results = []
 
         for paper in papers:
-            title = paper.get("title") or ""
+            title = str(paper.get("title") or "")
             title_lower = title.lower()
-            year = paper.get("year") or 2020
-            citations = paper.get("citation_count") or 0
-            source = paper.get("source") or ""
-            abstract = paper.get("abstract") or ""
+            try:
+                year = int(paper.get("year") or 2020)
+            except (ValueError, TypeError, OverflowError):
+                year = 2020
+            try:
+                raw_cites = paper.get("citation_count") or 0
+                citations = int(raw_cites) if not (isinstance(raw_cites, float) and (raw_cites != raw_cites or raw_cites == float('inf') or raw_cites == float('-inf'))) else 0
+            except (ValueError, TypeError, OverflowError):
+                citations = 0
+            source = str(paper.get("source") or "")
+            abstract = str(paper.get("abstract") or "")
 
             score = 0.0
 
             # Recency (0-0.25)
-            age = max(0, 2026 - year)
+            age = max(0, _CURRENT_YEAR - year)
             score += max(0.0, 0.25 - age * 0.06)
 
             # Source tier (0-0.20)
@@ -246,8 +255,8 @@ class LayeredTriage:
         # Build batch prompt
         entries = []
         for i, paper in enumerate(papers):
-            title = paper.get("title", "Unknown")
-            abstract = paper.get("abstract", "")[:500]
+            title = str(paper.get("title") or "Unknown")
+            abstract = str(paper.get("abstract") or "")[:500]
             entries.append(f"[{i}] {title}\n{abstract}")
 
         batch_text = "\n---\n".join(entries)
@@ -288,8 +297,8 @@ class LayeredTriage:
 
 def _content_hash(paper: Dict) -> str:
     """SHA-256 hash of title + first 200 chars of abstract."""
-    title = paper.get("title") or ""
-    abstract = (paper.get("abstract") or "")[:200]
+    title = str(paper.get("title") or "")
+    abstract = str(paper.get("abstract") or "")[:200]
     raw = f"{title}:{abstract}".encode("utf-8", errors="replace")
     return hashlib.sha256(raw).hexdigest()[:16]
 
