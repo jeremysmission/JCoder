@@ -1,0 +1,852 @@
+[
+  {
+    "id": "py_001",
+    "category": "python",
+    "subcategory": "stdlib",
+    "difficulty": "medium",
+    "question": "How do I recursively find all .py files in a directory using pathlib?",
+    "expected_keywords": ["Path", "rglob", "*.py"],
+    "expected_code": true,
+    "expected_imports": ["pathlib"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_002",
+    "category": "python",
+    "subcategory": "stdlib",
+    "difficulty": "medium",
+    "question": "How do I count word frequencies in a text file using collections.Counter?",
+    "expected_keywords": ["Counter", "most_common"],
+    "expected_code": true,
+    "expected_imports": ["collections"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_003",
+    "category": "python",
+    "subcategory": "stdlib",
+    "difficulty": "hard",
+    "question": "Show me how to flatten a list of lists using itertools.chain.from_iterable.",
+    "expected_keywords": ["chain", "from_iterable"],
+    "expected_code": true,
+    "expected_imports": ["itertools"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_004",
+    "category": "python",
+    "subcategory": "stdlib",
+    "difficulty": "hard",
+    "question": "Write a simple async TCP echo server using asyncio that handles multiple clients concurrently.",
+    "expected_keywords": ["asyncio", "start_server", "await"],
+    "expected_code": true,
+    "expected_imports": ["asyncio"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_005",
+    "category": "python",
+    "subcategory": "stdlib",
+    "difficulty": "easy",
+    "question": "How do I read and write JSON files in Python using the json module?",
+    "expected_keywords": ["json.load", "json.dump"],
+    "expected_code": true,
+    "expected_imports": ["json"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_006",
+    "category": "python",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "question": "Write a decorator that logs the execution time of any function it wraps.",
+    "expected_keywords": ["wrapper", "time", "functools.wraps"],
+    "expected_code": true,
+    "expected_imports": ["functools"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_007",
+    "category": "python",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "question": "Write a context manager class that temporarily changes the working directory and restores it on exit.",
+    "expected_keywords": ["__enter__", "__exit__", "os.chdir"],
+    "expected_code": true,
+    "expected_imports": ["os"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_008",
+    "category": "python",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "question": "Write a generator function that yields Fibonacci numbers indefinitely.",
+    "expected_keywords": ["yield", "def fib"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_009",
+    "category": "python",
+    "subcategory": "patterns",
+    "difficulty": "hard",
+    "question": "Implement the singleton pattern in Python using a metaclass.",
+    "expected_keywords": ["__call__", "type", "_instances"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_010",
+    "category": "python",
+    "subcategory": "debugging",
+    "difficulty": "medium",
+    "question": "I get 'TypeError: unhashable type: list' when using a list as a dictionary key. How do I fix this?",
+    "expected_keywords": ["tuple", "hashable", "immutable"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.2
+    }
+  },
+  {
+    "id": "py_011",
+    "category": "python",
+    "subcategory": "debugging",
+    "difficulty": "hard",
+    "question": "Explain this traceback and how to fix it: 'RecursionError: maximum recursion depth exceeded in comparison'",
+    "expected_keywords": ["sys.setrecursionlimit", "iterative", "base case"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.2,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "py_012",
+    "category": "python",
+    "subcategory": "frameworks",
+    "difficulty": "medium",
+    "question": "Write a FastAPI endpoint that accepts a JSON body with 'name' and 'age' fields and returns a greeting.",
+    "expected_keywords": ["FastAPI", "BaseModel", "@app.post"],
+    "expected_code": true,
+    "expected_imports": ["fastapi", "pydantic"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_013",
+    "category": "python",
+    "subcategory": "frameworks",
+    "difficulty": "medium",
+    "question": "Write a pytest test that uses parametrize to test a function with multiple input/output pairs.",
+    "expected_keywords": ["pytest.mark.parametrize", "def test_"],
+    "expected_code": true,
+    "expected_imports": ["pytest"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_014",
+    "category": "python",
+    "subcategory": "frameworks",
+    "difficulty": "medium",
+    "question": "How do I make an async HTTP GET request with httpx and handle timeouts?",
+    "expected_keywords": ["httpx.AsyncClient", "await", "timeout"],
+    "expected_code": true,
+    "expected_imports": ["httpx"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "py_015",
+    "category": "python",
+    "subcategory": "frameworks",
+    "difficulty": "hard",
+    "question": "Write a pytest fixture that creates a temporary SQLite database, yields the connection, and cleans up after the test.",
+    "expected_keywords": ["@pytest.fixture", "sqlite3.connect", "yield", "tmp_path"],
+    "expected_code": true,
+    "expected_imports": ["pytest", "sqlite3"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_001",
+    "category": "javascript",
+    "subcategory": "async",
+    "difficulty": "medium",
+    "question": "Write an async function that fetches data from two URLs in parallel using Promise.all.",
+    "expected_keywords": ["Promise.all", "async", "await", "fetch"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_002",
+    "category": "javascript",
+    "subcategory": "async",
+    "difficulty": "hard",
+    "question": "Explain the difference between Promise.all, Promise.allSettled, and Promise.race with code examples.",
+    "expected_keywords": ["Promise.all", "Promise.allSettled", "Promise.race", "rejected"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.2
+    }
+  },
+  {
+    "id": "js_003",
+    "category": "javascript",
+    "subcategory": "async",
+    "difficulty": "medium",
+    "question": "How do I implement retry logic for a fetch request with exponential backoff?",
+    "expected_keywords": ["retry", "setTimeout", "backoff", "async"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_004",
+    "category": "javascript",
+    "subcategory": "dom",
+    "difficulty": "medium",
+    "question": "Write code to create a debounced search input that only fires the search after the user stops typing for 300ms.",
+    "expected_keywords": ["debounce", "setTimeout", "clearTimeout", "addEventListener"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_005",
+    "category": "javascript",
+    "subcategory": "dom",
+    "difficulty": "easy",
+    "question": "How do I use event delegation to handle click events on dynamically added list items?",
+    "expected_keywords": ["addEventListener", "event.target", "closest", "parentElement"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_006",
+    "category": "javascript",
+    "subcategory": "node",
+    "difficulty": "medium",
+    "question": "Write a Node.js script that reads a CSV file line by line using streams without loading the entire file into memory.",
+    "expected_keywords": ["createReadStream", "readline", "line"],
+    "expected_code": true,
+    "expected_imports": ["fs", "readline"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_007",
+    "category": "javascript",
+    "subcategory": "node",
+    "difficulty": "medium",
+    "question": "How do I set up a basic Express.js middleware that logs the request method, URL, and response time?",
+    "expected_keywords": ["app.use", "req.method", "req.url", "next"],
+    "expected_code": true,
+    "expected_imports": ["express"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_008",
+    "category": "javascript",
+    "subcategory": "typescript",
+    "difficulty": "medium",
+    "question": "Write a TypeScript generic function that takes an array and returns the unique elements while preserving the type.",
+    "expected_keywords": ["<T>", "Set", "Array.from"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "js_009",
+    "category": "javascript",
+    "subcategory": "typescript",
+    "difficulty": "hard",
+    "question": "Explain the difference between 'type' and 'interface' in TypeScript. When should you use each?",
+    "expected_keywords": ["interface", "type", "extends", "union", "intersection"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.2,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "js_010",
+    "category": "javascript",
+    "subcategory": "typescript",
+    "difficulty": "hard",
+    "question": "Write a TypeScript discriminated union type for API responses that can be Success with data or Error with a message, and a type guard function.",
+    "expected_keywords": ["discriminated", "type guard", "is", "kind"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_001",
+    "category": "systems",
+    "subcategory": "linux",
+    "difficulty": "medium",
+    "question": "How do I find all files larger than 100MB modified in the last 7 days using the find command?",
+    "expected_keywords": ["find", "-size", "+100M", "-mtime", "-7"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_002",
+    "category": "systems",
+    "subcategory": "linux",
+    "difficulty": "medium",
+    "question": "Write a bash script that monitors a log file in real time and sends an alert when it sees the word ERROR.",
+    "expected_keywords": ["tail", "-f", "grep", "ERROR"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_003",
+    "category": "systems",
+    "subcategory": "linux",
+    "difficulty": "hard",
+    "question": "Explain the difference between hard links and soft links in Linux. How do you create each?",
+    "expected_keywords": ["ln", "ln -s", "inode", "symlink"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.2,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "sys_004",
+    "category": "systems",
+    "subcategory": "docker",
+    "difficulty": "medium",
+    "question": "Write a Dockerfile for a Python FastAPI app that uses multi-stage builds to minimize the final image size.",
+    "expected_keywords": ["FROM", "AS builder", "COPY --from", "pip install", "EXPOSE"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_005",
+    "category": "systems",
+    "subcategory": "docker",
+    "difficulty": "medium",
+    "question": "How do I use docker-compose to run a Python app with a PostgreSQL database and a Redis cache?",
+    "expected_keywords": ["services", "depends_on", "postgres", "redis", "volumes"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_006",
+    "category": "systems",
+    "subcategory": "git",
+    "difficulty": "medium",
+    "question": "How do I use git bisect to find the commit that introduced a bug?",
+    "expected_keywords": ["git bisect start", "git bisect good", "git bisect bad", "git bisect reset"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.2
+    }
+  },
+  {
+    "id": "sys_007",
+    "category": "systems",
+    "subcategory": "git",
+    "difficulty": "hard",
+    "question": "Explain git rebase vs merge. Show how to interactively rebase the last 5 commits to squash them.",
+    "expected_keywords": ["rebase -i", "squash", "HEAD~5", "pick"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.2
+    }
+  },
+  {
+    "id": "sys_008",
+    "category": "systems",
+    "subcategory": "networking",
+    "difficulty": "medium",
+    "question": "Explain what happens at each layer when you type 'https://example.com' in a browser and press Enter.",
+    "expected_keywords": ["DNS", "TCP", "TLS", "HTTP", "handshake"],
+    "expected_code": false,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.0,
+      "has_correct_api": 0.5,
+      "has_imports": 0.0,
+      "is_runnable": 0.0,
+      "cites_source": 0.5
+    }
+  },
+  {
+    "id": "sys_009",
+    "category": "systems",
+    "subcategory": "networking",
+    "difficulty": "medium",
+    "question": "How do I use curl to debug a slow API endpoint, showing DNS lookup time, TLS handshake time, and TTFB?",
+    "expected_keywords": ["curl", "-w", "time_namelookup", "time_connect", "time_starttransfer"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sys_010",
+    "category": "systems",
+    "subcategory": "networking",
+    "difficulty": "hard",
+    "question": "Write iptables rules to allow SSH on port 22, HTTP on 80, HTTPS on 443, and drop everything else.",
+    "expected_keywords": ["iptables", "-A INPUT", "--dport", "ACCEPT", "DROP"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sec_001",
+    "category": "security",
+    "subcategory": "owasp",
+    "difficulty": "medium",
+    "question": "Show me a Python example of SQL injection and how to fix it using parameterized queries.",
+    "expected_keywords": ["parameterized", "placeholder", "execute", "?"],
+    "expected_code": true,
+    "expected_imports": ["sqlite3"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sec_002",
+    "category": "security",
+    "subcategory": "owasp",
+    "difficulty": "medium",
+    "question": "What is Cross-Site Scripting (XSS)? Show a vulnerable code example and the fix.",
+    "expected_keywords": ["XSS", "escape", "sanitize", "innerHTML"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "sec_003",
+    "category": "security",
+    "subcategory": "vulnerabilities",
+    "difficulty": "hard",
+    "question": "Explain path traversal attacks. Show a vulnerable Python file-serving endpoint and how to fix it.",
+    "expected_keywords": ["../", "path traversal", "os.path.realpath", "resolve"],
+    "expected_code": true,
+    "expected_imports": ["os"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sec_004",
+    "category": "security",
+    "subcategory": "secure_coding",
+    "difficulty": "medium",
+    "question": "How should I securely store and verify passwords in a Python web application?",
+    "expected_keywords": ["bcrypt", "hash", "salt", "verify"],
+    "expected_code": true,
+    "expected_imports": ["bcrypt"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "sec_005",
+    "category": "security",
+    "subcategory": "secure_coding",
+    "difficulty": "hard",
+    "question": "What is CSRF and how do you protect against it in a web application? Show an implementation.",
+    "expected_keywords": ["CSRF", "token", "SameSite", "Origin"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "algo_001",
+    "category": "algorithms",
+    "subcategory": "data_structures",
+    "difficulty": "medium",
+    "question": "Implement an LRU cache in Python using OrderedDict.",
+    "expected_keywords": ["OrderedDict", "move_to_end", "popitem"],
+    "expected_code": true,
+    "expected_imports": ["collections"],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.1,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "algo_002",
+    "category": "algorithms",
+    "subcategory": "data_structures",
+    "difficulty": "medium",
+    "question": "Implement a trie (prefix tree) with insert, search, and starts_with methods in Python.",
+    "expected_keywords": ["TrieNode", "children", "insert", "search"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "algo_003",
+    "category": "algorithms",
+    "subcategory": "complexity",
+    "difficulty": "medium",
+    "question": "What is the time and space complexity of merge sort? Implement it in Python.",
+    "expected_keywords": ["O(n log n)", "divide", "merge", "def merge_sort"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.2
+    }
+  },
+  {
+    "id": "algo_004",
+    "category": "algorithms",
+    "subcategory": "patterns",
+    "difficulty": "medium",
+    "question": "Solve the 'longest substring without repeating characters' problem using the sliding window technique.",
+    "expected_keywords": ["sliding window", "left", "right", "set"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "algo_005",
+    "category": "algorithms",
+    "subcategory": "patterns",
+    "difficulty": "hard",
+    "question": "Use the two-pointer technique to find all pairs in a sorted array that sum to a target value.",
+    "expected_keywords": ["two pointer", "left", "right", "target"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.4,
+      "has_correct_api": 0.3,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "dbg_001",
+    "category": "debugging",
+    "subcategory": "find_bug",
+    "difficulty": "medium",
+    "question": "Find the bug in this code:\n\ndef get_averages(numbers):\n    total = 0\n    for n in numbers:\n        total += n\n    return total / len(numbers)\n\nprint(get_averages([]))",
+    "expected_keywords": ["ZeroDivisionError", "empty", "len(numbers) == 0"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "dbg_002",
+    "category": "debugging",
+    "subcategory": "find_bug",
+    "difficulty": "medium",
+    "question": "Find the bug in this code:\n\ndef remove_duplicates(lst):\n    for item in lst:\n        if lst.count(item) > 1:\n            lst.remove(item)\n    return lst\n\nprint(remove_duplicates([1, 2, 2, 3, 3, 3]))",
+    "expected_keywords": ["modifying", "iterating", "copy", "set"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "dbg_003",
+    "category": "debugging",
+    "subcategory": "find_bug",
+    "difficulty": "hard",
+    "question": "Find the bug in this code:\n\ndef cache_results(func):\n    cache = {}\n    def wrapper(*args, **kwargs):\n        key = (args, kwargs)\n        if key not in cache:\n            cache[key] = func(*args, **kwargs)\n        return cache[key]\n    return wrapper",
+    "expected_keywords": ["unhashable", "kwargs", "dict", "frozenset", "tuple"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.2,
+      "cites_source": 0.1
+    }
+  },
+  {
+    "id": "dbg_004",
+    "category": "debugging",
+    "subcategory": "error_interpretation",
+    "difficulty": "medium",
+    "question": "What does this error mean and how do I fix it?\n\nImportError: cannot import name 'Foo' from partially initialized module 'mymodule' (most likely due to a circular import)",
+    "expected_keywords": ["circular import", "lazy import", "restructure", "import inside function"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.2,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.3
+    }
+  },
+  {
+    "id": "dbg_005",
+    "category": "debugging",
+    "subcategory": "error_interpretation",
+    "difficulty": "hard",
+    "question": "What does this error mean and how do I fix it?\n\nRuntimeError: This event loop is already running\n\nI see this when calling asyncio.run() inside a Jupyter notebook.",
+    "expected_keywords": ["nest_asyncio", "await", "event loop", "already running"],
+    "expected_code": true,
+    "expected_imports": [],
+    "scoring": {
+      "has_code": 0.3,
+      "has_correct_api": 0.4,
+      "has_imports": 0.0,
+      "is_runnable": 0.1,
+      "cites_source": 0.2
+    }
+  }
+]

@@ -49,7 +49,7 @@ def _git_commit_hash() -> str:
             capture_output=True, text=True, timeout=5,
         )
         return result.stdout.strip() if result.returncode == 0 else ""
-    except Exception:
+    except (subprocess.SubprocessError, FileNotFoundError, OSError):
         return ""
 
 

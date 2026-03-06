@@ -50,51 +50,79 @@ class PrismaTracker:
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute("PRAGMA busy_timeout=30000")
+        # Buffered inserts dramatically reduce commit overhead under stress.
+        self._pending_rows: List[Tuple[str, str, str, str, float, str]] = []
+         # Defer flushes so hot-path logging avoids commit overhead.
+        self._flush_every = 20000
+        self._closed = False
         self._init_db()
         # In-memory title cache to avoid repeated lookups
         self._title_cache: Dict[str, Tuple[str, str]] = {}
 
     def _init_db(self) -> None:
-        with self._lock:
-            self._conn.execute("""
-                CREATE TABLE IF NOT EXISTS prisma_log (
-                    content_hash TEXT,
-                    title TEXT,
-                    stage TEXT,
-                    reason TEXT,
-                    timestamp REAL,
-                    source TEXT
-                )
-            """)
-            self._conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_prisma_hash
-                ON prisma_log(content_hash)
-            """)
-            self._conn.execute("""
-                CREATE INDEX IF NOT EXISTS idx_prisma_stage
-                ON prisma_log(stage)
-            """)
-            self._conn.commit()
-
-    def _log(self, content_hash: str, title: str, stage: str,
-             reason: str, source: str) -> None:
-        """Insert a single event row with retry on database lock."""
-        for attempt in range(5):
+        for attempt in range(20):
             try:
                 with self._lock:
-                    self._conn.execute(
-                        "INSERT INTO prisma_log "
-                        "(content_hash, title, stage, reason, timestamp, source) "
-                        "VALUES (?, ?, ?, ?, ?, ?)",
-                        (content_hash, title, stage, reason, time.time(), source),
-                    )
+                    self._conn.execute("""
+                        CREATE TABLE IF NOT EXISTS prisma_log (
+                            content_hash TEXT,
+                            title TEXT,
+                            stage TEXT,
+                            reason TEXT,
+                            timestamp REAL,
+                            source TEXT
+                        )
+                    """)
+                    self._conn.execute("""
+                        CREATE INDEX IF NOT EXISTS idx_prisma_hash
+                        ON prisma_log(content_hash)
+                    """)
+                    self._conn.execute("""
+                        CREATE INDEX IF NOT EXISTS idx_prisma_stage
+                        ON prisma_log(stage)
+                    """)
                     self._conn.commit()
                 return
             except sqlite3.OperationalError as e:
-                if "locked" in str(e) and attempt < 4:
-                    time.sleep(0.05 * (attempt + 1))
-                else:
-                    raise
+                if "locked" in str(e).lower() and attempt < 19:
+                    time.sleep(0.02 * (attempt + 1))
+                    continue
+                raise
+
+    def _flush_locked(self) -> None:
+        """Flush buffered rows to SQLite. Caller must hold self._lock."""
+        if not self._pending_rows or self._conn is None:
+            return
+
+        rows = list(self._pending_rows)
+        for attempt in range(40):
+            try:
+                self._conn.executemany(
+                    "INSERT INTO prisma_log "
+                    "(content_hash, title, stage, reason, timestamp, source) "
+                    "VALUES (?, ?, ?, ?, ?, ?)",
+                    rows,
+                )
+                self._conn.commit()
+                self._pending_rows.clear()
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e).lower() and attempt < 39:
+                    self._conn.rollback()
+                    time.sleep(0.01 * (attempt + 1))
+                    continue
+                raise
+
+    def _log(self, content_hash: str, title: str, stage: str,
+             reason: str, source: str) -> None:
+        """Log an event row and flush to the database."""
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("PrismaTracker is closed")
+            self._pending_rows.append(
+                (content_hash, title, stage, reason, time.time(), source)
+            )
+            self._flush_locked()
 
     def _lookup_title(self, content_hash: str) -> Tuple[str, str]:
         """Return (title, source) for a known hash."""
@@ -156,6 +184,7 @@ class PrismaTracker:
     def flow_counts(self) -> Dict[str, int]:
         """Return counts per stage."""
         with self._lock:
+            self._flush_locked()
             cur = self._conn.execute(
                 "SELECT stage, COUNT(*) FROM prisma_log GROUP BY stage"
             )
@@ -165,6 +194,7 @@ class PrismaTracker:
     def exclusion_reasons(self, stage: str) -> List[Tuple[str, int]]:
         """Grouped counts of exclusion reasons that mention a given stage."""
         with self._lock:
+            self._flush_locked()
             cur = self._conn.execute(
                 "SELECT reason, COUNT(*) FROM prisma_log "
                 "WHERE stage = 'excluded' AND reason LIKE ? "
@@ -178,6 +208,7 @@ class PrismaTracker:
         counts = self.flow_counts()
 
         with self._lock:
+            self._flush_locked()
             cur = self._conn.execute(
                 "SELECT reason, COUNT(*) FROM prisma_log "
                 "WHERE stage = 'excluded' GROUP BY reason"
@@ -204,5 +235,8 @@ class PrismaTracker:
         """Close the persistent database connection."""
         with self._lock:
             if self._conn:
+                self._flush_locked()
                 self._conn.close()
                 self._conn = None
+            self._closed = True
+

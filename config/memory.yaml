@@ -1,0 +1,19 @@
+memory:
+  index_name: "agent_memory"
+  index_dir: "data/indexes"
+  knowledge_dir: "data/agent_knowledge"
+  dimension: 768
+  auto_ingest: true  # automatically store task results
+  dedup_threshold: 0.95  # skip if similar memory exists
+
+federated_search:
+  rrf_k: 60
+  indexes:
+    agent_memory:
+      weight: 1.5  # boost personal experience
+    stackoverflow:
+      weight: 1.0
+    codesearchnet:
+      weight: 0.8
+    docs:
+      weight: 1.0

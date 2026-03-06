@@ -1,9 +1,12 @@
 """RRF fusion ordering must be deterministic and correct."""
 
+import pytest
 import numpy as np
 
 from core.config import StorageConfig
 from core.index_engine import IndexEngine
+
+faiss = pytest.importorskip("faiss", reason="faiss not installed")
 
 
 def _make_index(tmp_path, dimension=8) -> IndexEngine:

@@ -41,9 +41,9 @@ MAX_CHARS = 4000
 BATCH_SIZE = 5000
 IO_WORKERS = 16
 EMBED_BATCH = 64
-DEFAULT_SOURCE = Path(
-    r"D:\JCoder_Data\clean_source\_ingest_runs"
-    r"\parallel_20260303_213210"
+DEFAULT_SOURCE = (
+    Path(os.environ.get("JCODER_DATA_DIR", r"D:\JCoder_Data"))
+    / "clean_source" / "_ingest_runs" / "parallel_20260303_213210"
 )
 
 
@@ -67,6 +67,11 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+def _chunk_id(source_path: str, start_pos: int, chunk_text: str) -> str:
+    raw = f"{source_path}:{start_pos}:{chunk_text.replace(chr(13) + chr(10), chr(10))}"
+    return hashlib.sha256(raw.encode("utf-8", errors="replace")).hexdigest()
+
+
 def _chunk_text(content: str, source_path: str, max_chars: int) -> List[Dict]:
     chunks = []
     pos = 0
@@ -78,14 +83,15 @@ def _chunk_text(content: str, source_path: str, max_chars: int) -> List[Dict]:
                 end = nl + 1
         chunk_text = content[pos:end]
         if chunk_text.strip():
-            cid = _content_hash(chunk_text)
+            content_hash = _content_hash(chunk_text)
+            cid = _chunk_id(source_path, pos, chunk_text)
             chunks.append({
                 "id": cid,
                 "content": chunk_text,
                 "source_path": source_path,
                 "source_type": ".md",
                 "ingestion_date": datetime.now(tz=None).isoformat(),
-                "content_hash": cid,
+                "content_hash": content_hash,
                 "chunker_version": "bulk_ingest_v1",
                 "node_type": "markdown_split",
             })
@@ -106,14 +112,14 @@ def _discover_md_files(source_dir: Path) -> List[Path]:
     return files
 
 
-def _read_and_chunk(path: Path) -> List[Dict]:
+def _read_and_chunk(path: Path) -> Tuple[List[Dict], bool]:
     try:
         content = path.read_text(encoding="utf-8", errors="replace")
         if not content.strip():
-            return []
-        return _chunk_text(content, str(path), MAX_CHARS)
+            return ([], False)
+        return (_chunk_text(content, str(path), MAX_CHARS), False)
     except Exception:
-        return []
+        return ([], True)
 
 
 # ---------------------------------------------------------------------------
@@ -203,10 +209,12 @@ def phase1_build_fts5(
         futures = {executor.submit(_read_and_chunk, f): f for f in files}
 
         for future in as_completed(futures):
-            chunks = future.result()
+            chunks, had_error = future.result()
             processed += 1
 
-            if chunks:
+            if had_error:
+                stats.files_error += 1
+            elif chunks:
                 stats.files_read += 1
                 stats.chunks_produced += len(chunks)
                 batch_chunks.extend(chunks)
@@ -386,6 +394,7 @@ def main():
     print(f"  Files discovered: {stats.files_discovered:,}")
     print(f"  Files read:       {stats.files_read:,}")
     print(f"  Files empty:      {stats.files_empty:,}")
+    print(f"  Files error:      {stats.files_error:,}")
     print(f"  Chunks produced:  {stats.chunks_produced:,}")
     print(f"  FTS5 rows:        {stats.fts5_rows:,}")
     print(f"  Time:             {stats.elapsed_seconds:.0f}s ({stats.elapsed_seconds / 60:.1f}m)")
@@ -406,6 +415,7 @@ def main():
             "files_discovered": stats.files_discovered,
             "files_read": stats.files_read,
             "files_empty": stats.files_empty,
+            "files_error": stats.files_error,
             "chunks_produced": stats.chunks_produced,
             "fts5_rows": stats.fts5_rows,
             "elapsed_seconds": round(stats.elapsed_seconds, 1),
@@ -419,3 +429,4 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
+

@@ -1,5 +1,6 @@
 """Environment verification -- checks GPU, vLLM, FAISS, tree-sitter, disk."""
 
+import importlib
 import shutil
 import subprocess
 import sys
@@ -29,12 +30,12 @@ def _check_endpoint(name: str, url: str, timeout: int = 5) -> Tuple[str, bool, s
                     return name, True, f"Online (via {path}), serving: {', '.join(model_ids)}"
             except httpx.ConnectError:
                 return name, False, "Connection refused -- server not running"
-            except Exception:
+            except (httpx.HTTPStatusError, KeyError, ValueError):
                 continue
         return name, False, "Reachable but /v1/models returned non-200"
     except httpx.ConnectError:
         return name, False, "Connection refused -- server not running"
-    except Exception as e:
+    except httpx.HTTPError as e:
         return name, False, str(e)
     finally:
         client.close()
@@ -63,7 +64,7 @@ def _check_gpu() -> List[dict]:
                     })
     except FileNotFoundError:
         pass
-    except Exception:
+    except (subprocess.SubprocessError, OSError):
         pass
 
     # Fallback: try pynvml
@@ -86,7 +87,7 @@ def _check_gpu() -> List[dict]:
                     "free_mb": mem.free // (1024 * 1024),
                 })
             pynvml.nvmlShutdown()
-        except Exception:
+        except (ImportError, OSError):
             pass
 
     return gpus
@@ -163,7 +164,7 @@ def run_doctor(config: JCoderConfig):
     missing = []
     for ext, lang in sorted(LANGUAGE_MAP.items()):
         try:
-            __import__(f"tree_sitter_{lang}")
+            importlib.import_module(f"tree_sitter_{lang}")
             installed.append(lang)
         except ImportError:
             missing.append(lang)

@@ -19,7 +19,10 @@ import re
 import sqlite3
 from typing import Dict, List, Tuple
 
-import faiss
+try:
+    import faiss
+except ImportError:
+    faiss = None  # type: ignore[assignment]
 import numpy as np
 
 from .config import StorageConfig
@@ -60,7 +63,7 @@ def _gpu_min_free_mb() -> int:
             per_gpu.append(mem.free // (1024 * 1024))
         pynvml.nvmlShutdown()
         return min(per_gpu)
-    except Exception:
+    except (ImportError, OSError):
         return 0
 
 
@@ -88,8 +91,16 @@ class IndexEngine:
         self._fts5_error_logged = False
         self._sparse_only = sparse_only
         self._fts_conn: sqlite3.Connection = None
+        self._db_path: str = ""
+        os.makedirs(storage.index_dir, exist_ok=True)
 
         # FAISS index -- try GPU if enough VRAM, fall back to CPU
+        if faiss is None:
+            self._flat_index = None
+            self._gpu_available = False
+            self.index = None
+            print("[WARN] faiss not installed. Dense vector search disabled.")
+            return
         self._flat_index = faiss.IndexFlatIP(dimension)
         self._gpu_available = False
 
@@ -99,7 +110,7 @@ class IndexEngine:
                 try:
                     self.index = faiss.index_cpu_to_all_gpus(self._flat_index)
                     self._gpu_available = True
-                except Exception as e:
+                except RuntimeError as e:
                     print(f"[WARN] FAISS GPU init failed: {e}. Using CPU.")
                     self.index = self._flat_index
             else:
@@ -111,8 +122,6 @@ class IndexEngine:
             self.index = self._flat_index
 
         # FTS5 DB path is set per-index in save()/load()
-        self._db_path: str = ""
-        os.makedirs(storage.index_dir, exist_ok=True)
 
     def _get_fts_conn(self) -> sqlite3.Connection:
         """Return persistent FTS5 connection, opening if needed."""
@@ -360,7 +369,7 @@ class IndexEngine:
         if self._gpu_available:
             try:
                 self.index = faiss.index_cpu_to_all_gpus(cpu_index)
-            except Exception as e:
+            except RuntimeError as e:
                 print(f"[WARN] FAISS GPU reload failed: {e}. Using CPU.")
                 self.index = cpu_index
         else:

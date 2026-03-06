@@ -683,7 +683,15 @@ def measure(ctx, run_bench: bool, allow_wait: bool):
 from cli.evolve_cmd import evolve_cmd       # noqa: E402
 from cli.harvest_cmd import harvest_cmd    # noqa: E402
 from cli.research_cmd import research_cmd  # noqa: E402
+from cli.agent_cmd import agent_cmd        # noqa: E402
+from cli.ingest_cmd import ingest_corpus_cmd  # noqa: E402
+from cli.doctor_cmd import doctor_cmd      # noqa: E402
+from cli.repl_cmd import interactive       # noqa: E402
 
 cli.add_command(evolve_cmd)
 cli.add_command(harvest_cmd)
 cli.add_command(research_cmd)
+cli.add_command(agent_cmd)
+cli.add_command(ingest_corpus_cmd)
+cli.add_command(doctor_cmd)
+cli.add_command(interactive)

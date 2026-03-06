@@ -16,6 +16,7 @@ import httpx
 import numpy as np
 
 from .config import ModelConfig
+from .http_factory import make_client
 from .network_gate import NetworkGate
 
 
@@ -32,9 +33,7 @@ class EmbeddingEngine:
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.dimension = config.dimension or 768
-        transport = httpx.HTTPTransport(retries=2)
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout),
-                                    transport=transport)
+        self._client = make_client(timeout_s=timeout)
         self._gate = gate
 
     def embed(self, texts: List[str]) -> np.ndarray:

@@ -15,6 +15,7 @@ from typing import List, Tuple
 import httpx
 
 from .config import ModelConfig
+from .http_factory import make_client
 from .network_gate import NetworkGate
 
 
@@ -29,9 +30,7 @@ class Reranker:
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.enabled = config.enabled
-        transport = httpx.HTTPTransport(retries=2)
-        self._client = httpx.Client(timeout=httpx.Timeout(timeout),
-                                    transport=transport)
+        self._client = make_client(timeout_s=timeout)
         self._gate = gate
 
     def rerank(

@@ -14,6 +14,7 @@ Falls back to character splitting for languages without a grammar.
 """
 
 import hashlib
+import importlib
 import os
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Tuple
@@ -75,11 +76,11 @@ def _try_load_language(lang_name: str):
         from tree_sitter import Language, Parser
 
         # Each language is a separate pip package: tree_sitter_python, etc.
-        module = __import__(f"tree_sitter_{lang_name}")
+        module = importlib.import_module(f"tree_sitter_{lang_name}")
         language = Language(module.language())
         parser = Parser(language)
         return language, parser
-    except (ImportError, AttributeError, Exception):
+    except (ImportError, AttributeError, OSError):
         return None, None
 
 

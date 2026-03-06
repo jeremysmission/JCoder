@@ -32,7 +32,7 @@ from ingestion.repo_loader import RepoLoader
 from ingestion.sanitizer import SanitizationConfig, SanitizationPipeline
 
 
-DEFAULT_ROOTS = [
+_DEFAULT_ROOTS_STR = os.environ.get("JCODER_DATA_ROOTS", os.pathsep.join([
     r"D:\Projects\KnowledgeBase\stackexchange_20251231",
     r"D:\Projects\reddit",
     r"D:\Projects\KnowledgeBase\sources\ragas",
@@ -40,7 +40,8 @@ DEFAULT_ROOTS = [
     r"D:\Projects\softwarerecs.stackexchange.com",
     r"D:\Misc\ZippedDownloadsDumps",
     r"D:\Archive\HybridRAG3_VariousVersions\HybridRAG3_Archive\2026-02-16\orphans",
-]
+]))
+DEFAULT_ROOTS = [r for r in _DEFAULT_ROOTS_STR.split(os.pathsep) if r]
 
 CODE_EXTS = {
     ".py", ".js", ".ts", ".tsx", ".java", ".go", ".rs", ".c", ".cpp", ".cc",
@@ -189,7 +190,8 @@ def main() -> int:
         latest_logs.clear()
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    prep_root = Path(r"D:\JCoder_Data\prep_stage") / f"prep_{ts}"
+    _jcoder_data = Path(os.environ.get("JCODER_DATA_DIR", r"D:\JCoder_Data"))
+    prep_root = _jcoder_data / "prep_stage" / f"prep_{ts}"
     prep_root.mkdir(parents=True, exist_ok=True)
     report_json = prep_root / "prep_report.json"
     report_csv = prep_root / "prep_report.csv"

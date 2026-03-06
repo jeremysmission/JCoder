@@ -1,0 +1,20 @@
+agent:
+  backend: openai
+  model: ""  # empty = auto-detect
+  endpoint: ""  # empty = auto-detect from backend type
+  max_iterations: 50
+  max_tokens_budget: 500000
+  working_dir: "."
+
+  # Ollama defaults (when backend=ollama)
+  ollama_endpoint: "http://localhost:11434/v1"
+  ollama_model: "devstral-small-2:24b"
+
+  # API defaults (when backend=openai or anthropic)
+  # Keys read from environment: OPENAI_API_KEY, ANTHROPIC_API_KEY
+  api_model: "anthropic/claude-sonnet-4-20250514"
+  api_endpoint: "https://openrouter.ai/api/v1"
+
+  safety:
+    allowed_dirs: []  # empty = working_dir only
+    max_command_timeout_s: 120

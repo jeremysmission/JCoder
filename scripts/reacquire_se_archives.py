@@ -23,7 +23,8 @@ import httpx
 
 MAGIC_7Z = bytes.fromhex("377abcaf271c")
 BASE_URL = "https://archive.org/download/stackexchange"
-INTEGRITY_LOG = Path("D:/JCoder_Data/clean_source/_logs/stackexchange_archive_integrity_20260301.json")
+_JCODER_DATA_DIR = Path(os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data"))
+INTEGRITY_LOG = _JCODER_DATA_DIR / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
 
 # Sites with significant coding/tech content worth prioritizing.
 CODING_SITES = {
