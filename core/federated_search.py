@@ -11,8 +11,11 @@ regardless of which index it came from.
 """
 
 import hashlib
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from functools import lru_cache
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -42,11 +45,14 @@ class FederatedSearch:
         self,
         embedding_engine: Optional[EmbeddingEngine] = None,
         rrf_k: int = 60,
+        max_workers: int = 8,
     ):
         self._indexes: Dict[str, IndexEngine] = {}
         self._weights: Dict[str, float] = {}
         self._embedder = embedding_engine
         self._rrf_k = rrf_k
+        self._max_workers = max_workers
+        self._pool: Optional[ThreadPoolExecutor] = None
 
     # -- Index management --------------------------------------------------
 
@@ -90,15 +96,13 @@ class FederatedSearch:
         if self._embedder is not None:
             query_vector = self._embedder.embed_single(query)
 
-        # Collect per-index ranked results
-        # key = content_hash, value = {total_rrf_score, best SearchResult}
+        # Parallel search across all targeted indexes
+        per_index = self._search_all(targets, query, query_vector, top_k)
+
+        # RRF merge with dedup
         merged: Dict[str, Dict[str, Any]] = {}
-
-        for name in targets:
-            index = self._indexes[name]
+        for name, results in per_index:
             weight = self._weights[name]
-            results = self._search_single(index, query, query_vector, top_k)
-
             for rank, (score, meta) in enumerate(results):
                 rrf_score = weight * (1.0 / (self._rrf_k + rank + 1))
                 content = meta.get("content", "")
@@ -106,7 +110,6 @@ class FederatedSearch:
 
                 if h in merged:
                     merged[h]["rrf"] += rrf_score
-                    # Keep the higher-scoring version
                     if rrf_score > merged[h]["best_rrf"]:
                         merged[h]["result"] = self._make_result(
                             meta, name, rrf_score,
@@ -160,6 +163,12 @@ class FederatedSearch:
             "per_index": per_index,
         }
 
+    def close(self):
+        """Shut down the thread pool (if active)."""
+        if self._pool is not None:
+            self._pool.shutdown(wait=False)
+            self._pool = None
+
     # -- Internals ---------------------------------------------------------
 
     def _resolve_targets(self, indexes: Optional[List[str]]) -> List[str]:
@@ -167,6 +176,51 @@ class FederatedSearch:
         if indexes is None:
             return list(self._indexes.keys())
         return [n for n in indexes if n in self._indexes]
+
+    def _search_all(
+        self,
+        targets: List[str],
+        query: str,
+        query_vector: Optional[np.ndarray],
+        top_k: int,
+    ) -> List[Tuple[str, List]]:
+        """Search all target indexes, parallel when >1 index."""
+        if len(targets) <= 1:
+            # Single index -- no thread overhead
+            results = []
+            for name in targets:
+                r = self._search_single(
+                    self._indexes[name], query, query_vector, top_k,
+                )
+                results.append((name, r))
+            return results
+
+        # Lazy-init thread pool (reused across searches)
+        if self._pool is None:
+            workers = min(self._max_workers, len(targets))
+            self._pool = ThreadPoolExecutor(max_workers=workers)
+
+        def _do_search(name: str) -> Tuple[str, List]:
+            r = self._search_single(
+                self._indexes[name], query, query_vector, top_k,
+            )
+            return (name, r)
+
+        futures = {
+            self._pool.submit(_do_search, name): name
+            for name in targets
+        }
+        # Collect results, preserving deterministic order by index name
+        result_map: Dict[str, List] = {}
+        for future in as_completed(futures):
+            try:
+                name, hits = future.result()
+                result_map[name] = hits
+            except Exception:
+                pass  # Index search failure is non-fatal
+        # Return in original target order for deterministic RRF
+        return [(name, result_map[name]) for name in targets
+                if name in result_map]
 
     @staticmethod
     def _search_single(

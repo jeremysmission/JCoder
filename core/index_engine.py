@@ -125,9 +125,16 @@ class IndexEngine:
         # FTS5 DB path is set per-index in save()/load()
 
     def _get_fts_conn(self) -> sqlite3.Connection:
-        """Return persistent FTS5 connection, opening if needed."""
+        """Return persistent FTS5 connection, opening if needed.
+
+        check_same_thread=False allows reuse from ThreadPoolExecutor workers
+        in FederatedSearch parallel queries. Safe because FTS5 queries are
+        read-only and each IndexEngine owns a single connection.
+        """
         if self._fts_conn is None and self._db_path:
-            self._fts_conn = sqlite3.connect(self._db_path)
+            self._fts_conn = sqlite3.connect(
+                self._db_path, check_same_thread=False,
+            )
         return self._fts_conn
 
     def _close_fts_conn(self):
@@ -375,8 +382,10 @@ class IndexEngine:
         )
         conn.commit()
         conn.close()
-        # Re-open as persistent connection
-        self._fts_conn = sqlite3.connect(self._db_path)
+        # Re-open as persistent connection (thread-safe for parallel search)
+        self._fts_conn = sqlite3.connect(
+            self._db_path, check_same_thread=False,
+        )
 
     def save(self, name: str):
         """Save FAISS index, metadata, and per-index FTS5 DB to disk."""

@@ -63,6 +63,15 @@ TARGET_SITES = [
     "crypto.stackexchange.com",
     "raspberrypi.stackexchange.com",
     "ai.stackexchange.com",
+    "datascience.stackexchange.com",
+    "cs.stackexchange.com",
+    "cstheory.stackexchange.com",
+    "emacs.stackexchange.com",
+    "robotics.stackexchange.com",
+    "electronics.stackexchange.com",
+    "tex.stackexchange.com",
+    "wordpress.stackexchange.com",
+    "salesforce.stackexchange.com",
 ]
 
 BATCH_SIZE = 5000
@@ -107,8 +116,13 @@ def _find_archive(site_name: str) -> Path | None:
     return None
 
 
-def _extract_posts_xml(archive_path: Path) -> bytes | None:
-    """Extract Posts.xml from a 7z archive to a temp dir, read it, clean up."""
+def _extract_posts_xml(archive_path: Path) -> Path | None:
+    """Extract Posts.xml from a 7z archive to a temp dir, return file path.
+
+    The caller is responsible for cleaning up the temp directory via
+    ``shutil.rmtree(path.parent)``.  Returning a *path* instead of raw
+    bytes avoids loading multi-GB XML entirely into memory.
+    """
     try:
         import py7zr
     except ImportError:
@@ -116,7 +130,6 @@ def _extract_posts_xml(archive_path: Path) -> bytes | None:
         return None
 
     import tempfile
-    import shutil
 
     tmp_dir = None
     try:
@@ -131,26 +144,55 @@ def _extract_posts_xml(archive_path: Path) -> bytes | None:
                 print(f"  [WARN] No Posts.xml found in {archive_path.name}")
                 return None
 
-            # Extract to temp dir (py7zr 1.x doesn't have .read())
             tmp_dir = tempfile.mkdtemp(prefix="se_extract_")
             z.extract(path=tmp_dir, targets=[posts_name])
 
-        # Read the extracted file
         extracted = Path(tmp_dir) / posts_name
         if extracted.exists():
-            return extracted.read_bytes()
+            return extracted  # caller cleans up tmp_dir
         print(f"  [WARN] Posts.xml not found after extraction")
         return None
     except Exception as exc:
         print(f"  [FAIL] Could not extract {archive_path.name}: {exc}")
         return None
-    finally:
-        if tmp_dir and Path(tmp_dir).exists():
-            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
-def _parse_and_index(xml_data: bytes, site_key: str, db_path: Path) -> tuple:
-    """Parse Posts.xml and build FTS5 index. Returns (entries, chunks)."""
+def _is_build_complete(db_path: Path) -> bool:
+    """Check whether a previous build finished successfully."""
+    if not db_path.exists():
+        return False
+    try:
+        conn = sqlite3.connect(str(db_path))
+        rows = conn.execute(
+            "SELECT value FROM _build_meta WHERE key='build_complete'"
+        ).fetchone()
+        conn.close()
+        return rows is not None and rows[0] == "1"
+    except sqlite3.OperationalError:
+        return False
+
+
+def _mark_build_complete(conn: sqlite3.Connection) -> None:
+    """Stamp the database as successfully built."""
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS _build_meta "
+        "(key TEXT PRIMARY KEY, value TEXT)"
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO _build_meta(key, value) "
+        "VALUES ('build_complete', '1')"
+    )
+    conn.commit()
+
+
+def _parse_and_index(xml_path: Path, site_key: str, db_path: Path) -> tuple:
+    """Parse Posts.xml and build FTS5 index. Returns (entries, chunks, skipped).
+
+    Uses a two-pass streaming approach so that the full XML never lives
+    in memory as a single bytes object:
+      Pass 1 -- collect qualifying questions (id -> metadata).
+      Pass 2 -- stream answers, pair with questions, write to FTS5.
+    """
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
@@ -159,46 +201,42 @@ def _parse_and_index(xml_data: bytes, site_key: str, db_path: Path) -> tuple:
         "USING fts5(search_content, source_path, chunk_id)"
     )
 
+    # -- Pass 1: collect questions ------------------------------------------
+    questions = {}  # id -> {title, body, score, tags}
+    for _, elem in ET.iterparse(str(xml_path), events=("end",)):
+        if elem.tag != "row":
+            continue
+        if elem.get("PostTypeId") == "1":
+            score = int(elem.get("Score", "0"))
+            body = elem.get("Body", "")
+            if score >= MIN_SCORE and body:
+                questions[elem.get("Id", "")] = {
+                    "title": elem.get("Title", ""),
+                    "body": body,
+                    "score": score,
+                    "tags": elem.get("Tags", ""),
+                }
+        elem.clear()
+
+    # -- Pass 2: collect answers keyed by parent question -------------------
+    answers: dict[str, list[str]] = {}
+    for _, elem in ET.iterparse(str(xml_path), events=("end",)):
+        if elem.tag != "row":
+            continue
+        if elem.get("PostTypeId") == "2":
+            parent = elem.get("ParentId", "")
+            score = int(elem.get("Score", "0"))
+            body = elem.get("Body", "")
+            if score >= MIN_SCORE and body and parent in questions:
+                answers.setdefault(parent, []).append(body)
+        elem.clear()
+
+    # -- Build Q+A pairs and write to FTS5 ----------------------------------
     batch = []
     total_entries = 0
     total_chunks = 0
     skipped = 0
 
-    # Collect questions and answers
-    questions = {}  # id -> {title, body, score, tags}
-    answers = {}    # parent_id -> [answer_bodies]
-
-    # Parse iteratively to handle large XML
-    context = ET.iterparse(io.BytesIO(xml_data), events=("end",))
-    for event, elem in context:
-        if elem.tag != "row":
-            continue
-
-        post_type = elem.get("PostTypeId", "")
-        score = int(elem.get("Score", "0"))
-        body = elem.get("Body", "")
-        post_id = elem.get("Id", "")
-
-        if post_type == "1":  # Question
-            if score >= MIN_SCORE and body:
-                title = elem.get("Title", "")
-                tags = elem.get("Tags", "")
-                questions[post_id] = {
-                    "title": title,
-                    "body": body,
-                    "score": score,
-                    "tags": tags,
-                }
-        elif post_type == "2":  # Answer
-            parent = elem.get("ParentId", "")
-            if score >= MIN_SCORE and body and parent:
-                if parent not in answers:
-                    answers[parent] = []
-                answers[parent].append(body)
-
-        elem.clear()
-
-    # Build Q+A pairs
     for qid, q in questions.items():
         title = _strip_html(q["title"])
         q_body = _strip_html(q["body"])
@@ -252,6 +290,7 @@ def _parse_and_index(xml_data: bytes, site_key: str, db_path: Path) -> tuple:
             "VALUES (?, ?, ?)", batch)
         conn.commit()
 
+    _mark_build_complete(conn)
     conn.close()
     return total_entries, total_chunks, skipped
 
@@ -267,18 +306,25 @@ def main():
     t0 = time.time()
     results = []
 
+    import shutil as _shutil
+
     for site in TARGET_SITES:
         site_key = _site_key(site)
         db_path = INDEX_DIR / f"{site_key}.fts5.db"
 
         print(f"\n--- {site} -> {site_key} ---")
 
-        # Skip if already built
-        if db_path.exists() and db_path.stat().st_size > 100_000:
+        # Skip if previous build completed successfully
+        if _is_build_complete(db_path):
             size_mb = db_path.stat().st_size / 1e6
             print(f"  [OK] Already exists ({size_mb:.0f} MB)")
             results.append((site_key, "exists", size_mb))
             continue
+
+        # Remove partial builds so we start clean
+        if db_path.exists():
+            print(f"  [INFO] Removing incomplete previous build")
+            db_path.unlink()
 
         # Find archive
         archive = _find_archive(site)
@@ -290,19 +336,24 @@ def main():
         size_mb = archive.stat().st_size / 1e6
         print(f"  Archive: {archive.name} ({size_mb:.0f} MB)")
 
-        # Extract Posts.xml
+        # Extract Posts.xml to temp dir (returns path, not bytes)
         print(f"  Extracting Posts.xml...", end=" ", flush=True)
         t1 = time.time()
-        xml_data = _extract_posts_xml(archive)
-        if not xml_data:
+        xml_path = _extract_posts_xml(archive)
+        if not xml_path:
             results.append((site_key, "extract_fail", 0))
             continue
-        print(f"{len(xml_data)/1e6:.0f} MB in {time.time()-t1:.0f}s")
+        xml_size_mb = xml_path.stat().st_size / 1e6
+        print(f"{xml_size_mb:.0f} MB in {time.time()-t1:.0f}s")
 
-        # Parse and index
+        # Parse and index (streams from file)
         print(f"  Indexing (score >= {MIN_SCORE})...", end=" ", flush=True)
         t1 = time.time()
-        entries, chunks, skipped = _parse_and_index(xml_data, site_key, db_path)
+        try:
+            entries, chunks, skipped = _parse_and_index(xml_path, site_key, db_path)
+        finally:
+            # Clean up extracted temp dir
+            _shutil.rmtree(xml_path.parent, ignore_errors=True)
         elapsed = time.time() - t1
         idx_size = db_path.stat().st_size / 1e6 if db_path.exists() else 0
         print(f"{entries:,} entries, {chunks:,} chunks ({idx_size:.0f} MB) "
