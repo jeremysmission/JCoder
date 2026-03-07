@@ -22,6 +22,11 @@ class ModelConfig:
     quantization: str = ""
     tensor_parallel: int = 1
     max_model_len: int = 32768
+    # Dual-embedding support: optional specialized models for code vs text.
+    # When set, DualEmbeddingEngine uses these instead of the primary `name`.
+    # If unset, the primary model handles both content types.
+    code_model: Optional[str] = None
+    text_model: Optional[str] = None
 
 
 @dataclass
@@ -169,6 +174,8 @@ def _build_model_config(model_raw: dict, port: int) -> ModelConfig:
         quantization=model_raw.get("quantization", ""),
         tensor_parallel=model_raw.get("tensor_parallel", 1),
         max_model_len=model_raw.get("max_model_len", 32768),
+        code_model=model_raw.get("code_model"),
+        text_model=model_raw.get("text_model"),
     )
 
 
