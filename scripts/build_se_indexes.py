@@ -323,8 +323,13 @@ def main():
 
         # Remove partial builds so we start clean
         if db_path.exists():
-            print(f"  [INFO] Removing incomplete previous build")
-            db_path.unlink()
+            try:
+                print(f"  [INFO] Removing incomplete previous build")
+                db_path.unlink()
+            except PermissionError:
+                print(f"  [WARN] Cannot remove locked file, skipping")
+                results.append((site_key, "locked", 0))
+                continue
 
         # Find archive
         archive = _find_archive(site)
