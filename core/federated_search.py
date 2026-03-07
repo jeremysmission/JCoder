@@ -11,10 +11,10 @@ regardless of which index it came from.
 """
 
 import hashlib
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -38,6 +38,45 @@ def _content_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8", errors="replace")).hexdigest()
 
 
+class _SearchCache:
+    """Thread-safe LRU cache for federated search results."""
+
+    def __init__(self, maxsize: int = 128, ttl_s: float = 300.0):
+        self._maxsize = maxsize
+        self._ttl_s = ttl_s
+        self._cache: Dict[str, Tuple[float, List]] = {}  # key -> (timestamp, results)
+        self._lock = threading.Lock()
+
+    def get(self, key: str) -> Optional[List]:
+        with self._lock:
+            entry = self._cache.get(key)
+            if entry is None:
+                return None
+            ts, results = entry
+            if time.monotonic() - ts > self._ttl_s:
+                del self._cache[key]
+                return None
+            return results
+
+    def put(self, key: str, results: List) -> None:
+        if self._maxsize <= 0:
+            return
+        with self._lock:
+            if len(self._cache) >= self._maxsize:
+                oldest_key = min(self._cache, key=lambda k: self._cache[k][0])
+                del self._cache[oldest_key]
+            self._cache[key] = (time.monotonic(), results)
+
+    def invalidate(self) -> None:
+        with self._lock:
+            self._cache.clear()
+
+    @staticmethod
+    def make_key(query: str, top_k: int, indexes: Optional[List[str]]) -> str:
+        raw = f"{query}|{top_k}|{sorted(indexes) if indexes else '*'}"
+        return hashlib.sha256(raw.encode()).hexdigest()
+
+
 class FederatedSearch:
     """Search across multiple IndexEngine instances with result fusion."""
 
@@ -46,6 +85,8 @@ class FederatedSearch:
         embedding_engine: Optional[EmbeddingEngine] = None,
         rrf_k: int = 60,
         max_workers: int = 8,
+        cache_maxsize: int = 128,
+        cache_ttl_s: float = 300.0,
     ):
         self._indexes: Dict[str, IndexEngine] = {}
         self._weights: Dict[str, float] = {}
@@ -53,6 +94,7 @@ class FederatedSearch:
         self._rrf_k = rrf_k
         self._max_workers = max_workers
         self._pool: Optional[ThreadPoolExecutor] = None
+        self._cache = _SearchCache(maxsize=cache_maxsize, ttl_s=cache_ttl_s)
 
     # -- Index management --------------------------------------------------
 
@@ -66,11 +108,13 @@ class FederatedSearch:
             raise ValueError(f"Weight must be positive, got {weight}")
         self._indexes[name] = index
         self._weights[name] = weight
+        self._cache.invalidate()
 
     def remove_index(self, name: str):
         """Unregister an index."""
         self._indexes.pop(name, None)
         self._weights.pop(name, None)
+        self._cache.invalidate()
 
     # -- Search ------------------------------------------------------------
 
@@ -88,6 +132,12 @@ class FederatedSearch:
         4. Deduplicate by content hash.
         5. Return top_k ranked results.
         """
+        # Check cache first
+        cache_key = self._cache.make_key(query, top_k, indexes)
+        cached = self._cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         targets = self._resolve_targets(indexes)
         if not targets:
             return []
@@ -129,6 +179,8 @@ class FederatedSearch:
             r = entry["result"]
             r.score = entry["rrf"]
             output.append(r)
+
+        self._cache.put(cache_key, output)
         return output
 
     def search_by_index(
