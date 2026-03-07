@@ -53,7 +53,7 @@ def agent_cmd():
 @agent_cmd.command("run")
 @click.argument("task")
 @click.option("--mode", default="agent",
-              type=click.Choice(["agent", "qa", "review", "explain", "debug", "refactor"]),
+              type=click.Choice(["agent", "code", "qa", "review", "explain", "debug", "refactor"]),
               help="Prompt mode for the agent")
 @click.option("--backend", default="",
               help="LLM backend: openai, ollama, anthropic (default from config)")

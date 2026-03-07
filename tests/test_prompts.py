@@ -5,6 +5,7 @@ import pytest
 from agent.prompts import (
     AGENT_SYSTEM_PROMPT,
     CODE_EXPLAIN_PROMPT,
+    CODE_GROUNDED_PROMPT,
     CODE_QA_PROMPT,
     CODE_REVIEW_PROMPT,
     DEBUG_PROMPT,
@@ -16,6 +17,7 @@ from agent.prompts import (
 ALL_PROMPTS = [
     AGENT_SYSTEM_PROMPT,
     CODE_QA_PROMPT,
+    CODE_GROUNDED_PROMPT,
     CODE_REVIEW_PROMPT,
     CODE_EXPLAIN_PROMPT,
     DEBUG_PROMPT,
@@ -144,6 +146,33 @@ class TestPromptBuilder:
         assert "```" in user_text
         assert "eval(input())" in user_text
 
+    def test_code_mode_with_context(self):
+        pb = PromptBuilder("code")
+        msgs = pb.build_messages(
+            "How do I read a file?",
+            context="[1] (python_docs) def read_file(): ...\nSource: docs/io.py",
+        )
+        sys_text = msgs[0]["content"]
+        user_text = msgs[1]["content"]
+        assert "SOURCE-BOUNDED" in sys_text
+        assert "Retrieved Knowledge Chunks" in user_text
+        assert "python_docs" in user_text
+
+    def test_code_mode_no_context(self):
+        pb = PromptBuilder("code")
+        msgs = pb.build_messages("How to sort a list?")
+        user_text = msgs[1]["content"]
+        assert "Retrieved Knowledge Chunks" not in user_text
+        assert "sort a list" in user_text
+
+    def test_code_prompt_has_security_rule(self):
+        assert "secrets" in CODE_GROUNDED_PROMPT.lower() or \
+               "credentials" in CODE_GROUNDED_PROMPT.lower()
+
+    def test_code_prompt_requires_source_citation(self):
+        assert "cite" in CODE_GROUNDED_PROMPT.lower() or \
+               "source" in CODE_GROUNDED_PROMPT.lower()
+
     def test_debug_mode_with_error(self):
         pb = PromptBuilder("debug")
         msgs = pb.build_messages("Help", error="ZeroDivisionError: division by zero")
@@ -165,12 +194,12 @@ class TestPromptBuilder:
 
     def test_available_modes(self):
         modes = PromptBuilder.available_modes()
-        assert len(modes) == 7
-        for m in ("agent", "qa", "review", "explain", "debug", "refactor", "fim"):
+        assert len(modes) == 8
+        for m in ("agent", "code", "qa", "review", "explain", "debug", "refactor", "fim"):
             assert m in modes
 
     def test_messages_format(self):
-        for mode in ("agent", "qa", "review", "explain", "debug", "refactor"):
+        for mode in ("agent", "code", "qa", "review", "explain", "debug", "refactor"):
             pb = PromptBuilder(mode)
             msgs = pb.build_messages("test query")
             for msg in msgs:
