@@ -97,8 +97,35 @@ def download_codesearchnet():
             log(f"[FAIL] CodeSearchNet {lang}: {e}")
 
 
+def _read_counter(counter_path: Path) -> int:
+    """Read extraction counter file, return 0 if missing."""
+    if counter_path.exists():
+        try:
+            return int(counter_path.read_text().strip())
+        except (ValueError, OSError):
+            pass
+    return 0
+
+
+def _write_counter(counter_path: Path, count: int):
+    """Write extraction progress counter."""
+    counter_path.write_text(str(count), encoding="utf-8")
+
+
+def _subdir_for(lang_dir: Path, index: int, batch_size: int = 1000) -> Path:
+    """Return subdirectory path: lang_dir/000/, lang_dir/001/, etc."""
+    bucket = index // batch_size
+    sub = lang_dir / f"{bucket:03d}"
+    sub.mkdir(parents=True, exist_ok=True)
+    return sub
+
+
 def extract_codesearchnet():
-    """Convert CodeSearchNet JSONL to sanitized markdown files."""
+    """Convert CodeSearchNet JSONL to sanitized markdown files.
+
+    Uses subdirectory batching (1000 files per subdir) to avoid NTFS
+    slowdown at 300K+ files. Tracks progress via counter file for resume.
+    """
     csn_dir = RAW_ROOT / "codesearchnet"
     out_dir = CLEAN_ROOT / "codesearchnet"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -111,22 +138,34 @@ def extract_codesearchnet():
             continue
 
         lang_dir = out_dir / lang
-        if lang_dir.exists() and len(list(lang_dir.glob("*.md"))) > 100:
-            count = len(list(lang_dir.glob("*.md")))
-            log(f"[OK] CodeSearchNet {lang} already extracted ({count} files)")
-            total_entries += count
+        lang_dir.mkdir(parents=True, exist_ok=True)
+        counter_path = lang_dir / ".count"
+        existing = _read_counter(counter_path)
+
+        # Count JSONL lines to check if fully extracted
+        jsonl_lines = sum(1 for _ in open(jsonl_path, "r", encoding="utf-8"))
+        if existing >= jsonl_lines and existing > 100:
+            log(f"[OK] CodeSearchNet {lang} fully extracted ({existing:,} files)")
+            total_entries += existing
             continue
 
-        lang_dir.mkdir(parents=True, exist_ok=True)
-        log(f"Extracting CodeSearchNet {lang}...")
+        if existing > 0:
+            log(f"Resuming CodeSearchNet {lang} from entry {existing:,}...")
+        else:
+            log(f"Extracting CodeSearchNet {lang} ({jsonl_lines:,} entries)...")
 
         try:
-            count = 0
+            count = existing
+            skipped = 0
             with open(jsonl_path, "r", encoding="utf-8") as f:
-                for line in f:
+                for line_num, line in enumerate(f):
+                    if line_num < existing:
+                        continue  # skip already-extracted lines
+
                     try:
                         obj = json.loads(line)
                     except json.JSONDecodeError:
+                        skipped += 1
                         continue
 
                     code = obj.get("whole_func_string", obj.get("code", obj.get("function", "")))
@@ -135,6 +174,7 @@ def extract_codesearchnet():
                     repo = obj.get("repository_name", "")
 
                     if not code or len(code.strip()) < 20:
+                        skipped += 1
                         continue
 
                     title = func_name or f"function_{count}"
@@ -147,17 +187,21 @@ def extract_codesearchnet():
                         md += f"\n## Documentation\n{docstring.strip()}\n"
                     md += f"\n## Code\n```{lang}\n{code.strip()}\n```\n"
 
+                    sub = _subdir_for(lang_dir, count)
                     fname = f"csn_{lang}_{count:06d}.md"
-                    (lang_dir / fname).write_text(md, encoding="utf-8")
+                    (sub / fname).write_text(md, encoding="utf-8")
                     count += 1
 
                     if count % 10000 == 0:
+                        _write_counter(counter_path, count)
                         log(f"  {lang}: {count:,} entries extracted")
 
-            log(f"[OK] CodeSearchNet {lang}: {count:,} entries")
+            _write_counter(counter_path, count)
+            log(f"[OK] CodeSearchNet {lang}: {count:,} entries ({skipped:,} skipped)")
             total_entries += count
         except Exception as e:
-            log(f"[FAIL] CodeSearchNet {lang} extraction: {e}")
+            log(f"[FAIL] CodeSearchNet {lang} extraction at {count:,}: {e}")
+            _write_counter(counter_path, count)  # save progress on crash
 
     log(f"[OK] CodeSearchNet total: {total_entries:,} entries")
     return total_entries
@@ -192,8 +236,9 @@ def download_code_datasets():
         lang_lower = lang.lower().replace("+", "p").replace("#", "sharp")
         lang_dir = code_dir / lang_lower
         lang_dir.mkdir(parents=True, exist_ok=True)
+        counter_path = lang_dir / ".count"
 
-        existing = len(list(lang_dir.glob("*.md")))
+        existing = _read_counter(counter_path)
         if existing > 50000:
             log(f"[OK] Code {lang} already has {existing:,} files, skipping")
             total_files += existing
@@ -236,11 +281,13 @@ def download_code_datasets():
                 md += f"- path: {path}\n"
                 md += f"\n## Code\n```{lang_lower}\n{content}\n```\n"
 
+                sub = _subdir_for(lang_dir, count)
                 fname = f"ghcode_{lang_lower}_{count:07d}.md"
-                (lang_dir / fname).write_text(md, encoding="utf-8")
+                (sub / fname).write_text(md, encoding="utf-8")
                 count += 1
 
                 if count % 10000 == 0:
+                    _write_counter(counter_path, count)
                     log(f"  github-code {lang}: {count:,} files saved")
 
         except Exception as e:
@@ -274,15 +321,18 @@ def download_code_datasets():
                         md += f"- repo: {repo}\n"
                         md += f"\n## Code\n```{lang_lower}\n{content}\n```\n"
 
+                        sub = _subdir_for(lang_dir, count)
                         fname = f"stack_{lang_lower}_{count:07d}.md"
-                        (lang_dir / fname).write_text(md, encoding="utf-8")
+                        (sub / fname).write_text(md, encoding="utf-8")
                         count += 1
 
                         if count % 10000 == 0:
+                            _write_counter(counter_path, count)
                             log(f"  Stack v2 {lang}: {count:,} files saved")
                 except Exception as e2:
                     log(f"  [WARN] Stack v2 {lang} also failed: {e2}")
 
+        _write_counter(counter_path, count)
         log(f"[OK] Code {lang}: {count:,} files total")
         total_files += count
 
