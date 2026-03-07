@@ -188,10 +188,14 @@ def _mark_build_complete(conn: sqlite3.Connection) -> None:
 def _parse_and_index(xml_path: Path, site_key: str, db_path: Path) -> tuple:
     """Parse Posts.xml and build FTS5 index. Returns (entries, chunks, skipped).
 
-    Uses a two-pass streaming approach so that the full XML never lives
-    in memory as a single bytes object:
-      Pass 1 -- collect qualifying questions (id -> metadata).
-      Pass 2 -- stream answers, pair with questions, write to FTS5.
+    Uses a two-pass approach to avoid loading the full XML as a single
+    bytes object (the prior read_bytes() approach).  Each pass uses
+    ET.iterparse to stream XML element-by-element from disk, but the
+    qualifying questions dict (pass 1) and grouped answers dict (pass 2)
+    are accumulated in memory.  This is adequate for the target SE sites
+    (largest ≈ 500K qualifying posts → ~1–2 GB dict overhead) but would
+    need a SQLite staging table for truly bounded-memory operation on
+    sites like StackOverflow proper.
     """
     conn = sqlite3.connect(str(db_path))
     conn.execute("PRAGMA journal_mode=WAL")

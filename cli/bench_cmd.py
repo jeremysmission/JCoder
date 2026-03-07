@@ -54,30 +54,49 @@ def bench_search(queries: int, top_k: int, index_dir: str | None):
     from core.config import StorageConfig
     from core.federated_search import FederatedSearch
 
-    # Discover indexes
+    # Discover indexes — mirror the runtime scan logic from
+    # agent.config_loader._build_federated() to cover both
+    # memory_index_dir and federated_data_dir.
+    scan_dirs: list[Path] = []
     if index_dir:
-        idx_path = Path(index_dir)
+        scan_dirs.append(Path(index_dir))
     else:
         try:
             from agent.config_loader import load_agent_config
             cfg = load_agent_config()
-            idx_path = Path(cfg.memory_index_dir)
+            if cfg.federated_data_dir:
+                scan_dirs.append(Path(cfg.federated_data_dir))
+            if cfg.memory_index_dir:
+                scan_dirs.append(Path(cfg.memory_index_dir))
         except Exception:
-            idx_path = Path("D:/JCoder_Data/indexes")
+            scan_dirs.append(Path("D:/JCoder_Data/indexes"))
 
-    if not idx_path.exists():
-        console.print(f"[FAIL] Index directory not found: {idx_path}")
-        return
+    # Deduplicate and resolve
+    seen: set[Path] = set()
+    unique_dirs: list[Path] = []
+    for d in scan_dirs:
+        resolved = d.resolve()
+        if resolved not in seen:
+            seen.add(resolved)
+            unique_dirs.append(d)
 
-    db_files = sorted(idx_path.glob("*.fts5.db"))
+    db_files: list[Path] = []
+    for d in unique_dirs:
+        if d.exists():
+            db_files.extend(sorted(d.glob("*.fts5.db")))
+        else:
+            console.print(f"[WARN] Index directory not found: {d}")
+
     if not db_files:
-        console.print(f"[FAIL] No FTS5 indexes found in {idx_path}")
+        console.print("[FAIL] No FTS5 indexes found in any configured directory")
         return
 
-    console.print(f"Found {len(db_files)} FTS5 indexes in {idx_path}")
+    console.print(f"Found {len(db_files)} FTS5 indexes across "
+                  f"{len(unique_dirs)} directories")
 
     # Load indexes
-    storage = StorageConfig(data_dir=str(idx_path.parent), index_dir=str(idx_path))
+    primary_dir = db_files[0].parent
+    storage = StorageConfig(data_dir=str(primary_dir.parent), index_dir=str(primary_dir))
     fed = FederatedSearch(embedding_engine=None, max_workers=8)
     engines: list[IndexEngine] = []
 
@@ -98,8 +117,10 @@ def bench_search(queries: int, top_k: int, index_dir: str | None):
 
     console.print(f"\nRunning {len(query_set)} queries (top_k={top_k})...")
 
-    # Warm-up query (opens connections)
+    # Warm-up query (opens connections), then invalidate cache so
+    # measured queries are not served from cache.
     fed.search(query_set[0], top_k=top_k)
+    fed._cache.invalidate()
 
     for q in query_set:
         t0 = time.perf_counter()
@@ -108,12 +129,13 @@ def bench_search(queries: int, top_k: int, index_dir: str | None):
         latencies.append(elapsed_ms)
         result_counts.append(len(results))
 
-    # Stats
-    latencies.sort()
-    avg = sum(latencies) / len(latencies)
-    p50 = latencies[len(latencies) // 2]
-    p95 = latencies[int(len(latencies) * 0.95)]
-    p99 = latencies[int(len(latencies) * 0.99)]
+    # Stats — use a sorted copy so per-query order is preserved for the
+    # detail table below.
+    sorted_lat = sorted(latencies)
+    avg = sum(sorted_lat) / len(sorted_lat)
+    p50 = sorted_lat[len(sorted_lat) // 2]
+    p95 = sorted_lat[int(len(sorted_lat) * 0.95)]
+    p99 = sorted_lat[int(len(sorted_lat) * 0.99)]
     total_results = sum(result_counts)
     avg_results = total_results / len(result_counts)
 
@@ -130,8 +152,8 @@ def bench_search(queries: int, top_k: int, index_dir: str | None):
     table.add_row("P50 latency (ms)", f"{p50:.1f}")
     table.add_row("P95 latency (ms)", f"{p95:.1f}")
     table.add_row("P99 latency (ms)", f"{p99:.1f}")
-    table.add_row("Min latency (ms)", f"{latencies[0]:.1f}")
-    table.add_row("Max latency (ms)", f"{latencies[-1]:.1f}")
+    table.add_row("Min latency (ms)", f"{sorted_lat[0]:.1f}")
+    table.add_row("Max latency (ms)", f"{sorted_lat[-1]:.1f}")
     table.add_row("", "")
     table.add_row("Avg results/query", f"{avg_results:.1f}")
     table.add_row("Total results", str(total_results))
