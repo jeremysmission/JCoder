@@ -29,6 +29,8 @@ try: from agent.llm_backend import create_backend
 except ImportError: create_backend = None  # type: ignore[assignment,misc]
 try: from agent.memory import AgentMemory
 except ImportError: AgentMemory = None  # type: ignore[assignment,misc]
+try: from core.procedural_memory import ProceduralMemory, ProceduralExperience
+except ImportError: ProceduralMemory = ProceduralExperience = None  # type: ignore[assignment,misc]
 
 
 class AgentBridge:
@@ -38,16 +40,18 @@ class AgentBridge:
                  experience_store: Optional[Any] = None,
                  active_learner: Optional[Any] = None,
                  meta_cognitive: Optional[Any] = None,
-                 memory: Optional[Any] = None):
+                 memory: Optional[Any] = None,
+                 procedural_memory: Optional[ProceduralMemory] = None):
         self.agent = agent
         self.telemetry = telemetry
         self.experience = experience_store
         self.active = active_learner
         self.meta = meta_cognitive
         self.memory = memory
+        self.procedural_memory = procedural_memory
         active = [n for n, m in [("telemetry", telemetry), ("experience", experience_store),
                   ("active", active_learner), ("meta_cog", meta_cognitive),
-                  ("memory", memory)] if m]
+                  ("memory", memory), ("procedural_memory", procedural_memory)] if m]
         log.info("AgentBridge: modules active: %s", active or "(none)")
 
     def on_task_complete(self, task: str, result: AgentResult) -> None:
@@ -90,6 +94,22 @@ class AgentBridge:
             try:
                 self.memory.ingest_task_result(task=task, result=result)
             except Exception as exc: log.warning("Agent memory: %s", exc)
+        if self.procedural_memory and ProceduralExperience is not None:
+            try:
+                summary_hash = hashlib.sha256(
+                    (task + result.summary).encode()).hexdigest()
+                self.procedural_memory.store(
+                    ProceduralExperience(
+                        state_hash=summary_hash,
+                        action=task,
+                        outcome=result.summary,
+                        success=result.success,
+                        metadata={"iterations": result.iterations,
+                                  "tokens": result.total_input_tokens + result.total_output_tokens},
+                    )
+                )
+            except Exception as exc:
+                log.warning("Procedural memory: %s", exc)
 
     def suggest_next_study(self) -> Optional[str]:
         """Ask active_learner what the agent should study next.
@@ -246,8 +266,10 @@ def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = No
     experience = _try_init(ExperienceStore, "_experience/agent_replay.db")
     meta = _try_init(MetaCognitiveController, "_meta_cog/agent_controller.db")
     active = _try_init_active(backend=stack.get("backend"))
+    procedural_memory = _try_init(ProceduralMemory, "_procedural_memory/memory.db")
     bridge = AgentBridge(agent=agent, telemetry=telemetry, experience_store=experience,
-                         active_learner=active, meta_cognitive=meta, memory=memory)
+                         active_learner=active, meta_cognitive=meta,
+                         memory=memory, procedural_memory=procedural_memory)
 
     # Wrap RAG callback with telemetry if both are available
     rag_callback = getattr(stack["tools"], "_rag_callback", None)
