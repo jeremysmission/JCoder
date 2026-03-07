@@ -512,6 +512,7 @@ class TestBuildAgentGracefulDegradation:
             memory_enabled=True,
             session_enabled=False,
             logging_enabled=False,
+            federated_enabled=False,
         )
 
         mock_prompt = MagicMock()
@@ -549,6 +550,7 @@ class TestBuildAgentGracefulDegradation:
             memory_enabled=False,
             session_enabled=True,
             logging_enabled=False,
+            federated_enabled=False,
         )
 
         mock_prompt = MagicMock()
@@ -584,6 +586,7 @@ class TestBuildAgentGracefulDegradation:
             memory_enabled=False,
             session_enabled=False,
             logging_enabled=True,
+            federated_enabled=False,
         )
 
         mock_prompt = MagicMock()
