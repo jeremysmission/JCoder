@@ -6,15 +6,103 @@ memory:
   auto_ingest: true  # automatically store task results
   dedup_threshold: 0.95  # skip if similar memory exists
 
+embedder:
+  enabled: false  # set true when embedding server (vLLM/Ollama) is running
+  endpoint: "http://localhost:8000/v1"
+  model: "nomic-embed-text"
+  code_model: "nomic-embed-code"  # specialized for source code
+  text_model: "nomic-embed-text"  # specialized for documentation
+  dimension: 768
+  timeout: 120
+
 federated_search:
   rrf_k: 60
-  data_dir: "D:/JCoder_Data/indexes"  # corpus FTS5 databases (CSN, docs, rfc)
+  data_dir: "D:/JCoder_Data/indexes"  # corpus FTS5 databases
   indexes:
+    # Personal memory (highest priority)
     agent_memory:
-      weight: 1.5  # boost personal experience
-    stackoverflow:
+      weight: 1.5
+    # CodeSearchNet per-language (function+docstring pairs)
+    csn_python:
+      weight: 1.2
+    csn_javascript:
       weight: 1.0
-    codesearchnet:
+    csn_java:
+      weight: 1.0
+    csn_go:
+      weight: 1.0
+    csn_php:
       weight: 0.8
-    docs:
+    csn_ruby:
+      weight: 0.8
+    # The Stack smol-xl per-language (raw code samples)
+    stack_c:
+      weight: 0.9
+    stack_cpp:
+      weight: 0.9
+    stack_csharp:
+      weight: 0.9
+    stack_go:
+      weight: 0.9
+    stack_java:
+      weight: 0.9
+    stack_javascript:
+      weight: 0.9
+    # Codeparrot (cleaned GitHub Python)
+    codeparrot_python:
       weight: 1.0
+    # Commit diffs (11 languages)
+    commitpack:
+      weight: 0.8
+    # Code exercises, contests, instruction sets
+    code_exercises:
+      weight: 0.7
+    code_contests:
+      weight: 0.7
+    evol_instruct_code:
+      weight: 0.7
+    code_feedback:
+      weight: 0.7
+    # Instruction-tuning datasets (beginner-friendly)
+    python_instructions:
+      weight: 0.8
+    code_alpaca:
+      weight: 0.7
+    code_instructions_122k:
+      weight: 0.7
+    tiny_codes:
+      weight: 0.8  # beginner examples boosted
+    self_oss_instruct:
+      weight: 0.8
+    python_scripts_val:
+      weight: 0.7
+    math_instruct:
+      weight: 0.6
+    # Best practices and syntax help (high weight -- authoritative)
+    best_practices:
+      weight: 1.5
+    # Research feed (latest AI/ML advances)
+    research_feed:
+      weight: 1.0
+    # StackExchange sites (Q&A)
+    se_codereview:
+      weight: 1.0
+    se_unix:
+      weight: 0.9
+    se_security:
+      weight: 0.9
+    se_serverfault:
+      weight: 0.8
+    se_superuser:
+      weight: 0.7
+    se_softwareengineering:
+      weight: 1.0
+    se_askubuntu:
+      weight: 0.7
+    se_dba:
+      weight: 0.8
+    # Reference docs
+    python_docs:
+      weight: 1.2
+    rfc:
+      weight: 0.6
