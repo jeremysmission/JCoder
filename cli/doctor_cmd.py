@@ -240,21 +240,68 @@ def _check_gpu(cr: _CheckResult) -> None:
         cr.print_live("WARN", "GPU/VRAM", f"pynvml error: {exc}")
 
 
+def _load_memory_yaml() -> dict:
+    """Load config/memory.yaml and return as dict, or empty dict on failure."""
+    cfg_path = _PROJECT_ROOT / "config" / "memory.yaml"
+    if not cfg_path.is_file():
+        return {}
+    try:
+        import yaml
+        with open(cfg_path, "r", encoding="utf-8") as fh:
+            return yaml.safe_load(fh) or {}
+    except Exception:
+        return {}
+
+
 def _check_fts5_indexes(cr: _CheckResult) -> None:
-    idx_dir = _PROJECT_ROOT / "data" / "indexes"
-    if not idx_dir.is_dir():
-        cr.warn("FTS5 indexes", "data/indexes directory missing")
-        cr.print_live("WARN", "FTS5 indexes", "data/indexes directory missing")
-        return
-    fts_files = list(idx_dir.rglob("*.fts5.db"))
-    if fts_files:
-        names = [f.name for f in fts_files]
-        cr.ok("FTS5 indexes", f"{len(fts_files)} found: {', '.join(names[:6])}")
-        cr.print_live("OK", "FTS5 indexes",
-                      f"{len(fts_files)} found: {', '.join(names[:6])}")
-    else:
-        cr.warn("FTS5 indexes", "none found in data/indexes/")
-        cr.print_live("WARN", "FTS5 indexes", "none found in data/indexes/")
+    mem_yaml = _load_memory_yaml()
+    memory_cfg = mem_yaml.get("memory", {})
+    fed_cfg = mem_yaml.get("federated_search", {})
+
+    # Determine index directories: repo-local memory dir + configured federated dir
+    memory_index_dir = memory_cfg.get("index_dir", "data/indexes")
+    fed_data_dir = fed_cfg.get("data_dir", "")
+
+    scan_dirs: List[Tuple[str, Path]] = []
+    # Resolve memory index dir (may be relative to project root)
+    mem_path = Path(memory_index_dir)
+    if not mem_path.is_absolute():
+        mem_path = _PROJECT_ROOT / mem_path
+    scan_dirs.append(("memory_index_dir", mem_path))
+
+    # Federated data dir (often an absolute external path)
+    if fed_data_dir:
+        fed_path = Path(fed_data_dir)
+        if not fed_path.is_absolute():
+            fed_path = _PROJECT_ROOT / fed_path
+        if fed_path != mem_path:  # avoid duplicate scan
+            scan_dirs.append(("federated_data_dir", fed_path))
+
+    all_fts: List[str] = []
+    for label, idx_dir in scan_dirs:
+        if not idx_dir.is_dir():
+            cr.warn(f"FTS5 indexes ({label})", f"{idx_dir} not found")
+            cr.print_live("WARN", f"FTS5 indexes ({label})", f"{idx_dir} not found")
+            continue
+        fts_files = list(idx_dir.glob("*.fts5.db"))
+        if fts_files:
+            names = [f.name for f in fts_files]
+            all_fts.extend(names)
+            detail = f"{len(fts_files)} in {idx_dir}"
+            if len(names) <= 6:
+                detail += f": {', '.join(names)}"
+            else:
+                detail += f": {', '.join(names[:6])} (+{len(names)-6} more)"
+            cr.ok(f"FTS5 indexes ({label})", detail)
+            cr.print_live("OK", f"FTS5 indexes ({label})", detail)
+        else:
+            cr.warn(f"FTS5 indexes ({label})", f"none found in {idx_dir}")
+            cr.print_live("WARN", f"FTS5 indexes ({label})", f"none found in {idx_dir}")
+
+    if not all_fts:
+        cr.warn("FTS5 indexes", "no FTS5 indexes found in any configured directory")
+        cr.print_live("WARN", "FTS5 indexes",
+                      "no FTS5 indexes found in any configured directory")
 
 
 def _check_agent_package(cr: _CheckResult) -> None:
