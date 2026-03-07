@@ -245,7 +245,7 @@ def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = No
     telemetry = _try_init(TelemetryStore, "_telemetry/agent_events.db")
     experience = _try_init(ExperienceStore, "_experience/agent_replay.db")
     meta = _try_init(MetaCognitiveController, "_meta_cog/agent_controller.db")
-    active = _try_init_active()
+    active = _try_init_active(backend=stack.get("backend"))
     bridge = AgentBridge(agent=agent, telemetry=telemetry, experience_store=experience,
                          active_learner=active, meta_cognitive=meta, memory=memory)
 
@@ -253,6 +253,24 @@ def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = No
     rag_callback = getattr(stack["tools"], "_rag_callback", None)
     if rag_callback and telemetry:
         stack["tools"]._rag_callback = bridge.wrap_rag_callback(rag_callback)
+
+    # Register committee strategies for active learner
+    if active and stack.get("backend"):
+        llm = stack["backend"]
+        # Strategy 1: direct LLM (low temp)
+        active.register_strategy(
+            lambda q, _b=llm: _b.chat(
+                [{"role": "user", "content": q}],
+                tools=[], temperature=0.1, max_tokens=512).content)
+        # Strategy 2: direct LLM (high temp)
+        active.register_strategy(
+            lambda q, _b=llm: _b.chat(
+                [{"role": "user", "content": q}],
+                tools=[], temperature=0.7, max_tokens=512).content)
+        # Strategy 3: RAG-augmented (if available)
+        if rag_callback:
+            active.register_strategy(
+                lambda q, _cb=rag_callback: _cb(q))
 
     return agent, bridge
 
@@ -264,9 +282,17 @@ def _try_init(cls: Optional[type], db_path: str) -> Optional[Any]:
         log.warning("%s init failed: %s", cls.__name__, exc); return None
 
 
-def _try_init_active() -> Optional[Any]:
+def _try_init_active(backend: Optional[Any] = None) -> Optional[Any]:
     if ActiveLearner is None: return None
-    try: return ActiveLearner(generate_fn=lambda q, t: "",
+    def _generate(query: str, temperature: float) -> str:
+        if backend is None: return ""
+        try:
+            resp = backend.chat(
+                [{"role": "user", "content": query}],
+                tools=[], temperature=temperature, max_tokens=512)
+            return resp.content
+        except Exception: return ""
+    try: return ActiveLearner(generate_fn=_generate,
                               db_path="_active_learn/agent_learner.db")
     except Exception as exc:
         log.warning("ActiveLearner init failed: %s", exc); return None

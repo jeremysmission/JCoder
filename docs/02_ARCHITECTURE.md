@@ -1,27 +1,70 @@
 # JCoder Architecture
 
 Document: 02_ARCHITECTURE.md
-Version: RevA (2026-02-26)
-Status: Design specification -- not yet implemented
+Version: RevB (2026-03-07)
+Status: Mixed -- sections marked IMPLEMENTED or ROADMAP
+
+Legend:
+- [IMPLEMENTED] -- code exists and tests pass
+- [PARTIAL] -- core exists, details differ from original design
+- [ROADMAP] -- design only, not yet built
 
 ---
 
 ## Table of Contents
 
-1. [System Overview](#system-overview)
-2. [System Diagram](#system-diagram)
-3. [Subsystem 1 -- CLI Agent](#subsystem-1----cli-agent)
-4. [Subsystem 2 -- RAG Engine](#subsystem-2----rag-engine)
-5. [Subsystem 3 -- Weekly Scraper](#subsystem-3----weekly-scraper)
-6. [Subsystem 4 -- 10x Code Evolver](#subsystem-4----10x-code-evolver)
-7. [Data Flow -- User Query](#data-flow----user-query)
-8. [Data Flow -- Weekly Scraper Cycle](#data-flow----weekly-scraper-cycle)
-9. [Data Flow -- 10x Evolution Cycle](#data-flow----10x-evolution-cycle)
-10. [Process Architecture](#process-architecture)
-11. [Storage Layout](#storage-layout)
-12. [Model Inventory](#model-inventory)
-13. [Reusable Code Mapping](#reusable-code-mapping)
-14. [Component Interaction Matrix](#component-interaction-matrix)
+1. [System Overview](#system-overview) [PARTIAL]
+2. [System Diagram](#system-diagram) [PARTIAL]
+3. [Subsystem 1 -- CLI Agent](#subsystem-1----cli-agent) [IMPLEMENTED]
+4. [Subsystem 2 -- RAG Engine](#subsystem-2----rag-engine) [PARTIAL]
+5. [Subsystem 3 -- Weekly Scraper](#subsystem-3----weekly-scraper) [ROADMAP]
+6. [Subsystem 4 -- 10x Code Evolver](#subsystem-4----10x-code-evolver) [ROADMAP]
+7. [Data Flow -- User Query](#data-flow----user-query) [IMPLEMENTED]
+8. [Data Flow -- Weekly Scraper Cycle](#data-flow----weekly-scraper-cycle) [ROADMAP]
+9. [Data Flow -- 10x Evolution Cycle](#data-flow----10x-evolution-cycle) [ROADMAP]
+10. [Process Architecture](#process-architecture) [PARTIAL]
+11. [Storage Layout](#storage-layout) [PARTIAL]
+12. [Model Inventory](#model-inventory) [PARTIAL]
+13. [Reusable Code Mapping](#reusable-code-mapping) [PARTIAL]
+14. [Component Interaction Matrix](#component-interaction-matrix) [PARTIAL]
+
+---
+
+## Implementation Status (2026-03-07)
+
+What exists today (~8,000+ lines, 731 tests, 0 failures):
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| CLI Agent (Click + Rich) | IMPLEMENTED | `cli/`, `agent/core.py` |
+| Agent Tools (read/write/edit/bash/glob/grep/git) | IMPLEMENTED | `agent/tools.py` |
+| Agent Bridge (self-learning pipeline) | IMPLEMENTED | `agent/bridge.py` |
+| Telemetry + Feedback Loop | IMPLEMENTED | `core/telemetry.py`, `cli/agent_cmd.py` |
+| Experience Replay | IMPLEMENTED | `core/experience_replay.py` |
+| Meta-Cognitive Controller (Thompson Sampling) | IMPLEMENTED | `core/meta_cognitive.py` |
+| Active Learner (uncertainty + committee) | IMPLEMENTED | `core/active_learner.py` |
+| Agent Memory | IMPLEMENTED | `agent/memory.py` |
+| FTS5 Index + Federated Search | IMPLEMENTED | `core/index_engine.py`, `core/federated_search.py` |
+| Index Discovery (auto-scan FTS5 DBs) | IMPLEMENTED | `core/index_discovery.py` |
+| Dual LLM Backend (Ollama + Anthropic) | IMPLEMENTED | `agent/llm_backend.py` |
+| 8 Query Profiles + Prompt Modes | IMPLEMENTED | `agent/prompts.py`, `config/` |
+| 200-Question Eval Set + Scorer | IMPLEMENTED | `evaluation/` |
+| Session Persistence | IMPLEMENTED | `agent/session.py` |
+| FIM Code Completion | IMPLEMENTED | `agent/prompts.py`, `cli/agent_cmd.py` |
+| Data Ingestion Pipeline | IMPLEMENTED | `ingestion/` |
+| RAG Engine (retrieval + generation) | PARTIAL | `core/retrieval_engine.py` |
+| FAISS GPU Vector Store | NOT YET | design only |
+| AST Chunker (tree-sitter) | NOT YET | design only |
+| Reranker Integration | NOT YET | design only |
+| Weekly Scraper | NOT YET | design only |
+| 10x Code Evolver | NOT YET | design only |
+| QLoRA Fine-Tuning | NOT YET | design only |
+| vLLM Serving | NOT YET | design only (current: Ollama) |
+
+Current model stack (Ollama-served, not vLLM):
+- Primary: Devstral Small 2 24B (Apache 2.0, 256K ctx) -- BEAST only
+- Code embedder: nomic-embed-code (768-dim) -- BEAST only
+- Toaster fallback: phi4-mini (3.8B), FTS5-only search
 
 ---
 
@@ -118,7 +161,11 @@ Weekly Scraper --[summaries]--> RAG Engine index (background, scheduled)
 
 ---
 
-## Subsystem 1 -- CLI Agent
+## Subsystem 1 -- CLI Agent [IMPLEMENTED]
+
+> **Status**: Core agent loop, tools, bridge, sessions, profiles all implemented.
+> Actual implementation uses Click + Rich (no prompt_toolkit REPL yet).
+> Tools match the design. Context window management implemented via token budgets.
 
 ### Purpose
 
@@ -188,7 +235,12 @@ while True:
 
 ---
 
-## Subsystem 2 -- RAG Engine
+## Subsystem 2 -- RAG Engine [PARTIAL]
+
+> **Status**: FTS5 search, federated search with RRF, retrieval engine, and index
+> discovery all implemented. FAISS GPU, AST chunker (tree-sitter), reranker, and
+> vLLM embedding server are NOT yet built. Current search is FTS5-only with keyword
+> fallback. Embedding requires Ollama nomic-embed-code (available on BEAST only).
 
 ### Purpose
 
@@ -314,7 +366,10 @@ grounded_query_engine.py with modifications for code-specific prompting.
 
 ---
 
-## Subsystem 3 -- Weekly Scraper
+## Subsystem 3 -- Weekly Scraper [ROADMAP]
+
+> **Status**: Design only. No code exists. Depends on BEAST hardware and vLLM
+> serving. Deferred until core agent + RAG pipeline is validated on BEAST.
 
 ### Purpose
 
@@ -376,7 +431,10 @@ re-ingested every week it stays on the trending page.
 
 ---
 
-## Subsystem 4 -- 10x Code Evolver
+## Subsystem 4 -- 10x Code Evolver [ROADMAP]
+
+> **Status**: Design only. No code exists. Depends on BEAST hardware, vLLM,
+> and QLoRA training. Deferred to Sprint 7+.
 
 ### Purpose
 
@@ -457,7 +515,10 @@ Deploy updated model to vLLM
 
 ---
 
-## Data Flow -- User Query
+## Data Flow -- User Query [IMPLEMENTED]
+
+> **Status**: Implemented. Actual flow uses Ollama (not vLLM) and FTS5 (not FAISS).
+> No reranker step yet. Otherwise matches the design.
 
 Step-by-step trace of a user asking a question in the CLI.
 
@@ -508,7 +569,9 @@ Latency budget (estimated):
 
 ---
 
-## Data Flow -- Weekly Scraper Cycle
+## Data Flow -- Weekly Scraper Cycle [ROADMAP]
+
+> **Status**: Design only. No code exists.
 
 ```
 Step 1:  Windows Task Scheduler triggers scraper (e.g., Sunday 02:00)
@@ -562,7 +625,9 @@ Step 14: Process exits. Next run in 7 days.
 
 ---
 
-## Data Flow -- 10x Evolution Cycle
+## Data Flow -- 10x Evolution Cycle [ROADMAP]
+
+> **Status**: Design only. No code exists.
 
 ```
 Step 1:  Trigger (manual or scheduled)
@@ -629,7 +694,11 @@ Step 20: Process complete.
 
 ---
 
-## Process Architecture
+## Process Architecture [PARTIAL]
+
+> **Status**: Current reality: single-process CLI agent with Ollama as model server.
+> vLLM tensor-parallel setup is ROADMAP (requires BEAST hardware). No separate
+> embedder or reranker server processes yet.
 
 JCoder runs as multiple processes that communicate via localhost HTTP and
 filesystem:
@@ -702,7 +771,11 @@ are already running. If servers are down, they fail fast with a clear error.
 
 ---
 
-## Storage Layout
+## Storage Layout [PARTIAL]
+
+> **Status**: Actual layout differs from design. Real code lives in `agent/`,
+> `core/`, `cli/`, `ingestion/`, `evaluation/`, `config/`, `scripts/` (flat, no
+> `src/` prefix). No `src/rag/`, `src/scraper/`, `src/evolver/` dirs yet.
 
 ```
 D:\JCoder\                          Project root
@@ -820,7 +893,12 @@ D:\JCoder_Data\                     Data directory (outside project root)
 
 ---
 
-## Model Inventory
+## Model Inventory [PARTIAL]
+
+> **Status**: Design specified Qwen-family models. Actual approved stack is
+> Devstral Small 2 24B (primary), phi4-mini (toaster), nomic-embed-code (embedder).
+> No vLLM -- all served via Ollama. Reranker not implemented.
+> JCoder is personal project -- no NDAA restrictions on model selection.
 
 | Model                       | Role      | Params | Quant | Size    | Context | Throughput   |
 |-----------------------------|-----------|--------|-------|---------|---------|--------------|
@@ -855,7 +933,11 @@ vllm serve qwen3-reranker-4b \
 
 ---
 
-## Reusable Code Mapping
+## Reusable Code Mapping [PARTIAL]
+
+> **Status**: Some code was borrowed from HybridRAG3 (config patterns, FTS5,
+> federated search, telemetry). LimitlessApp code has NOT been ported yet.
+> Actual reuse ratio differs from original estimates.
 
 ### From HybridRAG3 (D:\HybridRAG3) -- 9,894 lines total
 
@@ -900,7 +982,10 @@ Estimated total codebase at v1.0: approximately 16,800 lines of Python.
 
 ---
 
-## Component Interaction Matrix
+## Component Interaction Matrix [PARTIAL]
+
+> **Status**: Only CLI Agent and RAG Engine columns are meaningful today.
+> Scraper and Evolver columns are aspirational.
 
 Which subsystems depend on which shared components:
 
