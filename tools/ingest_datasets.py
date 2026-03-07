@@ -337,6 +337,101 @@ def ingest_humanevalpack(index_dir: str) -> Dict:
 
 
 # ---------------------------------------------------------------------------
+# Research papers, curated lists, and JCoder meta-docs
+# ---------------------------------------------------------------------------
+
+RESEARCH_DIRS = [
+    os.path.join(DOWNLOADS_DIR, "research_papers", "markdown"),
+    os.path.join(DOWNLOADS_DIR, "self_learning_docs"),
+]
+JCODER_DOC_PATTERNS = [
+    os.path.join("docs", "11_RESEARCH_AGENTIC_SELF_LEARNING.md"),
+    os.path.join("docs", "11a_CITATIONS_RANKED.md"),
+    os.path.join("docs", "11b_DEEP_DIVE_SUBAGENT_FINDINGS.md"),
+]
+
+
+def _collect_md_files(dirs: List[str], extra_files: List[str]) -> List[str]:
+    """Collect all .md files from directories plus explicit file paths."""
+    paths = []
+    for d in dirs:
+        if not os.path.isdir(d):
+            continue
+        for fname in sorted(os.listdir(d)):
+            if fname.endswith(".md"):
+                paths.append(os.path.join(d, fname))
+    for f in extra_files:
+        if os.path.isfile(f):
+            paths.append(f)
+    return paths
+
+
+def ingest_research(index_dir: str, jcoder_root: str = "") -> Dict:
+    """Ingest self-learning research papers, curated lists, and JCoder docs."""
+    if not jcoder_root:
+        jcoder_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    extra = [os.path.join(jcoder_root, p) for p in JCODER_DOC_PATTERNS]
+    md_files = _collect_md_files(RESEARCH_DIRS, extra)
+
+    if not md_files:
+        return {"status": "SKIP", "reason": "No markdown files found"}
+
+    t0 = time.monotonic()
+    chunks = []
+    file_stats = {}
+
+    for fpath in md_files:
+        fname = os.path.basename(fpath)
+        with open(fpath, "r", encoding="utf-8", errors="replace") as f:
+            text = f.read()
+
+        if not text.strip():
+            file_stats[fname] = {"chunks": 0, "chars": 0}
+            continue
+
+        # Determine source kind from path
+        if "research_papers" in fpath:
+            source_kind = "research_paper"
+        elif "self_learning_docs" in fpath:
+            source_kind = "curated_list"
+        else:
+            source_kind = "jcoder_meta"
+
+        vpath = f"self_learning/{source_kind}/{fname}"
+
+        for text_chunk in _sub_chunk(text):
+            chunks.append(_make_chunk(
+                text_chunk, vpath,
+                language="markdown", source_kind=source_kind,
+                original_file=fname,
+            ))
+
+        file_stats[fname] = {
+            "chunks": sum(1 for c in chunks if c.get("original_file") == fname),
+            "chars": len(text),
+        }
+
+    db_path = os.path.join(index_dir, "self_learning.fts5.db")
+    meta_path = os.path.join(index_dir, "self_learning.meta.json")
+    row_count = _build_fts5(db_path, chunks)
+    _save_meta(meta_path, chunks)
+
+    elapsed = time.monotonic() - t0
+    return {
+        "status": "OK",
+        "dataset": "self_learning_research",
+        "files": len(md_files),
+        "chunks": len(chunks),
+        "fts5_rows": row_count,
+        "db_path": db_path,
+        "db_size_mb": round(os.path.getsize(db_path) / (1024 * 1024), 2),
+        "elapsed_s": round(elapsed, 1),
+        "file_details": file_stats,
+    }
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -344,7 +439,7 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Ingest JSONL datasets into FTS5")
     parser.add_argument("--dataset", default="all",
-                        choices=["ds1000", "commitpackft", "humanevalpack", "all"])
+                        choices=["ds1000", "commitpackft", "humanevalpack", "research", "all"])
     parser.add_argument("--index-dir", default=DEFAULT_INDEX_DIR)
     parser.add_argument("--max-per-lang", type=int, default=0,
                         help="Limit records per language (0 = unlimited)")
@@ -368,6 +463,11 @@ def main():
         print("[INFO] Ingesting HumanEvalPack...")
         results["humanevalpack"] = ingest_humanevalpack(args.index_dir)
         print(f"  -> {json.dumps(results['humanevalpack'], indent=2)}")
+
+    if args.dataset in ("research", "all"):
+        print("[INFO] Ingesting self-learning research...")
+        results["research"] = ingest_research(args.index_dir)
+        print(f"  -> {json.dumps(results['research'], indent=2)}")
 
     # Summary
     print("\n" + "=" * 60)
