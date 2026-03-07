@@ -57,6 +57,12 @@ class AgentConfig:
     logging_enabled: bool = True
     log_dir: str = "logs/agent"
 
+    # Federated search
+    federated_enabled: bool = True
+    federated_rrf_k: int = 60
+    federated_index_weights: Dict[str, float] = field(default_factory=dict)
+    federated_data_dir: str = ""  # directory containing FTS5 .fts5.db files
+
     # Safety
     allowed_dirs: List[str] = field(default_factory=list)
     max_command_timeout_s: int = 120
@@ -126,6 +132,14 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
     backend, model, endpoint, api_key_env = _resolve_backend_defaults(agent_raw)
     safety = agent_raw.get("safety", {})
 
+    # Federated search (from memory.yaml)
+    fed_raw = _load_yaml(d / "memory.yaml").get("federated_search", {})
+    fed_indexes = fed_raw.get("indexes", {})
+    fed_weights = {
+        name: float(idx_cfg.get("weight", 1.0))
+        for name, idx_cfg in fed_indexes.items()
+    } if isinstance(fed_indexes, dict) else {}
+
     cfg = AgentConfig(
         backend=backend,
         model=model,
@@ -142,6 +156,11 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
         memory_knowledge_dir=memory_raw.get("knowledge_dir", "data/agent_knowledge"),
         auto_ingest=memory_raw.get("auto_ingest", True),
         dedup_threshold=memory_raw.get("dedup_threshold", 0.95),
+        # Federated search (from memory.yaml)
+        federated_enabled=bool(fed_raw),
+        federated_rrf_k=fed_raw.get("rrf_k", 60),
+        federated_index_weights=fed_weights,
+        federated_data_dir=fed_raw.get("data_dir", ""),
         # Safety (from agent.yaml)
         allowed_dirs=safety.get("allowed_dirs", []),
         max_command_timeout_s=safety.get("max_command_timeout_s", 120),
@@ -220,6 +239,16 @@ def build_agent_from_config(
         except Exception as exc:
             log.warning("[WARN] Agent memory unavailable: %s", exc)
 
+    # -- Federated search (optional) ---------------------------------------
+    federated = None
+    if config.federated_enabled:
+        try:
+            federated = _build_federated(config)
+            if federated:
+                log.info("[OK] Federated search: %d indexes", len(federated.list_indexes()))
+        except Exception as exc:
+            log.warning("[WARN] Federated search unavailable: %s", exc)
+
     # -- Session store (optional) ------------------------------------------
     session_store = None
     if config.session_enabled:
@@ -244,12 +273,30 @@ def build_agent_from_config(
     from agent.prompts import PromptBuilder
     prompt_builder = PromptBuilder(mode=config.mode)
 
+    # -- RAG callback (connects federated search to agent's rag_query tool) --
+    rag_callback = None
+    if federated:
+        def rag_callback(query: str) -> str:
+            results = federated.search(query, top_k=10)
+            if not results:
+                return "[No relevant chunks found in knowledge base]"
+            lines = []
+            for i, r in enumerate(results, 1):
+                lines.append(
+                    f"[{i}] ({r.index_name}, score={r.score:.3f})\n"
+                    f"{r.content[:800]}\n"
+                    f"Source: {r.source}"
+                )
+            return "\n\n".join(lines)
+        log.info("[OK] RAG callback wired to federated search")
+
     # -- Tool registry -----------------------------------------------------
     from agent.tools import ToolRegistry
     tools = ToolRegistry(
         working_dir=config.working_dir,
         allowed_dirs=config.allowed_dirs or [],
         memory=memory,
+        rag_callback=rag_callback,
     )
 
     # -- Agent core --------------------------------------------------------
@@ -269,8 +316,136 @@ def build_agent_from_config(
         "backend": backend,
         "tools": tools,
         "memory": memory,
+        "federated": federated,
         "session_store": session_store,
         "logger": agent_logger,
         "prompt_builder": prompt_builder,
         "config": config,
     }
+
+
+# ---------------------------------------------------------------------------
+# Federated search builder
+# ---------------------------------------------------------------------------
+
+def _discover_fts5_indexes(index_dir: str) -> Dict[str, str]:
+    """Scan a directory for *.fts5.db files and return {name: path}.
+
+    Names are derived by stripping the .fts5.db suffix from the filename.
+    Only files that actually contain a ``chunks`` FTS5 table are included.
+    """
+    import sqlite3 as _sqlite3
+
+    found: Dict[str, str] = {}
+    if not index_dir or not os.path.isdir(index_dir):
+        return found
+
+    for entry in os.scandir(index_dir):
+        if not entry.name.endswith(".fts5.db") or not entry.is_file():
+            continue
+        name = entry.name[: -len(".fts5.db")]
+        # Quick validation: does it have a chunks table?
+        try:
+            conn = _sqlite3.connect(entry.path)
+            tables = {
+                row[0]
+                for row in conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table'"
+                )
+            }
+            conn.close()
+            if "chunks" in tables:
+                found[name] = entry.path
+        except _sqlite3.Error:
+            continue
+    return found
+
+
+def _load_fts5_index(db_path: str, name: str) -> "IndexEngine":
+    """Create a sparse-only IndexEngine pointing at an existing FTS5 database.
+
+    Uses lazy loading: metadata stays empty, chunk count comes from a fast
+    COUNT query, and search_fts5_direct() fetches content on demand.
+    This avoids loading millions of rows into RAM for large indexes.
+    """
+    import json as _json
+    import sqlite3 as _sqlite3
+    from core.config import StorageConfig
+    from core.index_engine import IndexEngine
+
+    index_dir = os.path.dirname(db_path)
+    storage = StorageConfig(data_dir=index_dir, index_dir=index_dir)
+    eng = IndexEngine(dimension=768, storage=storage, sparse_only=True)
+    eng._db_path = db_path
+    eng._fts_conn = _sqlite3.connect(db_path)
+
+    # Load .meta.json only for small indexes (<1 MB).
+    # Large .meta.json files (e.g. 332K entries) eat hundreds of MB of RAM.
+    _META_SIZE_LIMIT = 1 * 1024 * 1024  # 1 MB
+    meta_path = os.path.join(index_dir, name + ".meta.json")
+    if os.path.isfile(meta_path):
+        try:
+            if os.path.getsize(meta_path) <= _META_SIZE_LIMIT:
+                with open(meta_path, "r", encoding="utf-8") as f:
+                    eng.metadata = _json.load(f)
+                return eng
+        except (OSError, ValueError):
+            pass  # fall through to lazy mode
+
+    # Lazy mode: skip counting (FTS5 COUNT(*) scans all rows).
+    # FederatedSearch uses search_fts5_direct() for these indexes.
+    # File size is a fast proxy: ~80 KB per chunk in typical FTS5.
+    try:
+        file_size_mb = os.path.getsize(db_path) / (1024 * 1024)
+        eng._fts5_chunk_count = max(1, int(file_size_mb * 12.5))  # estimate
+    except OSError:
+        eng._fts5_chunk_count = 1  # at least 1 -- we know chunks table exists
+    eng.metadata = []
+
+    return eng
+
+
+def _build_federated(config: AgentConfig):
+    """Build a FederatedSearch from discovered FTS5 indexes.
+
+    Returns None if no indexes are found or FederatedSearch cannot be created.
+    """
+    from core.federated_search import FederatedSearch
+
+    # Determine data directories to scan for FTS5 files
+    scan_dirs: List[str] = []
+    if config.federated_data_dir:
+        scan_dirs.append(config.federated_data_dir)
+    # Also scan the memory index_dir (agent_memory lives here)
+    if config.memory_index_dir:
+        scan_dirs.append(config.memory_index_dir)
+
+    # Discover all FTS5 databases across scan directories
+    all_indexes: Dict[str, str] = {}
+    for d in scan_dirs:
+        if os.path.isdir(d):
+            all_indexes.update(_discover_fts5_indexes(d))
+
+    if not all_indexes:
+        log.info("[WARN] No FTS5 indexes found; federated search disabled")
+        return None
+
+    fed = FederatedSearch(embedding_engine=None, rrf_k=config.federated_rrf_k)
+
+    for name, db_path in sorted(all_indexes.items()):
+        try:
+            idx = _load_fts5_index(db_path, name)
+            chunk_count = getattr(idx, "_fts5_chunk_count", 0) or len(idx.metadata)
+            if chunk_count == 0:
+                log.warning("[WARN] Skipping empty index: %s", name)
+                continue
+            weight = config.federated_index_weights.get(name, 1.0)
+            fed.add_index(name, idx, weight=weight)
+            log.info("[OK] Federated index: %s (%d chunks, weight=%.1f)",
+                     name, chunk_count, weight)
+        except Exception as exc:
+            log.warning("[WARN] Failed to load index %s: %s", name, exc)
+
+    if not fed.list_indexes():
+        return None
+    return fed

@@ -409,6 +409,7 @@ class TestBuildAgentFromConfig:
         "backend",
         "tools",
         "memory",
+        "federated",
         "session_store",
         "logger",
         "prompt_builder",
@@ -603,3 +604,97 @@ class TestBuildAgentGracefulDegradation:
             result = build_agent_from_config(config=cfg)
 
         assert result["logger"] is None
+
+
+# ===================================================================
+# 13. build_agent_from_config -- rag_callback wiring
+# ===================================================================
+
+
+class TestRagCallbackWiring:
+    """Federated search should be wired as rag_callback to ToolRegistry."""
+
+    @patch("agent.config_loader.create_backend", create=True)
+    @patch("agent.config_loader._build_federated")
+    def test_rag_callback_passed_when_federated_exists(
+        self, mock_build_fed, mock_create_backend, monkeypatch,
+    ):
+        mock_create_backend.return_value = MagicMock()
+        mock_build_fed.return_value = MagicMock(
+            list_indexes=MagicMock(return_value=[{"name": "test"}]),
+        )
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        cfg = AgentConfig(
+            backend="ollama",
+            model="phi4:14b",
+            endpoint="http://localhost:11434/v1",
+            memory_enabled=False,
+            session_enabled=False,
+            logging_enabled=False,
+            federated_enabled=True,
+        )
+
+        mock_prompt = MagicMock()
+        mock_prompt.build_messages.return_value = [{"content": "sys"}]
+        mock_tool_reg_cls = MagicMock(return_value=MagicMock())
+
+        with patch.dict("sys.modules", {
+            "agent.llm_backend": MagicMock(create_backend=mock_create_backend),
+            "agent.memory": MagicMock(),
+            "agent.session": MagicMock(),
+            "agent.logger": MagicMock(),
+            "agent.prompts": MagicMock(PromptBuilder=MagicMock(return_value=mock_prompt)),
+            "agent.tools": MagicMock(ToolRegistry=mock_tool_reg_cls),
+            "agent.core": MagicMock(Agent=MagicMock(return_value=MagicMock())),
+        }):
+            build_agent_from_config(config=cfg)
+
+        # ToolRegistry should have received a callable rag_callback
+        call_kwargs = mock_tool_reg_cls.call_args
+        assert call_kwargs is not None
+        assert callable(call_kwargs.kwargs.get("rag_callback")), \
+            "rag_callback should be a callable when federated search is available"
+
+    @patch("agent.config_loader.create_backend", create=True)
+    @patch("agent.config_loader._build_federated")
+    def test_rag_callback_none_when_no_federated(
+        self, mock_build_fed, mock_create_backend, monkeypatch,
+    ):
+        mock_create_backend.return_value = MagicMock()
+        mock_build_fed.return_value = None
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        cfg = AgentConfig(
+            backend="ollama",
+            model="phi4:14b",
+            endpoint="http://localhost:11434/v1",
+            memory_enabled=False,
+            session_enabled=False,
+            logging_enabled=False,
+            federated_enabled=True,
+        )
+
+        mock_prompt = MagicMock()
+        mock_prompt.build_messages.return_value = [{"content": "sys"}]
+        mock_tool_reg_cls = MagicMock(return_value=MagicMock())
+
+        with patch.dict("sys.modules", {
+            "agent.llm_backend": MagicMock(create_backend=mock_create_backend),
+            "agent.memory": MagicMock(),
+            "agent.session": MagicMock(),
+            "agent.logger": MagicMock(),
+            "agent.prompts": MagicMock(PromptBuilder=MagicMock(return_value=mock_prompt)),
+            "agent.tools": MagicMock(ToolRegistry=mock_tool_reg_cls),
+            "agent.core": MagicMock(Agent=MagicMock(return_value=MagicMock())),
+        }):
+            build_agent_from_config(config=cfg)
+
+        call_kwargs = mock_tool_reg_cls.call_args
+        assert call_kwargs is not None
+        assert call_kwargs.kwargs.get("rag_callback") is None, \
+            "rag_callback should be None when federated search is unavailable"

@@ -8,6 +8,7 @@ memory:
 
 federated_search:
   rrf_k: 60
+  data_dir: "D:/JCoder_Data/indexes"  # corpus FTS5 databases (CSN, docs, rfc)
   indexes:
     agent_memory:
       weight: 1.5  # boost personal experience

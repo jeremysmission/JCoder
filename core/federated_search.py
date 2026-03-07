@@ -178,7 +178,10 @@ class FederatedSearch:
         """Search one IndexEngine, using hybrid or FTS5-only."""
         if query_vector is not None and index.index is not None:
             return index.hybrid_search(query_vector, query_text, k)
-        # FTS5-only fallback
+        # Lazy FTS5: no metadata preloaded, query DB directly
+        if not index.metadata and hasattr(index, "search_fts5_direct"):
+            return index.search_fts5_direct(query_text, k)
+        # FTS5 with preloaded metadata (small indexes, .meta.json)
         kw_results = index.search_keywords(query_text, k)
         return [
             (score, index.metadata[idx])

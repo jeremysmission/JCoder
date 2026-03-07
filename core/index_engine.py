@@ -222,6 +222,40 @@ class IndexEngine:
                 results.append((idx, -float(rank)))
         return results
 
+    def search_fts5_direct(self, query: str, k: int) -> List[Tuple[float, Dict]]:
+        """Search FTS5 and return content directly without metadata array.
+
+        Returns list of (score, {id, content, source_path}) -- same shape
+        as what FederatedSearch._search_single expects, but fetched in a
+        single SQL query. No preloaded metadata needed.
+
+        Use this for standalone FTS5 indexes where loading all rows into
+        RAM is impractical (e.g. 500 MB+ corpus indexes).
+        """
+        or_query = self._sanitize_fts5_query(query)
+        if or_query == '""':
+            return []
+        conn = self._get_fts_conn()
+        if conn is None:
+            return []
+
+        try:
+            cursor = conn.execute(
+                "SELECT chunk_id, search_content, source_path, rank "
+                "FROM chunks WHERE search_content MATCH ? "
+                "ORDER BY rank LIMIT ?",
+                (or_query, k),
+            )
+            return [
+                (-float(rank), {"id": cid, "content": content, "source_path": src})
+                for cid, content, src, rank in cursor.fetchall()
+            ]
+        except sqlite3.OperationalError as e:
+            if not self._fts5_error_logged:
+                print(f"[WARN] FTS5 direct query error (logged once): {e}")
+                self._fts5_error_logged = True
+            return []
+
     # Intent token sets for path-prior boosting
     _INTENT_CONFIG = {"config", "yaml", "yml", "policy", "policies", "ports",
                       "models", "timeout", "cap", "budget"}
