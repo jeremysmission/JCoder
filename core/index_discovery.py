@@ -118,6 +118,10 @@ def _open_fts5_index(
 ) -> Optional[IndexEngine]:
     """Open an FTS5 database as a sparse-only IndexEngine.
 
+    Uses lazy connection -- the SQLite file is NOT opened until the
+    first query hits _get_fts_conn().  A quick validation probe checks
+    the file is a real FTS5 database (single open, immediately closed).
+
     Returns None if the database cannot be opened (logs the reason).
     """
     p = Path(db_path)
@@ -125,7 +129,7 @@ def _open_fts5_index(
         logger.warning("FTS5 database missing, skipping: %s", db_path)
         return None
 
-    # Validate the file is a readable SQLite database
+    # Quick validation: open once, probe, close immediately
     try:
         conn = sqlite3.connect(db_path)
         conn.execute("SELECT 1 FROM chunks LIMIT 1")
@@ -141,14 +145,22 @@ def _open_fts5_index(
         sparse_only=True,
     )
     engine._db_path = db_path
-    engine._fts_conn = sqlite3.connect(db_path)
+    # Leave _fts_conn=None -- _get_fts_conn() will lazy-open with
+    # check_same_thread=False when the first query arrives.
 
-    # Load metadata from companion .meta.json if it exists
+    # Load metadata from companion .meta.json if small enough
     meta_path = p.with_suffix("").with_suffix(".meta.json")
     if meta_path.exists():
-        import json
-        with open(meta_path, "r", encoding="utf-8") as fh:
-            engine.metadata = json.load(fh)
+        meta_size_mb = meta_path.stat().st_size / (1024 * 1024)
+        if meta_size_mb <= 1.0:
+            import json
+            with open(meta_path, "r", encoding="utf-8") as fh:
+                engine.metadata = json.load(fh)
+        else:
+            logger.info(
+                "Skipping large .meta.json (%.1f MB) for %s -- using lazy FTS5",
+                meta_size_mb, name,
+            )
 
     return engine
 
