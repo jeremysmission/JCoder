@@ -101,6 +101,26 @@ federated_search:
       weight: 0.7
     se_dba:
       weight: 0.8
+    se_networkengineering:
+      weight: 0.7
+    se_codegolf:
+      weight: 0.5
+    se_crypto:
+      weight: 0.7
+    se_reverseengineering:
+      weight: 0.8
+    se_ai:
+      weight: 0.9
+    se_webmasters:
+      weight: 0.6
+    se_datascience:
+      weight: 0.9
+    se_cs:
+      weight: 0.8
+    se_cstheory:
+      weight: 0.7
+    se_electronics:
+      weight: 0.6
     # Reference docs
     python_docs:
       weight: 1.2
