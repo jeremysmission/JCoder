@@ -933,3 +933,82 @@ class TestBuildEmbedder:
             result = _build_embedder(cfg)
 
         assert result is None
+
+
+# ===================================================================
+# 15. Persistence paths from YAML (goals_path, session_dir)
+# ===================================================================
+
+
+class TestPersistencePathsFromYaml:
+    """goals_path and session_dir should be read from agent.yaml."""
+
+    def test_goals_path_default(self):
+        cfg = AgentConfig()
+        assert cfg.goals_path == "data/agent_goals.json"
+
+    def test_goals_path_from_yaml(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        (tmp_path / "agent.yaml").write_text(textwrap.dedent("""\
+            agent:
+              backend: ollama
+              goals_path: "custom/goals.json"
+              session_dir: "custom/sessions"
+        """), encoding="utf-8")
+        (tmp_path / "memory.yaml").write_text("", encoding="utf-8")
+
+        cfg = load_agent_config(config_dir=str(tmp_path))
+        assert cfg.goals_path == "custom/goals.json"
+        assert cfg.session_dir == "custom/sessions"
+
+    def test_missing_goals_path_uses_default(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        (tmp_path / "agent.yaml").write_text(textwrap.dedent("""\
+            agent:
+              backend: ollama
+        """), encoding="utf-8")
+        (tmp_path / "memory.yaml").write_text("", encoding="utf-8")
+
+        cfg = load_agent_config(config_dir=str(tmp_path))
+        assert cfg.goals_path == "data/agent_goals.json"
+        assert cfg.session_dir == "data/agent_sessions"
+
+    def test_session_dir_from_yaml_reaches_session_store(self, tmp_path, monkeypatch):
+        """session_dir parsed from YAML is used by build_agent_from_config."""
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        cfg = AgentConfig(
+            backend="ollama", model="phi4:14b",
+            endpoint="http://localhost:11434/v1",
+            memory_enabled=False, session_enabled=True,
+            logging_enabled=False, federated_enabled=False,
+            session_dir="/my/custom/sessions",
+        )
+
+        mock_prompt = MagicMock()
+        mock_prompt.build_messages.return_value = [{"content": "sys"}]
+        mock_session_cls = MagicMock(return_value=MagicMock())
+        mock_create_backend = MagicMock(return_value=MagicMock())
+
+        with patch.dict("sys.modules", {
+            "agent.llm_backend": MagicMock(create_backend=mock_create_backend),
+            "agent.memory": MagicMock(),
+            "agent.session": MagicMock(SessionStore=mock_session_cls),
+            "agent.logger": MagicMock(),
+            "agent.prompts": MagicMock(PromptBuilder=MagicMock(return_value=mock_prompt)),
+            "agent.tools": MagicMock(ToolRegistry=MagicMock(return_value=MagicMock())),
+            "agent.core": MagicMock(Agent=MagicMock(return_value=MagicMock())),
+        }):
+            with patch("agent.config_loader.create_backend",
+                       mock_create_backend, create=True):
+                build_agent_from_config(config=cfg)
+
+        mock_session_cls.assert_called_once_with(store_dir="/my/custom/sessions")

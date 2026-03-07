@@ -350,3 +350,143 @@ class TestSummarizeArgs:
 
     def test_empty_args(self):
         assert _summarize_args({}) == ""
+
+
+# ---------------------------------------------------------------------------
+# create_wired_agent -- factory override semantics
+# ---------------------------------------------------------------------------
+
+
+class TestCreateWiredAgent:
+    """create_wired_agent delegates to build_agent_from_config and
+    honours caller-provided config and backend overrides."""
+
+    def test_returns_agent_and_bridge(self):
+        """Factory returns a (Agent, AgentBridge) tuple."""
+        mock_agent = MagicMock(name="MockAgent", _system_prompt="sys")
+        mock_tools = MagicMock(name="MockTools")
+        mock_tools._rag_callback = None
+        mock_stack = {
+            "agent": mock_agent,
+            "backend": MagicMock(),
+            "tools": mock_tools,
+            "memory": None,
+            "session_store": None,
+            "logger": None,
+        }
+
+        with patch("agent.config_loader.build_agent_from_config", return_value=mock_stack):
+            with patch("agent.config_loader.load_agent_config", return_value=MagicMock()):
+                agent, bridge = create_wired_agent()
+
+        assert agent is mock_agent
+        assert isinstance(bridge, AgentBridge)
+        assert bridge.agent is mock_agent
+
+    def test_caller_config_forwarded(self):
+        """Pre-built config is passed through to build_agent_from_config."""
+        from agent.config_loader import AgentConfig
+        custom_cfg = AgentConfig(backend="ollama", model="phi4:14b",
+                                 max_iterations=10)
+
+        mock_agent = MagicMock(name="MockAgent", _system_prompt="sys")
+        mock_tools = MagicMock(name="MockTools")
+        mock_tools._rag_callback = None
+        mock_stack = {
+            "agent": mock_agent,
+            "backend": MagicMock(),
+            "tools": mock_tools,
+            "memory": None,
+            "session_store": None,
+            "logger": None,
+        }
+
+        with patch("agent.config_loader.build_agent_from_config",
+                    return_value=mock_stack) as mock_build:
+            with patch("agent.config_loader.load_agent_config"):
+                create_wired_agent(config=custom_cfg)
+
+        mock_build.assert_called_once_with(custom_cfg)
+
+    def test_caller_backend_overrides_config_backend(self):
+        """When backend= is provided, the agent is rebuilt with that backend."""
+        from agent.config_loader import AgentConfig
+        custom_backend = MagicMock(name="CallerBackend")
+        cfg = AgentConfig(max_iterations=25, max_tokens_budget=100_000)
+
+        mock_tools = MagicMock(name="MockTools")
+        mock_tools._rag_callback = None
+        config_agent = MagicMock(name="ConfigAgent", _system_prompt="sys prompt")
+        mock_stack = {
+            "agent": config_agent,
+            "backend": MagicMock(name="ConfigBackend"),
+            "tools": mock_tools,
+            "memory": None,
+            "session_store": MagicMock(),
+            "logger": MagicMock(),
+        }
+
+        rebuilt_agent = MagicMock(name="RebuiltAgent")
+
+        with patch("agent.config_loader.build_agent_from_config", return_value=mock_stack):
+            with patch("agent.config_loader.load_agent_config"):
+                with patch("agent.core.Agent", return_value=rebuilt_agent) as mock_cls:
+                    agent, bridge = create_wired_agent(
+                        config=cfg, backend=custom_backend)
+
+        # Agent was rebuilt with caller's backend
+        assert agent is rebuilt_agent
+        call_kwargs = mock_cls.call_args.kwargs
+        assert call_kwargs["backend"] is custom_backend
+        assert call_kwargs["max_iterations"] == 25
+        assert call_kwargs["max_tokens_budget"] == 100_000
+
+    def test_working_dir_applied_to_config(self):
+        """working_dir parameter is set on the config before building."""
+        from agent.config_loader import AgentConfig
+        cfg = AgentConfig()
+
+        mock_agent = MagicMock(_system_prompt="sys")
+        mock_tools = MagicMock()
+        mock_tools._rag_callback = None
+        mock_stack = {
+            "agent": mock_agent,
+            "backend": MagicMock(),
+            "tools": mock_tools,
+            "memory": None,
+            "session_store": None,
+            "logger": None,
+        }
+
+        with patch("agent.config_loader.build_agent_from_config", return_value=mock_stack):
+            with patch("agent.config_loader.load_agent_config"):
+                create_wired_agent(config=cfg, working_dir="/my/project")
+
+        assert cfg.working_dir == "/my/project"
+
+    def test_no_config_loads_from_yaml(self):
+        """When config=None, load_agent_config() is called."""
+        loaded_cfg = MagicMock(name="LoadedConfig")
+        loaded_cfg.working_dir = "."
+        loaded_cfg.max_iterations = 50
+        loaded_cfg.max_tokens_budget = 500_000
+
+        mock_agent = MagicMock(_system_prompt="sys")
+        mock_tools = MagicMock()
+        mock_tools._rag_callback = None
+        mock_stack = {
+            "agent": mock_agent,
+            "backend": MagicMock(),
+            "tools": mock_tools,
+            "memory": None,
+            "session_store": None,
+            "logger": None,
+        }
+
+        with patch("agent.config_loader.build_agent_from_config",
+                    return_value=mock_stack) as mock_build:
+            with patch("agent.config_loader.load_agent_config",
+                       return_value=loaded_cfg):
+                create_wired_agent()
+
+        mock_build.assert_called_once_with(loaded_cfg)
