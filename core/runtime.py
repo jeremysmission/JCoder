@@ -38,6 +38,7 @@ class Runtime:
         temperature: float = 0.1,
         max_tokens: int = 2048,
         system_prompt: str = None,
+        max_context_tokens: int = 8192,
     ):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
@@ -46,6 +47,7 @@ class Runtime:
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self._max_context_tokens = max_context_tokens
 
     def generate(
         self,
@@ -62,8 +64,34 @@ class Runtime:
         Per-call overrides for temperature/max_tokens/system_prompt
         take precedence over instance defaults.
         """
-        context_block = "\n\n---\n\n".join(context_chunks)
         prompt = system_prompt or self._system_prompt
+
+        # Enforce context budget (~4 chars/token).
+        # Reserve room for: system prompt, question, separators, output tokens.
+        chars_per_token = 4
+        overhead_tokens = (
+            len(prompt) // chars_per_token       # system prompt
+            + len(question) // chars_per_token   # user question
+            + self._max_tokens                   # reserved for generation output
+            + 100                                # separators + framing
+        )
+        budget_tokens = max(0, self._max_context_tokens - overhead_tokens)
+        budget_chars = budget_tokens * chars_per_token
+        separator = "\n\n---\n\n"
+        sep_chars = len(separator)
+
+        trimmed = []
+        total = 0
+        for chunk in context_chunks:
+            needed = len(chunk) + (sep_chars if trimmed else 0)
+            if total + needed > budget_chars:
+                remaining = budget_chars - total - (sep_chars if trimmed else 0)
+                if remaining > 200:
+                    trimmed.append(chunk[:remaining])
+                break
+            trimmed.append(chunk)
+            total += needed
+        context_block = separator.join(trimmed)
 
         payload = {
             "model": self.model_name,

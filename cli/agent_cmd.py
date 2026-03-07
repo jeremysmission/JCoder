@@ -9,7 +9,29 @@ from rich.console import Console
 from rich.table import Table
 
 console = Console()
-_GOALS_PATH = Path("data/goals.json")
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _get_agent_config():
+    """Load agent config once for persistence path lookups."""
+    from agent.config_loader import load_agent_config
+    return load_agent_config()
+
+
+def _goals_path() -> str:
+    """Config-driven goals persistence path."""
+    try:
+        return _get_agent_config().goals_path
+    except Exception:
+        return str(_REPO_ROOT / "data" / "agent_goals.json")
+
+
+def _session_dir() -> str:
+    """Config-driven session directory."""
+    try:
+        return _get_agent_config().session_dir
+    except Exception:
+        return str(_REPO_ROOT / "data" / "agent_sessions")
 
 
 def _build_stack(backend: str = "", model: str = "", endpoint: str = "",
@@ -103,7 +125,7 @@ def study(topic, backend, model, endpoint):
     """Queue a self-study goal on TOPIC."""
     from agent.goals import GoalQueue, StudyEngine
     stack = _build_stack(backend, model, endpoint)
-    goals = GoalQueue(persist_path=str(_GOALS_PATH))
+    goals = GoalQueue(persist_path=_goals_path())
     engine = StudyEngine(agent=stack["agent"], goals=goals,
                          llm_backend=stack["backend"])
     console.print(f"[bold]Generating study goals for:[/bold] {topic}\n")
@@ -121,7 +143,7 @@ def study(topic, backend, model, endpoint):
 def goals(status):
     """List goals in the queue."""
     from agent.goals import GoalQueue
-    queue = GoalQueue(persist_path=str(_GOALS_PATH))
+    queue = GoalQueue(persist_path=_goals_path())
     items = queue.list()
     if status:
         items = [g for g in items if getattr(g, "status", "pending") == status]
@@ -143,7 +165,7 @@ def autopilot(max_goals, backend, model, endpoint):
     """Run the agent in autonomous study mode."""
     from agent.goals import GoalQueue, StudyEngine
     stack = _build_stack(backend, model, endpoint)
-    goals_q = GoalQueue(persist_path=str(_GOALS_PATH))
+    goals_q = GoalQueue(persist_path=_goals_path())
     engine = StudyEngine(agent=stack["agent"], goals=goals_q,
                          llm_backend=stack["backend"])
     console.print(f"[bold]Autopilot:[/bold] processing up to "
@@ -197,7 +219,7 @@ def resume(session_id, followup, backend, model, endpoint):
 def sessions(status, search, delete, cleanup_days):
     """List, search, or manage agent sessions."""
     from agent.session import SessionStore
-    store = SessionStore()
+    store = SessionStore(store_dir=_session_dir())
     if delete:
         ok = store.delete(delete)
         console.print(f"[bold green][OK][/bold green] Deleted {delete}" if ok

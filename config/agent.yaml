@@ -15,6 +15,10 @@ agent:
   api_model: "anthropic/claude-sonnet-4-20250514"
   api_endpoint: "https://openrouter.ai/api/v1"
 
+  # Persistence paths (relative to repo root or absolute)
+  goals_path: "data/agent_goals.json"
+  session_dir: "data/agent_sessions"
+
   safety:
     allowed_dirs: []  # empty = working_dir only
     max_command_timeout_s: 120

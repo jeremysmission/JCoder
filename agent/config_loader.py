@@ -51,13 +51,23 @@ class AgentConfig:
     auto_ingest: bool = True
     dedup_threshold: float = 0.95
 
-    # Session
+    # Persistence
+    goals_path: str = "data/agent_goals.json"
     session_enabled: bool = True
     session_dir: str = "data/agent_sessions"
 
     # Logging
     logging_enabled: bool = True
     log_dir: str = "logs/agent"
+
+    # Embedder (optional -- enables dense vector search alongside FTS5)
+    embedder_enabled: bool = False
+    embedder_endpoint: str = "http://localhost:8000/v1"
+    embedder_model: str = "nomic-embed-text"
+    embedder_code_model: str = ""   # e.g. nomic-embed-code (empty = use primary)
+    embedder_text_model: str = ""   # e.g. nomic-embed-text (empty = use primary)
+    embedder_dimension: int = 768
+    embedder_timeout: int = 120
 
     # Federated search
     federated_enabled: bool = True
@@ -135,12 +145,16 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
     safety = agent_raw.get("safety", {})
 
     # Federated search (from memory.yaml)
-    fed_raw = _load_yaml(d / "memory.yaml").get("federated_search", {})
+    mem_yaml = _load_yaml(d / "memory.yaml")
+    fed_raw = mem_yaml.get("federated_search", {})
     fed_indexes = fed_raw.get("indexes", {})
     fed_weights = {
         name: float(idx_cfg.get("weight", 1.0))
         for name, idx_cfg in fed_indexes.items()
     } if isinstance(fed_indexes, dict) else {}
+
+    # Embedder (from memory.yaml -- collocated with memory/federated settings)
+    emb_raw = mem_yaml.get("embedder", {})
 
     cfg = AgentConfig(
         backend=backend,
@@ -158,11 +172,22 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
         memory_knowledge_dir=memory_raw.get("knowledge_dir", "data/agent_knowledge"),
         auto_ingest=memory_raw.get("auto_ingest", True),
         dedup_threshold=memory_raw.get("dedup_threshold", 0.95),
+        # Embedder (from memory.yaml)
+        embedder_enabled=emb_raw.get("enabled", False),
+        embedder_endpoint=emb_raw.get("endpoint", "http://localhost:8000/v1"),
+        embedder_model=emb_raw.get("model", "nomic-embed-text"),
+        embedder_code_model=emb_raw.get("code_model", ""),
+        embedder_text_model=emb_raw.get("text_model", ""),
+        embedder_dimension=emb_raw.get("dimension", 768),
+        embedder_timeout=emb_raw.get("timeout", 120),
         # Federated search (from memory.yaml)
         federated_enabled=bool(fed_raw),
         federated_rrf_k=fed_raw.get("rrf_k", 60),
         federated_index_weights=fed_weights,
         federated_data_dir=fed_raw.get("data_dir", ""),
+        # Persistence (from agent.yaml)
+        goals_path=agent_raw.get("goals_path", "data/agent_goals.json"),
+        session_dir=agent_raw.get("session_dir", "data/agent_sessions"),
         # Safety (from agent.yaml)
         allowed_dirs=safety.get("allowed_dirs", []),
         max_command_timeout_s=safety.get("max_command_timeout_s", 120),
@@ -263,18 +288,22 @@ def build_agent_from_config(
         api_key=api_key,
     )
 
+    # -- Embedder (optional) -----------------------------------------------
+    embedder = _build_embedder(config)
+
     # -- Memory (optional) -------------------------------------------------
     memory = None
     if config.memory_enabled:
         try:
             from agent.memory import AgentMemory
             memory = AgentMemory(
-                embedding_engine=None,  # FTS5-only (no embedding server)
+                embedding_engine=embedder,
                 index_dir=config.memory_index_dir,
                 index_name=config.memory_index_name,
                 knowledge_dir=config.memory_knowledge_dir,
             )
-            log.info("[OK] Agent memory initialised (FTS5-only)")
+            mode = "dual-embedding" if embedder else "FTS5-only"
+            log.info("[OK] Agent memory initialised (%s)", mode)
         except Exception as exc:
             log.warning("[WARN] Agent memory unavailable: %s", exc)
 
@@ -282,7 +311,7 @@ def build_agent_from_config(
     federated = None
     if config.federated_enabled:
         try:
-            federated = _build_federated(config)
+            federated = _build_federated(config, embedder)
             if federated:
                 log.info("[OK] Federated search: %d indexes", len(federated.list_indexes()))
         except Exception as exc:
@@ -355,6 +384,7 @@ def build_agent_from_config(
         "backend": backend,
         "tools": tools,
         "memory": memory,
+        "embedder": embedder,
         "federated": federated,
         "session_store": session_store,
         "logger": agent_logger,
@@ -366,6 +396,47 @@ def build_agent_from_config(
 # ---------------------------------------------------------------------------
 # Federated search builder
 # ---------------------------------------------------------------------------
+
+def _build_embedder(config: AgentConfig):
+    """Build a DualEmbeddingEngine from config, or return None.
+
+    Returns None if embedder is disabled or the embedding server is
+    unreachable.  The probe inside DualEmbeddingEngine sets internal
+    flags so it degrades gracefully even if one model is missing.
+    """
+    if not config.embedder_enabled:
+        return None
+
+    try:
+        from core.config import ModelConfig
+        from core.embedding_engine import DualEmbeddingEngine
+
+        model_cfg = ModelConfig(
+            name=config.embedder_model,
+            endpoint=config.embedder_endpoint,
+            dimension=config.embedder_dimension,
+            code_model=config.embedder_code_model or None,
+            text_model=config.embedder_text_model or None,
+        )
+        engine = DualEmbeddingEngine(model_cfg, timeout=config.embedder_timeout)
+
+        if not engine._code_ok and not engine._text_ok:
+            log.warning("[WARN] Embedder configured but no models responded; "
+                        "falling back to FTS5-only")
+            engine.close()
+            return None
+
+        models = []
+        if engine._code_ok:
+            models.append(f"code={model_cfg.code_model or model_cfg.name}")
+        if engine._text_ok:
+            models.append(f"text={model_cfg.text_model or model_cfg.name}")
+        log.info("[OK] DualEmbeddingEngine: %s", ", ".join(models))
+        return engine
+    except Exception as exc:
+        log.warning("[WARN] Embedder init failed: %s", exc)
+        return None
+
 
 def _discover_fts5_indexes(index_dir: str) -> Dict[str, str]:
     """Scan a directory for *.fts5.db files and return {name: path}.
@@ -444,10 +515,12 @@ def _load_fts5_index(db_path: str, name: str) -> "IndexEngine":
     return eng
 
 
-def _build_federated(config: AgentConfig):
+def _build_federated(config: AgentConfig, embedding_engine=None):
     """Build a FederatedSearch from discovered FTS5 indexes.
 
     Returns None if no indexes are found or FederatedSearch cannot be created.
+    When embedding_engine is provided, FederatedSearch can use dense vectors
+    alongside FTS5 for hybrid retrieval.
     """
     from core.federated_search import FederatedSearch
 
@@ -469,7 +542,7 @@ def _build_federated(config: AgentConfig):
         log.info("[WARN] No FTS5 indexes found; federated search disabled")
         return None
 
-    fed = FederatedSearch(embedding_engine=None, rrf_k=config.federated_rrf_k)
+    fed = FederatedSearch(embedding_engine=embedding_engine, rrf_k=config.federated_rrf_k)
 
     for name, db_path in sorted(all_indexes.items()):
         try:

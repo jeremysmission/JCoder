@@ -43,16 +43,24 @@ class Orchestrator:
     def answer(self, question: str) -> AnswerResult:
         """
         End-to-end: retrieve context, generate answer, return with sources.
-        Raises TimeoutError if the pipeline exceeds the configured timeout.
+
+        Timeout enforcement relies on HTTP client timeouts set on the
+        retriever and runtime.  The ThreadPoolExecutor wrapper provides a
+        secondary safety net but cannot forcibly stop a blocking call --
+        the worker thread will complete in the background if the HTTP
+        client timeout fires first.
         """
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            future = pool.submit(self._answer_sync, question)
-            try:
-                return future.result(timeout=self._timeout)
-            except concurrent.futures.TimeoutError:
-                raise TimeoutError(
-                    f"Pipeline exceeded {self._timeout}s timeout"
-                )
+        pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(self._answer_sync, question)
+        try:
+            return future.result(timeout=self._timeout)
+        except concurrent.futures.TimeoutError:
+            future.cancel()
+            raise TimeoutError(
+                f"Pipeline exceeded {self._timeout}s timeout"
+            )
+        finally:
+            pool.shutdown(wait=False)
 
     def _answer_sync(self, question: str) -> AnswerResult:
         """Synchronous answer pipeline (runs inside timeout wrapper)."""

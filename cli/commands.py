@@ -14,7 +14,7 @@ from rich.table import Table
 import subprocess
 
 from core.config import load_config, _ms_to_seconds, JCoderConfig
-from core.embedding_engine import EmbeddingEngine
+from core.embedding_engine import EmbeddingEngine, DualEmbeddingEngine
 from core.eval_guard import save_hashes, verify_hashes
 from core.index_engine import IndexEngine
 from core.mock_backend import MockEmbedder, MockReranker, MockLLM
@@ -27,6 +27,16 @@ from ingestion.chunker import Chunker
 from ingestion.repo_loader import RepoLoader
 
 console = Console()
+
+
+def _build_embedder(config: JCoderConfig, gate: NetworkGate):
+    """Canonical embedder builder: DualEmbeddingEngine when dual models configured."""
+    p = config.policies
+    timeout = _ms_to_seconds(p.timeout_embed_ms)
+    cfg = config.embedder
+    if cfg.code_model or cfg.text_model:
+        return DualEmbeddingEngine(cfg, timeout=timeout, gate=gate)
+    return EmbeddingEngine(cfg, timeout=timeout, gate=gate)
 
 
 def _build_pipeline(config: JCoderConfig, mock: bool = False,
@@ -42,16 +52,17 @@ def _build_pipeline(config: JCoderConfig, mock: bool = False,
         reranker = MockReranker()
         runtime = MockLLM()
     else:
-        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(p.timeout_embed_ms), gate=gate)
+        embedder = _build_embedder(config, gate)
         reranker = Reranker(config.reranker, _ms_to_seconds(p.timeout_rerank_ms), gate=gate)
         runtime = Runtime(config.llm, _ms_to_seconds(p.timeout_generate_ms), gate=gate,
                           max_tokens=p.max_generation_tokens,
-                          temperature=temperature)
+                          temperature=temperature,
+                          max_context_tokens=p.max_context_tokens)
 
     index = IndexEngine(
         dim, config.storage, config.retrieval.rrf_k,
         gpu_safety_margin_mb=p.gpu_memory_safety_margin_mb,
-        sparse_only=mock,
+        sparse_only=mock,  # IndexEngine also auto-enables sparse_only when faiss unavailable
     )
     retriever = RetrievalEngine(
         embedder, index, reranker,
@@ -108,7 +119,7 @@ def ingest(ctx, path: str, index_name: str):
         console.print("Using mock embedder (no vLLM)")
         embedder = MockEmbedder(dimension=dim)
     else:
-        embedder = EmbeddingEngine(config.embedder, _ms_to_seconds(config.policies.timeout_embed_ms), gate=gate)
+        embedder = _build_embedder(config, gate)
 
     console.print(f"Embedding {len(chunks)} chunks...")
 

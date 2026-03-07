@@ -99,7 +99,8 @@ class IndexEngine:
             self._flat_index = None
             self._gpu_available = False
             self.index = None
-            print("[WARN] faiss not installed. Dense vector search disabled.")
+            self._sparse_only = True  # auto-degrade to FTS5-only
+            print("[WARN] faiss not installed. Dense vector search disabled, using FTS5-only.")
             return
         self._flat_index = faiss.IndexFlatIP(dimension)
         self._gpu_available = False
@@ -151,15 +152,17 @@ class IndexEngine:
                 f"index dimension {self.dimension}"
             )
 
-        self.index.add(vectors)
+        if self.index is not None:
+            self.index.add(vectors)
         self.metadata.extend(metadata)
 
     def search_vectors(self, query_vector: np.ndarray, k: int) -> List[Tuple[int, float]]:
         """
         Dense vector search via FAISS.
         Returns list of (metadata_index, score).
+        Returns [] when FAISS is unavailable.
         """
-        if len(self.metadata) == 0:
+        if self.index is None or len(self.metadata) == 0:
             return []
         query_vector = np.array([query_vector], dtype=np.float32)
         scores, indices = self.index.search(query_vector, min(k, len(self.metadata)))
@@ -380,12 +383,13 @@ class IndexEngine:
         path = os.path.join(self.storage.index_dir, name)
         os.makedirs(self.storage.index_dir, exist_ok=True)
 
-        # If GPU index, convert back to CPU for saving
-        if self._gpu_available:
-            cpu_index = faiss.index_gpu_to_cpu(self.index)
-            faiss.write_index(cpu_index, path + ".faiss")
-        else:
-            faiss.write_index(self.index, path + ".faiss")
+        # Save FAISS index if available
+        if self.index is not None and faiss is not None:
+            if self._gpu_available:
+                cpu_index = faiss.index_gpu_to_cpu(self.index)
+                faiss.write_index(cpu_index, path + ".faiss")
+            else:
+                faiss.write_index(self.index, path + ".faiss")
 
         with open(path + ".meta.json", "w", encoding="utf-8") as f:
             json.dump(self.metadata, f)
@@ -399,15 +403,18 @@ class IndexEngine:
         self._close_fts_conn()
         path = os.path.join(self.storage.index_dir, name)
 
-        cpu_index = faiss.read_index(path + ".faiss")
-        if self._gpu_available:
-            try:
-                self.index = faiss.index_cpu_to_all_gpus(cpu_index)
-            except RuntimeError as e:
-                print(f"[WARN] FAISS GPU reload failed: {e}. Using CPU.")
+        # Load FAISS index if available
+        faiss_path = path + ".faiss"
+        if faiss is not None and os.path.exists(faiss_path):
+            cpu_index = faiss.read_index(faiss_path)
+            if self._gpu_available:
+                try:
+                    self.index = faiss.index_cpu_to_all_gpus(cpu_index)
+                except RuntimeError as e:
+                    print(f"[WARN] FAISS GPU reload failed: {e}. Using CPU.")
+                    self.index = cpu_index
+            else:
                 self.index = cpu_index
-        else:
-            self.index = cpu_index
 
         with open(path + ".meta.json", "r", encoding="utf-8") as f:
             self.metadata = json.load(f)

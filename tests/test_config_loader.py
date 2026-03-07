@@ -411,6 +411,7 @@ class TestBuildAgentFromConfig:
         "backend",
         "tools",
         "memory",
+        "embedder",
         "federated",
         "session_store",
         "logger",
@@ -771,3 +772,164 @@ class TestLoadProfiles:
         cfg = AgentConfig()
         assert cfg.temperature == 0.1
         assert cfg.top_k == 10
+
+
+# ===================================================================
+# 14. Embedder config
+# ===================================================================
+
+
+class TestEmbedderConfig:
+    """Tests for embedder configuration fields and parsing."""
+
+    def test_embedder_defaults_disabled(self):
+        """Embedder is disabled by default."""
+        cfg = AgentConfig()
+        assert cfg.embedder_enabled is False
+        assert cfg.embedder_endpoint == "http://localhost:8000/v1"
+        assert cfg.embedder_model == "nomic-embed-text"
+        assert cfg.embedder_code_model == ""
+        assert cfg.embedder_text_model == ""
+        assert cfg.embedder_dimension == 768
+        assert cfg.embedder_timeout == 120
+
+    def test_embedder_parsed_from_memory_yaml(self, tmp_path, monkeypatch):
+        """Embedder section in memory.yaml is parsed into AgentConfig."""
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        (tmp_path / "agent.yaml").write_text("agent:\n  backend: ollama\n",
+                                              encoding="utf-8")
+        (tmp_path / "memory.yaml").write_text(textwrap.dedent("""\
+            memory:
+              index_name: test
+            embedder:
+              enabled: true
+              endpoint: "http://my-server:9000/v1"
+              model: "custom-embed"
+              code_model: "code-embed-v2"
+              text_model: "text-embed-v2"
+              dimension: 1024
+              timeout: 60
+        """), encoding="utf-8")
+
+        cfg = load_agent_config(config_dir=str(tmp_path))
+        assert cfg.embedder_enabled is True
+        assert cfg.embedder_endpoint == "http://my-server:9000/v1"
+        assert cfg.embedder_model == "custom-embed"
+        assert cfg.embedder_code_model == "code-embed-v2"
+        assert cfg.embedder_text_model == "text-embed-v2"
+        assert cfg.embedder_dimension == 1024
+        assert cfg.embedder_timeout == 60
+
+    def test_missing_embedder_section_uses_defaults(self, tmp_path, monkeypatch):
+        """No embedder section in memory.yaml means disabled with defaults."""
+        monkeypatch.delenv("JCODER_AGENT_BACKEND", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_MODEL", raising=False)
+        monkeypatch.delenv("JCODER_AGENT_ENDPOINT", raising=False)
+
+        (tmp_path / "agent.yaml").write_text("agent:\n  backend: ollama\n",
+                                              encoding="utf-8")
+        (tmp_path / "memory.yaml").write_text("memory:\n  index_name: test\n",
+                                               encoding="utf-8")
+
+        cfg = load_agent_config(config_dir=str(tmp_path))
+        assert cfg.embedder_enabled is False
+        assert cfg.embedder_model == "nomic-embed-text"
+
+
+class TestBuildEmbedder:
+    """Tests for _build_embedder() factory function."""
+
+    def test_returns_none_when_disabled(self):
+        from agent.config_loader import _build_embedder
+        cfg = AgentConfig(embedder_enabled=False)
+        assert _build_embedder(cfg) is None
+
+    def test_returns_none_when_no_models_respond(self):
+        from agent.config_loader import _build_embedder
+        cfg = AgentConfig(
+            embedder_enabled=True,
+            embedder_endpoint="http://localhost:99999/v1",
+        )
+        # DualEmbeddingEngine probes will fail on bad port
+        mock_engine = MagicMock()
+        mock_engine._code_ok = False
+        mock_engine._text_ok = False
+        mock_engine.close = MagicMock()
+
+        with patch("agent.config_loader.DualEmbeddingEngine",
+                   create=True, return_value=mock_engine) as mock_cls:
+            with patch.dict("sys.modules", {
+                "core.config": MagicMock(ModelConfig=MagicMock()),
+                "core.embedding_engine": MagicMock(
+                    DualEmbeddingEngine=mock_cls
+                ),
+            }):
+                result = _build_embedder(cfg)
+
+        assert result is None
+        mock_engine.close.assert_called_once()
+
+    def test_returns_engine_when_models_respond(self):
+        from agent.config_loader import _build_embedder
+        cfg = AgentConfig(
+            embedder_enabled=True,
+            embedder_endpoint="http://localhost:8000/v1",
+            embedder_model="nomic-embed-text",
+            embedder_code_model="nomic-embed-code",
+        )
+
+        mock_engine = MagicMock()
+        mock_engine._code_ok = True
+        mock_engine._text_ok = True
+
+        with patch("agent.config_loader.DualEmbeddingEngine",
+                   create=True, return_value=mock_engine) as mock_cls:
+            with patch.dict("sys.modules", {
+                "core.config": MagicMock(ModelConfig=MagicMock()),
+                "core.embedding_engine": MagicMock(
+                    DualEmbeddingEngine=mock_cls
+                ),
+            }):
+                result = _build_embedder(cfg)
+
+        assert result is mock_engine
+
+    def test_returns_engine_with_partial_models(self):
+        """Only code model responding still returns a working engine."""
+        from agent.config_loader import _build_embedder
+        cfg = AgentConfig(
+            embedder_enabled=True,
+            embedder_endpoint="http://localhost:8000/v1",
+        )
+
+        mock_engine = MagicMock()
+        mock_engine._code_ok = True
+        mock_engine._text_ok = False
+
+        with patch("agent.config_loader.DualEmbeddingEngine",
+                   create=True, return_value=mock_engine) as mock_cls:
+            with patch.dict("sys.modules", {
+                "core.config": MagicMock(ModelConfig=MagicMock()),
+                "core.embedding_engine": MagicMock(
+                    DualEmbeddingEngine=mock_cls
+                ),
+            }):
+                result = _build_embedder(cfg)
+
+        assert result is mock_engine
+
+    def test_import_failure_returns_none(self):
+        """If core.config or core.embedding_engine can't import, returns None."""
+        from agent.config_loader import _build_embedder
+        cfg = AgentConfig(embedder_enabled=True)
+
+        with patch.dict("sys.modules", {
+            "core.config": None,  # simulate ImportError
+        }):
+            # The import inside _build_embedder will fail
+            result = _build_embedder(cfg)
+
+        assert result is None

@@ -192,49 +192,68 @@ class AgentBridge:
 
 def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = None,
                        working_dir: str = ".") -> Tuple[Agent, AgentBridge]:
-    """Create an Agent fully wired to self-learning. Returns (agent, bridge)."""
-    # Config
-    if config is None and load_config is not None:
-        try: config = load_config()
-        except Exception as exc: log.warning("Config load failed: %s", exc)
-    # Backend
-    if backend is None and create_backend is not None:
+    """Create an Agent fully wired to self-learning. Returns (agent, bridge).
+
+    Delegates to config_loader.build_agent_from_config() for the canonical
+    stack (federated search, RAG callback, memory, sessions), then layers
+    on bridge-specific self-learning modules (telemetry, experience replay,
+    meta-cognitive, active learner).
+
+    Parameters
+    ----------
+    config : optional
+        Pre-built AgentConfig. If None, loads from YAML.
+    backend : optional
+        Pre-built LLM backend. If provided, overrides config-driven backend.
+    working_dir : str
+        Working directory for file tools.
+    """
+    from agent.config_loader import load_agent_config, build_agent_from_config
+
+    # Use caller's config or load from YAML
+    agent_config = config
+    if agent_config is None:
         try:
-            if config is not None:
-                backend = create_backend(backend_type="openai",
-                    endpoint=config.llm.endpoint, model=config.llm.name)
-            else:
-                backend = create_backend()
+            agent_config = load_agent_config()
         except Exception as exc:
-            raise RuntimeError(f"Cannot create LLM backend: {exc}") from exc
-    if backend is None:
-        raise RuntimeError("No LLM backend available. Provide one explicitly.")
-    # RAG callback via SmartOrchestrator
-    rag_callback = None
-    if SmartOrchestrator is not None and config is not None:
-        try:
-            from core.retrieval_engine import RetrievalEngine
-            from core.runtime import Runtime
-            orch = SmartOrchestrator(retriever=RetrievalEngine(config),
-                                     runtime=Runtime(config))
-            rag_callback = lambda q: orch.answer(q).answer  # noqa: E731
-            log.info("RAG wired via SmartOrchestrator")
-        except Exception as exc:
-            log.warning("SmartOrchestrator unavailable: %s", exc)
-    # Agent memory (optional)
-    memory = _try_init_memory()
-    # Assemble
-    tools = ToolRegistry(working_dir=working_dir, rag_callback=rag_callback,
-                         memory=memory)
-    agent = Agent(backend=backend, tools=tools)
+            log.warning("Agent config load failed: %s", exc)
+    if agent_config is not None and working_dir != ".":
+        agent_config.working_dir = working_dir
+
+    stack = build_agent_from_config(agent_config)
+
+    # Honor caller-provided backend by replacing the one from config
+    if backend is not None:
+        stack["backend"] = backend
+        # Rebuild agent with caller's backend
+        from agent.core import Agent
+        agent = Agent(
+            backend=backend,
+            tools=stack["tools"],
+            system_prompt=getattr(stack["agent"], "_system_prompt", None),
+            max_iterations=agent_config.max_iterations if agent_config else 50,
+            max_tokens_budget=agent_config.max_tokens_budget if agent_config else 500_000,
+            session_store=stack.get("session_store"),
+            logger=stack.get("logger"),
+        )
+    else:
+        agent = stack["agent"]
+
+    memory = stack.get("memory")
+
+    # Layer on bridge-specific self-learning modules
     telemetry = _try_init(TelemetryStore, "_telemetry/agent_events.db")
     experience = _try_init(ExperienceStore, "_experience/agent_replay.db")
     meta = _try_init(MetaCognitiveController, "_meta_cog/agent_controller.db")
     active = _try_init_active()
     bridge = AgentBridge(agent=agent, telemetry=telemetry, experience_store=experience,
                          active_learner=active, meta_cognitive=meta, memory=memory)
+
+    # Wrap RAG callback with telemetry if both are available
+    rag_callback = getattr(stack["tools"], "_rag_callback", None)
     if rag_callback and telemetry:
-        tools._rag_callback = bridge.wrap_rag_callback(rag_callback)
+        stack["tools"]._rag_callback = bridge.wrap_rag_callback(rag_callback)
+
     return agent, bridge
 
 
