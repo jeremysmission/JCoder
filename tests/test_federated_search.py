@@ -25,10 +25,10 @@ class TestSearchCache:
         assert cache.get("nonexistent") is None
 
     def test_ttl_expiry(self):
-        cache = _SearchCache(ttl_s=0.05)
+        cache = _SearchCache(ttl_s=0.2)
         cache.put("k1", ["data"])
         assert cache.get("k1") == ["data"]
-        time.sleep(0.06)
+        time.sleep(0.3)
         assert cache.get("k1") is None
 
     def test_eviction_on_full(self):
