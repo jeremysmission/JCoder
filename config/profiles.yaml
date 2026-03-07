@@ -1,0 +1,67 @@
+# JCoder Query Profiles
+# Each profile sets optimal defaults for a type of coding task.
+# CLI usage: jcoder agent run --profile code "how to sort a list"
+#
+# Fields:
+#   mode           - prompt template (agent, code, qa, review, explain, debug, refactor)
+#   temperature    - LLM temperature (lower = more deterministic)
+#   max_iterations - iteration cap for agent loop
+#   top_k          - number of RAG chunks to retrieve
+#   description    - human-readable summary
+
+profiles:
+  code:
+    mode: code
+    temperature: 0.1
+    max_iterations: 30
+    top_k: 10
+    description: "Code Q&A with RAG-grounded answers"
+
+  debug:
+    mode: debug
+    temperature: 0.1
+    max_iterations: 40
+    top_k: 15
+    description: "Error diagnosis and fix suggestions"
+
+  review:
+    mode: review
+    temperature: 0.2
+    max_iterations: 20
+    top_k: 5
+    description: "Code review for bugs, security, performance"
+
+  explain:
+    mode: explain
+    temperature: 0.3
+    max_iterations: 15
+    top_k: 5
+    description: "Code explanation for learning"
+
+  refactor:
+    mode: refactor
+    temperature: 0.2
+    max_iterations: 30
+    top_k: 5
+    description: "Structure improvement without behavior change"
+
+  agent:
+    mode: agent
+    temperature: 0.1
+    max_iterations: 50
+    top_k: 10
+    description: "Full autonomous agent (read, write, execute, test)"
+
+  quick:
+    mode: qa
+    temperature: 0.1
+    max_iterations: 5
+    top_k: 5
+    description: "Fast lookup -- minimal iterations, low context"
+
+  deep:
+    mode: agent
+    temperature: 0.1
+    max_iterations: 100
+    top_k: 20
+    description: "Deep research -- high iterations, broad context"

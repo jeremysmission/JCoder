@@ -21,8 +21,10 @@ from agent.config_loader import (
     _find_config_dir,
     _load_yaml,
     _resolve_backend_defaults,
+    apply_profile,
     build_agent_from_config,
     load_agent_config,
+    load_profiles,
 )
 
 
@@ -701,3 +703,71 @@ class TestRagCallbackWiring:
         assert call_kwargs is not None
         assert call_kwargs.kwargs.get("rag_callback") is None, \
             "rag_callback should be None when federated search is unavailable"
+
+
+# ===================================================================
+# 10. Query Profiles
+# ===================================================================
+
+class TestLoadProfiles:
+    """Tests for load_profiles() and apply_profile()."""
+
+    def test_load_profiles_from_project(self):
+        """Profiles load from the actual config/profiles.yaml."""
+        profiles = load_profiles()
+        assert "code" in profiles
+        assert "debug" in profiles
+        assert "agent" in profiles
+        assert profiles["code"]["mode"] == "code"
+
+    def test_load_profiles_empty_when_missing(self, tmp_path):
+        """Missing profiles.yaml returns empty dict."""
+        profiles = load_profiles(config_dir=str(tmp_path))
+        assert profiles == {}
+
+    def test_apply_profile_sets_fields(self):
+        """apply_profile overwrites mode, temperature, max_iterations, top_k."""
+        cfg = AgentConfig()
+        apply_profile(cfg, "code")
+        assert cfg.mode == "code"
+        assert cfg.temperature == 0.1
+        assert cfg.max_iterations == 30
+        assert cfg.top_k == 10
+
+    def test_apply_profile_deep(self):
+        cfg = AgentConfig()
+        apply_profile(cfg, "deep")
+        assert cfg.max_iterations == 100
+        assert cfg.top_k == 20
+
+    def test_apply_profile_quick(self):
+        cfg = AgentConfig()
+        apply_profile(cfg, "quick")
+        assert cfg.mode == "qa"
+        assert cfg.max_iterations == 5
+
+    def test_apply_unknown_profile_raises(self):
+        cfg = AgentConfig()
+        with pytest.raises(KeyError, match="Unknown profile"):
+            apply_profile(cfg, "nonexistent_profile_xyz")
+
+    def test_apply_profile_preserves_unrelated_fields(self):
+        """Profile application should not change backend, model, etc."""
+        cfg = AgentConfig(backend="anthropic", model="claude-test")
+        apply_profile(cfg, "code")
+        assert cfg.backend == "anthropic"
+        assert cfg.model == "claude-test"
+
+    def test_all_profiles_have_required_fields(self):
+        """Every profile must have mode, temperature, max_iterations, top_k."""
+        profiles = load_profiles()
+        required = {"mode", "temperature", "max_iterations", "top_k"}
+        for name, p in profiles.items():
+            for fld in required:
+                assert fld in p, f"Profile {name!r} missing {fld!r}"
+
+    def test_config_defaults_include_new_fields(self):
+        """AgentConfig has temperature and top_k with sensible defaults."""
+        cfg = AgentConfig()
+        assert cfg.temperature == 0.1
+        assert cfg.top_k == 10

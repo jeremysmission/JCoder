@@ -40,6 +40,8 @@ class AgentConfig:
     max_tokens_budget: int = 500_000
     working_dir: str = "."
     mode: str = "agent"
+    temperature: float = 0.1
+    top_k: int = 10
 
     # Memory
     memory_enabled: bool = True
@@ -178,6 +180,43 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
         cfg.endpoint = env_endpoint
 
     return cfg
+
+
+# ---------------------------------------------------------------------------
+# Profile loader
+# ---------------------------------------------------------------------------
+
+def load_profiles(config_dir: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
+    """Load query profiles from config/profiles.yaml.
+
+    Returns a dict of {profile_name: {mode, temperature, max_iterations, top_k, description}}.
+    Returns empty dict if the file is missing.
+    """
+    d = _find_config_dir(config_dir)
+    raw = _load_yaml(d / "profiles.yaml")
+    return raw.get("profiles", {})
+
+
+def apply_profile(config: AgentConfig, profile_name: str,
+                  config_dir: Optional[str] = None) -> AgentConfig:
+    """Apply a named profile's settings to an AgentConfig.
+
+    Overwrites mode, temperature, max_iterations, and top_k.
+    Returns the modified config (same object, mutated in place).
+    Raises KeyError if the profile name is not found.
+    """
+    profiles = load_profiles(config_dir)
+    if profile_name not in profiles:
+        available = ", ".join(sorted(profiles.keys())) or "(none)"
+        raise KeyError(
+            f"Unknown profile {profile_name!r}. Available: {available}"
+        )
+    p = profiles[profile_name]
+    config.mode = p.get("mode", config.mode)
+    config.temperature = float(p.get("temperature", config.temperature))
+    config.max_iterations = int(p.get("max_iterations", config.max_iterations))
+    config.top_k = int(p.get("top_k", config.top_k))
+    return config
 
 
 # ---------------------------------------------------------------------------

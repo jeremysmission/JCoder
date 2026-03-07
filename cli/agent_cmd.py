@@ -14,19 +14,25 @@ _GOALS_PATH = Path("data/goals.json")
 
 def _build_stack(backend: str = "", model: str = "", endpoint: str = "",
                  max_iterations: int = 50, working_dir: str = ".",
-                 mode: str = "agent"):
+                 mode: str = "agent", profile: str = ""):
     """Build the full agent stack via config_loader, with CLI overrides."""
-    from agent.config_loader import load_agent_config, build_agent_from_config
+    from agent.config_loader import (
+        load_agent_config, build_agent_from_config, apply_profile,
+    )
     cfg = load_agent_config()
+    if profile:
+        apply_profile(cfg, profile)
     if backend:
         cfg.backend = backend
     if model:
         cfg.model = model
     if endpoint:
         cfg.endpoint = endpoint
-    cfg.max_iterations = max_iterations
+    if max_iterations != 50:  # only override if explicitly changed
+        cfg.max_iterations = max_iterations
     cfg.working_dir = working_dir
-    cfg.mode = mode
+    if mode != "agent" or not profile:  # explicit --mode overrides profile
+        cfg.mode = mode
     stack = build_agent_from_config(cfg)
     return stack
 
@@ -52,23 +58,27 @@ def agent_cmd():
 
 @agent_cmd.command("run")
 @click.argument("task")
+@click.option("--profile", default="",
+              help="Query profile: code, debug, review, explain, refactor, quick, deep")
 @click.option("--mode", default="agent",
               type=click.Choice(["agent", "code", "qa", "review", "explain", "debug", "refactor"]),
-              help="Prompt mode for the agent")
+              help="Prompt mode (overrides profile mode)")
 @click.option("--backend", default="",
               help="LLM backend: openai, ollama, anthropic (default from config)")
 @click.option("--model", default="", help="Model name (default from config)")
 @click.option("--endpoint", default="", help="API endpoint URL")
 @click.option("--max-iterations", default=50, type=int)
 @click.option("--working-dir", default=".", help="Working directory for agent")
-def run(task, mode, backend, model, endpoint, max_iterations, working_dir):
+def run(task, profile, mode, backend, model, endpoint, max_iterations, working_dir):
     """Run the agent on a single TASK."""
     stack = _build_stack(backend, model, endpoint, max_iterations,
-                         working_dir, mode)
+                         working_dir, mode, profile)
+    cfg = stack["config"]
     agent = stack["agent"]
     console.print(f"[bold]Agent starting:[/bold] {task[:80]}")
-    console.print(f"  mode={mode}  backend={backend or '(config)'}  "
-                  f"model={model or '(auto)'}  max_iter={max_iterations}\n")
+    label = f"profile={profile}" if profile else f"mode={cfg.mode}"
+    console.print(f"  {label}  backend={backend or '(config)'}  "
+                  f"model={model or '(auto)'}  max_iter={cfg.max_iterations}\n")
     result = agent.run(task)
     tag = "[bold green][OK]" if result.success else "[bold red][FAIL]"
     console.print(f"\n{tag} {result.iterations} iterations, "
