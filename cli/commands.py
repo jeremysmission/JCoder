@@ -698,6 +698,7 @@ from cli.agent_cmd import agent_cmd        # noqa: E402
 from cli.ingest_cmd import ingest_corpus_cmd  # noqa: E402
 from cli.doctor_cmd import doctor_cmd      # noqa: E402
 from cli.repl_cmd import interactive       # noqa: E402
+from cli.bench_cmd import bench_search     # noqa: E402
 
 cli.add_command(evolve_cmd)
 cli.add_command(harvest_cmd)
@@ -706,3 +707,4 @@ cli.add_command(agent_cmd)
 cli.add_command(ingest_corpus_cmd)
 cli.add_command(doctor_cmd)
 cli.add_command(interactive)
+cli.add_command(bench_search)
