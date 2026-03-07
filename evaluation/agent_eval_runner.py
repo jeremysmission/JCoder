@@ -265,7 +265,7 @@ class AgentEvalRunner:
 def main():
     import argparse
     ap = argparse.ArgumentParser(description="JCoder Agent Eval Runner")
-    ap.add_argument("--eval-set", default=str(Path(__file__).parent / "agent_eval_set.json"))
+    ap.add_argument("--eval-set", default=str(Path(__file__).parent / "agent_eval_set_200.json"))
     ap.add_argument("--output-dir", default="evaluation/results")
     ap.add_argument("--validate-only", action="store_true", help="Just validate the eval set")
     ap.add_argument("--category", action="append", help="Filter by category (repeatable)")
