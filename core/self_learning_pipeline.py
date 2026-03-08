@@ -41,7 +41,10 @@ Each module can be independently disabled by passing None.
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
+
+log = logging.getLogger(__name__)
 from dataclasses import asdict, dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -258,8 +261,8 @@ class SelfLearningPipeline:
                     question, chunks, response
                 )
                 confidence = reflection_scores.get("confidence", confidence)
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # --- Step 6: Confidence Gating ---
         if confidence < self.confidence_gate:
@@ -313,8 +316,8 @@ class SelfLearningPipeline:
                     reflection_useful=reflection_scores.get("useful", 0),
                 )
                 self.telemetry.log(event)
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # Active learning scoring
         if self.active:
@@ -387,14 +390,14 @@ class SelfLearningPipeline:
                 report["strategy_preferences"] = (
                     self.meta.best_strategy_per_type()
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # Continual learning health
         if self.continual and hasattr(self.continual, "health_report"):
             try:
                 report["continual_health"] = self.continual.health_report()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         return report

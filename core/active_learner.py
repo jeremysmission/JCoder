@@ -29,9 +29,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 import sqlite3
 import time
+
+log = logging.getLogger(__name__)
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -205,7 +208,8 @@ class ActiveLearner:
             try:
                 answer = self.generate_fn(query, temp)
                 answers.append(answer)
-            except Exception:
+            except Exception as exc:
+                log.debug("Committee gen failed: %s", exc)
                 answers.append("")
 
         if not answers:
@@ -230,7 +234,8 @@ class ActiveLearner:
             try:
                 answer = fn(query)
                 strategy_answers[f"strategy_{i}"] = answer
-            except Exception:
+            except Exception as exc:
+                log.debug("Strategy gen failed: %s", exc)
                 strategy_answers[f"strategy_{i}"] = ""
 
         if len(strategy_answers) < 2:
@@ -293,8 +298,8 @@ class ActiveLearner:
                     time.time(),
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Persist failed: %s", exc)
 
     def stats(self) -> Dict[str, Any]:
         with self._connect() as conn:

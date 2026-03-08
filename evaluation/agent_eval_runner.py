@@ -57,18 +57,15 @@ class AgentEvalRunner:
         return "```" in text
 
     @staticmethod
-    def _keyword_ratio(text: str, keywords: List[str]) -> float:
-        if not keywords:
+    def _token_ratio(text: str, tokens: List[str]) -> float:
+        if not tokens:
             return 1.0
         low = text.lower()
-        return sum(1 for kw in keywords if kw.lower() in low) / len(keywords)
+        return sum(1 for t in tokens if t.lower() in low) / len(tokens)
 
-    @staticmethod
-    def _import_ratio(text: str, imports: List[str]) -> float:
-        if not imports:
-            return 1.0
-        low = text.lower()
-        return sum(1 for imp in imports if imp.lower() in low) / len(imports)
+    # Keep aliases so callers/tests don't break
+    _keyword_ratio = _token_ratio
+    _import_ratio = _token_ratio
 
     @staticmethod
     def _extract_python(text: str) -> str:

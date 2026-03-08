@@ -118,14 +118,17 @@ class TestOnTaskComplete:
         bridge.on_task_complete("Task A", result_ok)
         exp.store.assert_called_once()
 
-    def test_experience_skipped_on_failure(self, mock_agent):
-        """Failed tasks are NOT stored in experience replay."""
+    def test_experience_stored_on_failure(self, mock_agent):
+        """Failed tasks ARE stored in experience replay with confidence=0."""
         exp = MagicMock()
         bridge = AgentBridge(agent=mock_agent, experience_store=exp)
 
         result_fail = _make_result(success=False)
         bridge.on_task_complete("Task B", result_fail)
-        exp.store.assert_not_called()
+        exp.store.assert_called_once()
+        call_kwargs = exp.store.call_args.kwargs
+        assert call_kwargs["confidence"] == 0.0
+        assert call_kwargs["answer"].startswith("[FAIL]")
 
     def test_meta_cognitive_outcome_reported(self, mock_agent):
         """Meta-cognitive controller receives outcome report."""
@@ -490,3 +493,95 @@ class TestCreateWiredAgent:
                 create_wired_agent()
 
         mock_build.assert_called_once_with(loaded_cfg)
+
+
+# ---------------------------------------------------------------------------
+# QD archive integration
+# ---------------------------------------------------------------------------
+
+class TestQDArchive:
+
+    def test_qd_tracked_in_modules(self, mock_agent):
+        """QD archive appears in active modules list."""
+        qd = MagicMock()
+        bridge = AgentBridge(agent=mock_agent, qd_archive=qd)
+        assert bridge.qd_archive is qd
+
+    def test_qd_stored_on_success(self, mock_agent):
+        """QD archive receives solution after successful task."""
+        qd = MagicMock()
+        bridge = AgentBridge(agent=mock_agent, qd_archive=qd)
+
+        with patch("agent.bridge.QDSolution", MagicMock()):
+            with patch("agent.bridge.compute_behavior",
+                       return_value={"complexity": 0.3, "answer_type": 0.25,
+                                     "retrieval_conf": 1.0}):
+                with patch("agent.bridge.classify_query") as mock_cls:
+                    mock_cls.return_value = MagicMock(
+                        complexity=0.3, query_type="explain")
+                    result = _make_result(success=True)
+                    bridge.on_task_complete("Explain decorators", result)
+
+        qd.add.assert_called_once()
+
+    def test_qd_stored_on_failure(self, mock_agent):
+        """QD archive receives solution even after failure (fitness=0)."""
+        qd = MagicMock()
+        bridge = AgentBridge(agent=mock_agent, qd_archive=qd)
+
+        with patch("agent.bridge.QDSolution", MagicMock()):
+            with patch("agent.bridge.compute_behavior",
+                       return_value={"complexity": 0.5, "answer_type": 0.5,
+                                     "retrieval_conf": 0.0}):
+                with patch("agent.bridge.classify_query") as mock_cls:
+                    mock_cls.return_value = MagicMock(
+                        complexity=0.5, query_type="debug")
+                    result = _make_result(success=False)
+                    bridge.on_task_complete("Fix crash", result)
+
+        qd.add.assert_called_once()
+
+    def test_qd_hints_in_strategy(self, mock_agent):
+        """select_strategy includes QD archive hints when available."""
+        qd = MagicMock()
+        qd.lookup.return_value = {
+            "config": {"strategy": "corrective"},
+            "fitness": 0.9, "niche": "c=1|a=2|r=3",
+        }
+
+        with patch("agent.bridge.compute_behavior",
+                   return_value={"complexity": 0.5, "answer_type": 0.5,
+                                 "retrieval_conf": 0.5}):
+            with patch("agent.bridge.classify_query") as mock_cls:
+                mock_cls.return_value = MagicMock(
+                    complexity=0.5, query_type="debug")
+                bridge = AgentBridge(agent=mock_agent, qd_archive=qd)
+                result = bridge.select_strategy("Fix the parser bug")
+
+        assert "qd_niche" in result
+        assert result["qd_fitness"] == 0.9
+
+    def test_no_qd_no_hints(self, mock_agent):
+        """Without QD archive, strategy has no QD hints."""
+        bridge = AgentBridge(agent=mock_agent)
+        result = bridge.select_strategy("What is os.path?")
+        assert "qd_niche" not in result
+
+    def test_qd_low_fitness_skipped(self, mock_agent):
+        """QD niche with low fitness does not add hints."""
+        qd = MagicMock()
+        qd.lookup.return_value = {
+            "config": {"strategy": "standard"},
+            "fitness": 0.2, "niche": "c=0|a=0|r=0",
+        }
+
+        with patch("agent.bridge.compute_behavior",
+                   return_value={"complexity": 0.1, "answer_type": 0.0,
+                                 "retrieval_conf": 0.5}):
+            with patch("agent.bridge.classify_query") as mock_cls:
+                mock_cls.return_value = MagicMock(
+                    complexity=0.1, query_type="lookup")
+                bridge = AgentBridge(agent=mock_agent, qd_archive=qd)
+                result = bridge.select_strategy("What is os.path?")
+
+        assert "qd_niche" not in result

@@ -30,11 +30,14 @@ Selection uses Thompson Sampling with Beta distributions:
 from __future__ import annotations
 
 import json
+import logging
 import math
 import random
 import re
 import sqlite3
 import time
+
+log = logging.getLogger(__name__)
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -317,8 +320,8 @@ class MetaCognitiveController:
                     json.dumps({k: round(v, 4) for k, v in samples.items()}),
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Persist failed: %s", exc)
 
     def _persist_arm(self, query_type: str, arm: StrategyArm) -> None:
         try:
@@ -333,5 +336,5 @@ class MetaCognitiveController:
                     arm.total_uses, arm.total_reward, arm.avg_latency_ms,
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Persist failed: %s", exc)

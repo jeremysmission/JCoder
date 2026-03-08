@@ -107,13 +107,14 @@ class Chunker:
 
     def _make_chunk(self, text: str, file_path: str, **extra) -> Dict:
         """Build a chunk metadata dict."""
+        h = self._hash(text)
         return {
-            "id": self._hash(text),
+            "id": h,
             "content": text,
             "source_path": file_path,
             "source_type": os.path.splitext(file_path)[1],
             "ingestion_date": datetime.now(timezone.utc).isoformat(),
-            "content_hash": self._hash(text),
+            "content_hash": h,
             "chunker_version": CHUNKER_VERSION,
             **extra,
         }

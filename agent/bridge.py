@@ -31,6 +31,8 @@ try: from agent.memory import AgentMemory
 except ImportError: AgentMemory = None  # type: ignore[assignment,misc]
 try: from core.procedural_memory import ProceduralMemory, ProceduralExperience
 except ImportError: ProceduralMemory = ProceduralExperience = None  # type: ignore[assignment,misc]
+try: from core.quality_diversity import QualityDiversityArchive, QDSolution, compute_behavior
+except ImportError: QualityDiversityArchive = QDSolution = compute_behavior = None  # type: ignore[assignment,misc]
 
 
 class AgentBridge:
@@ -41,7 +43,8 @@ class AgentBridge:
                  active_learner: Optional[Any] = None,
                  meta_cognitive: Optional[Any] = None,
                  memory: Optional[Any] = None,
-                 procedural_memory: Optional[ProceduralMemory] = None):
+                 procedural_memory: Optional[ProceduralMemory] = None,
+                 qd_archive: Optional[Any] = None):
         self.agent = agent
         self.telemetry = telemetry
         self.experience = experience_store
@@ -49,9 +52,11 @@ class AgentBridge:
         self.meta = meta_cognitive
         self.memory = memory
         self.procedural_memory = procedural_memory
+        self.qd_archive = qd_archive
         active = [n for n, m in [("telemetry", telemetry), ("experience", experience_store),
                   ("active", active_learner), ("meta_cog", meta_cognitive),
-                  ("memory", memory), ("procedural_memory", procedural_memory)] if m]
+                  ("memory", memory), ("procedural_memory", procedural_memory),
+                  ("qd_archive", qd_archive)] if m]
         log.info("AgentBridge: modules active: %s", active or "(none)")
 
     def on_task_complete(self, task: str, result: AgentResult) -> None:
@@ -67,12 +72,18 @@ class AgentBridge:
                     answer_snippet=result.summary[:500],
                     confidence=1.0 if result.success else 0.0))
             except Exception as exc: log.warning("Telemetry: %s", exc)
-        # Experience replay (successful only)
-        if self.experience and result.success:
+        # Experience replay (successes and failures)
+        if self.experience:
             try:
+                confidence = 1.0 if result.success else 0.0
+                if result.success and result.iterations > 5:
+                    confidence = max(0.3, 1.0 - (result.iterations / 50.0))
+                prefix = "[FAIL] " if not result.success else ""
                 self.experience.store(
-                    exp_id=tid, query=task, answer=result.summary,
-                    source_files=self._extract_source_files(result), confidence=1.0)
+                    exp_id=tid, query=task,
+                    answer=f"{prefix}{result.summary}",
+                    source_files=self._extract_source_files(result),
+                    confidence=confidence)
             except Exception as exc: log.warning("Experience: %s", exc)
         # Meta-cognitive outcome
         if self.meta and hasattr(self.meta, "report_outcome"):
@@ -110,6 +121,25 @@ class AgentBridge:
                 )
             except Exception as exc:
                 log.warning("Procedural memory: %s", exc)
+        # Quality-diversity archive
+        if self.qd_archive and QDSolution is not None and compute_behavior is not None:
+            try:
+                sig = classify_query(task) if classify_query else None
+                if sig:
+                    behavior = compute_behavior(
+                        query_complexity=sig.complexity,
+                        answer_type=sig.query_type,
+                        retrieval_confidence=1.0 if result.success else 0.0,
+                    )
+                    fitness = 1.0 if result.success else 0.0
+                    if result.success and result.iterations > 5:
+                        fitness = max(0.3, 1.0 - (result.iterations / 50.0))
+                    self.qd_archive.add(QDSolution(
+                        config={"strategy": "agent",
+                                "iterations": result.iterations},
+                        fitness=fitness, behavior=behavior))
+            except Exception as exc:
+                log.warning("QD archive: %s", exc)
 
     def suggest_next_study(self) -> Optional[str]:
         """Ask active_learner what the agent should study next.
@@ -149,20 +179,43 @@ class AgentBridge:
             return {}
 
     def select_strategy(self, task: str) -> Dict[str, Any]:
-        """Ask meta_cognitive which approach to use for this task."""
+        """Ask meta_cognitive which approach to use for this task.
+
+        Also consults QD archive for niche-specific hints.
+        """
         defaults: Dict[str, Any] = {"temperature": 0.1, "max_iterations": 50,
                                      "strategy": "standard"}
         if not self.meta or not classify_query:
-            return defaults
+            return self._apply_qd_hints(task, defaults)
         try:
             name, sig = self.meta.select_strategy(task)
-            return {"temperature": 0.1 if sig.complexity < 0.5 else 0.3,
-                    "max_iterations": 30 if sig.query_type == "lookup" else 50,
-                    "strategy": name, "query_type": sig.query_type,
-                    "complexity": sig.complexity, "has_code": sig.has_code}
+            result = {"temperature": 0.1 if sig.complexity < 0.5 else 0.3,
+                      "max_iterations": 30 if sig.query_type == "lookup" else 50,
+                      "strategy": name, "query_type": sig.query_type,
+                      "complexity": sig.complexity, "has_code": sig.has_code}
+            return self._apply_qd_hints(task, result)
         except Exception as exc:
             log.warning("Strategy selection failed: %s", exc)
-            return defaults
+            return self._apply_qd_hints(task, defaults)
+
+    def _apply_qd_hints(self, task: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        """Overlay quality-diversity archive hints if available."""
+        if not self.qd_archive or compute_behavior is None or classify_query is None:
+            return params
+        try:
+            sig = classify_query(task)
+            behavior = compute_behavior(
+                query_complexity=sig.complexity,
+                answer_type=sig.query_type,
+                retrieval_confidence=0.5,
+            )
+            niche = self.qd_archive.lookup(behavior)
+            if niche and niche.get("fitness", 0) > 0.5:
+                params["qd_niche"] = niche.get("niche", "")
+                params["qd_fitness"] = niche.get("fitness", 0)
+        except Exception as exc:
+            log.warning("QD lookup: %s", exc)
+        return params
 
     def wrap_rag_callback(self, base_cb: Callable[[str], str]) -> Callable[[str], str]:
         """Wrap a RAG callback with telemetry logging."""
@@ -267,9 +320,11 @@ def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = No
     meta = _try_init(MetaCognitiveController, "_meta_cog/agent_controller.db")
     active = _try_init_active(backend=stack.get("backend"))
     procedural_memory = _try_init(ProceduralMemory, "_procedural_memory/memory.db")
+    qd_archive = _try_init(QualityDiversityArchive, "_qd_archive/agent_archive.db")
     bridge = AgentBridge(agent=agent, telemetry=telemetry, experience_store=experience,
                          active_learner=active, meta_cognitive=meta,
-                         memory=memory, procedural_memory=procedural_memory)
+                         memory=memory, procedural_memory=procedural_memory,
+                         qd_archive=qd_archive)
 
     # Wrap RAG callback with telemetry if both are available
     rag_callback = getattr(stack["tools"], "_rag_callback", None)

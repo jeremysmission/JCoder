@@ -32,8 +32,11 @@ from __future__ import annotations
 
 import copy
 import json
+import logging
 import sqlite3
 import time
+
+log = logging.getLogger(__name__)
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -221,7 +224,8 @@ class ContinualLearner:
         for bl in baselines:
             try:
                 current_score = self.eval_fn(bl.name, bl.test_queries)
-            except Exception:
+            except Exception as exc:
+                log.debug("Baseline eval failed: %s", exc)
                 current_score = 0.0
 
             scores[bl.name] = round(current_score, 4)
@@ -254,7 +258,8 @@ class ContinualLearner:
         for bl in baselines:
             try:
                 current = self.eval_fn(bl.name, bl.test_queries)
-            except Exception:
+            except Exception as exc:
+                log.debug("Expansion eval failed: %s", exc)
                 continue
 
             if current > bl.score:
@@ -299,20 +304,20 @@ class ContinualLearner:
         if experience_prune_fn:
             try:
                 result.experiences_pruned = experience_prune_fn()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Consolidation step failed: %s", exc)
 
         if config_prune_fn:
             try:
                 result.configs_pruned = config_prune_fn()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Consolidation step failed: %s", exc)
 
         if telemetry_compact_fn:
             try:
                 result.telemetry_compacted = telemetry_compact_fn()
-            except Exception:
-                pass
+            except Exception as exc:
+                log.debug("Consolidation step failed: %s", exc)
 
         result.duration_ms = (time.time() - t0) * 1000
         return result
@@ -359,8 +364,8 @@ class ContinualLearner:
                     VALUES (?, ?, ?)
                 """, (json.dumps(config, default=str), reason, time.time()))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Continual learner: %s", exc)
 
     def _log_check(self, check: RegressionCheck) -> None:
         try:
@@ -378,5 +383,5 @@ class ContinualLearner:
                     check.checked_at,
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            log.debug("Continual learner: %s", exc)

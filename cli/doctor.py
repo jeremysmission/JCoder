@@ -109,7 +109,7 @@ def _check_faiss() -> Tuple[bool, str]:
 
 def run_doctor(config: JCoderConfig):
     """Run all health checks and print results."""
-    print(f"JCoder Doctor")
+    print("JCoder Doctor")
     print(f"Python {sys.version}")
     print()
 

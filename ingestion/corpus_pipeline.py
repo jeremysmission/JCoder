@@ -304,9 +304,8 @@ class CorpusPipeline:
             print(f"[WARN] FAISS save skipped ({exc}); building FTS5 only.")
             idx_path = os.path.join(self._storage.index_dir, index_name)
             os.makedirs(self._storage.index_dir, exist_ok=True)
-            import json as _json
             with open(idx_path + ".meta.json", "w", encoding="utf-8") as mf:
-                _json.dump(index.metadata, mf)
+                json.dump(index.metadata, mf)
             index._db_path = idx_path + ".fts5.db"
             index._build_fts5()
         if resume:

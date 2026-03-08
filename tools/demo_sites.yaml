@@ -1,0 +1,16 @@
+# Demo sites config (simulating a real site list)
+# In production, these would be your actual site names and aliases
+
+sites:
+  API Server:
+    aliases: [api, fastapi, server, endpoint, routes]
+  GUI Framework:
+    aliases: [gui, panel, settings, tuning, dashboard]
+  RAG Engine:
+    aliases: [rag, retrieval, embedding, chunking, indexer]
+  Security:
+    aliases: [security, credential, encryption, keyring, sanitize]
+  Testing:
+    aliases: [test, pytest, fixture, mock, stress]
+  Deployment:
+    aliases: [deploy, install, setup, config, startup]

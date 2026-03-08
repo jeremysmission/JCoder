@@ -269,6 +269,26 @@ DATASET_CONFIG = {
         "format": "parquet",
         "fields": ["instruction", "output"],
     },
+    "openhermes_2_5": {
+        "index": "openhermes_2_5",
+        "format": "parquet",
+        "fields": ["conversations"],
+    },
+    "magicoder_oss_instruct": {
+        "index": "magicoder_oss_instruct",
+        "format": "parquet",
+        "fields": ["problem", "solution"],
+    },
+    "magicoder_evol_instruct": {
+        "index": "magicoder_evol_instruct",
+        "format": "parquet",
+        "fields": ["instruction", "response"],
+    },
+    "glaive_code_assistant": {
+        "index": "glaive_code_assistant",
+        "format": "parquet",
+        "fields": ["question", "answer"],
+    },
 }
 
 

@@ -32,7 +32,7 @@ Legend:
 
 ## Implementation Status (2026-03-07)
 
-What exists today (~8,000+ lines, 731 tests, 0 failures):
+What exists today (~8,000+ lines, 788 tests, 0 failures):
 
 | Component | Status | Location |
 |-----------|--------|----------|
@@ -43,6 +43,7 @@ What exists today (~8,000+ lines, 731 tests, 0 failures):
 | Experience Replay | IMPLEMENTED | `core/experience_replay.py` |
 | Meta-Cognitive Controller (Thompson Sampling) | IMPLEMENTED | `core/meta_cognitive.py` |
 | Active Learner (uncertainty + committee) | IMPLEMENTED | `core/active_learner.py` |
+| Quality-Diversity Archive (MAP-Elites) | IMPLEMENTED | `core/quality_diversity.py`, `agent/bridge.py` |
 | Agent Memory | IMPLEMENTED | `agent/memory.py` |
 | FTS5 Index + Federated Search | IMPLEMENTED | `core/index_engine.py`, `core/federated_search.py` |
 | Index Discovery (auto-scan FTS5 DBs) | IMPLEMENTED | `core/index_discovery.py` |
