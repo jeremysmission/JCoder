@@ -1,0 +1,261 @@
+{
+  "baseline": {
+    "avg_score": 0.21000000000000002,
+    "keywords_found": 11,
+    "keywords_possible": 57,
+    "per_question": [
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "self-play",
+          "no data",
+          "no labels",
+          "code executor",
+          "reward",
+          "zero"
+        ]
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "state hash",
+          "action",
+          "outcome",
+          "experience",
+          "web automation",
+          "procedural"
+        ]
+      },
+      {
+        "score": 0.4,
+        "found": [
+          "introspection",
+          "recursive"
+        ],
+        "missed": [
+          "multi-turn",
+          "MDP",
+          "self-improve"
+        ]
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "evolutionary",
+          "mutation",
+          "population",
+          "fitness",
+          "prompt",
+          "generation"
+        ]
+      },
+      {
+        "score": 1.0,
+        "found": [
+          "generator",
+          "verifier",
+          "updater",
+          "self-play",
+          "cycle"
+        ],
+        "missed": []
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "verbal",
+          "reinforcement",
+          "reflection",
+          "memory",
+          "feedback",
+          "trial"
+        ]
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "minecraft",
+          "curriculum",
+          "skill library",
+          "code",
+          "exploration",
+          "open-ended"
+        ]
+      },
+      {
+        "score": 0.2,
+        "found": [
+          "self-reward"
+        ],
+        "missed": [
+          "LLM-as-judge",
+          "iterative",
+          "DPO",
+          "preference"
+        ]
+      },
+      {
+        "score": 0.3333333333333333,
+        "found": [
+          "experience",
+          "task"
+        ],
+        "missed": [
+          "insights",
+          "accumulate",
+          "trial",
+          "natural language"
+        ]
+      },
+      {
+        "score": 0.16666666666666666,
+        "found": [
+          "self-play"
+        ],
+        "missed": [
+          "discriminator",
+          "generator",
+          "SFT",
+          "weak",
+          "strong"
+        ]
+      }
+    ]
+  },
+  "learned": {
+    "avg_score": 0.29333333333333333,
+    "keywords_found": 16,
+    "keywords_possible": 57,
+    "per_question": [
+      {
+        "score": 0.5,
+        "found": [
+          "self-play",
+          "reward",
+          "zero"
+        ],
+        "missed": [
+          "no data",
+          "no labels",
+          "code executor"
+        ]
+      },
+      {
+        "score": 0.16666666666666666,
+        "found": [
+          "procedural"
+        ],
+        "missed": [
+          "state hash",
+          "action",
+          "outcome",
+          "experience",
+          "web automation"
+        ]
+      },
+      {
+        "score": 0.4,
+        "found": [
+          "introspection",
+          "recursive"
+        ],
+        "missed": [
+          "multi-turn",
+          "MDP",
+          "self-improve"
+        ]
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "evolutionary",
+          "mutation",
+          "population",
+          "fitness",
+          "prompt",
+          "generation"
+        ]
+      },
+      {
+        "score": 1.0,
+        "found": [
+          "generator",
+          "verifier",
+          "updater",
+          "self-play",
+          "cycle"
+        ],
+        "missed": []
+      },
+      {
+        "score": 0.0,
+        "found": [],
+        "missed": [
+          "verbal",
+          "reinforcement",
+          "reflection",
+          "memory",
+          "feedback",
+          "trial"
+        ]
+      },
+      {
+        "score": 0.16666666666666666,
+        "found": [
+          "open-ended"
+        ],
+        "missed": [
+          "minecraft",
+          "curriculum",
+          "skill library",
+          "code",
+          "exploration"
+        ]
+      },
+      {
+        "score": 0.2,
+        "found": [
+          "self-reward"
+        ],
+        "missed": [
+          "LLM-as-judge",
+          "iterative",
+          "DPO",
+          "preference"
+        ]
+      },
+      {
+        "score": 0.3333333333333333,
+        "found": [
+          "experience",
+          "task"
+        ],
+        "missed": [
+          "insights",
+          "accumulate",
+          "trial",
+          "natural language"
+        ]
+      },
+      {
+        "score": 0.16666666666666666,
+        "found": [
+          "self-play"
+        ],
+        "missed": [
+          "discriminator",
+          "generator",
+          "SFT",
+          "weak",
+          "strong"
+        ]
+      }
+    ]
+  }
+}
