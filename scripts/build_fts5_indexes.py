@@ -152,57 +152,58 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
 
     # Build in batches to SQLite
     conn = sqlite3.connect(str(db_path))
-    conn.execute("DROP TABLE IF EXISTS chunks")
-    conn.execute(
-        "CREATE VIRTUAL TABLE chunks "
-        "USING fts5(search_content, source_path, chunk_id, title)"
-    )
-
-    batch = []
-    chunk_id = 0
-
-    for i, fpath in enumerate(md_files):
-        try:
-            chunks = chunk_fn(fpath)
-            for c in chunks:
-                chunk_id += 1
-                batch.append((
-                    _normalize(c["content"]),
-                    c["source"],
-                    f"{index_name}_{chunk_id:08d}",
-                    c.get("title", ""),
-                ))
-                stats["chunks"] += 1
-
-                if len(batch) >= 5000:
-                    conn.executemany(
-                        "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
-                        "VALUES (?, ?, ?, ?)", batch
-                    )
-                    conn.commit()
-                    batch.clear()
-
-            stats["files"] += 1
-        except Exception as exc:
-            stats["errors"] += 1
-            if stats["errors"] <= 5:
-                print(f"[WARN] {fpath.name}: {exc}")
-
-        if (i + 1) % 5000 == 0:
-            elapsed = time.monotonic() - t0
-            rate = (i + 1) / elapsed if elapsed > 0 else 0
-            print(f"     {source_name}: {i+1}/{len(md_files)} files, "
-                  f"{stats['chunks']:,} chunks ({rate:.0f} files/s)")
-
-    # Flush remaining
-    if batch:
-        conn.executemany(
-            "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
-            "VALUES (?, ?, ?, ?)", batch
+    try:
+        conn.execute("DROP TABLE IF EXISTS chunks")
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks "
+            "USING fts5(search_content, source_path, chunk_id, title)"
         )
-        conn.commit()
 
-    conn.close()
+        batch = []
+        chunk_id = 0
+
+        for i, fpath in enumerate(md_files):
+            try:
+                chunks = chunk_fn(fpath)
+                for c in chunks:
+                    chunk_id += 1
+                    batch.append((
+                        _normalize(c["content"]),
+                        c["source"],
+                        f"{index_name}_{chunk_id:08d}",
+                        c.get("title", ""),
+                    ))
+                    stats["chunks"] += 1
+
+                    if len(batch) >= 5000:
+                        conn.executemany(
+                            "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
+                            "VALUES (?, ?, ?, ?)", batch
+                        )
+                        conn.commit()
+                        batch.clear()
+
+                stats["files"] += 1
+            except Exception as exc:
+                stats["errors"] += 1
+                if stats["errors"] <= 5:
+                    print(f"[WARN] {fpath.name}: {exc}")
+
+            if (i + 1) % 5000 == 0:
+                elapsed = time.monotonic() - t0
+                rate = (i + 1) / elapsed if elapsed > 0 else 0
+                print(f"     {source_name}: {i+1}/{len(md_files)} files, "
+                      f"{stats['chunks']:,} chunks ({rate:.0f} files/s)")
+
+        # Flush remaining
+        if batch:
+            conn.executemany(
+                "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
+                "VALUES (?, ?, ?, ?)", batch
+            )
+            conn.commit()
+    finally:
+        conn.close()
 
     elapsed = time.monotonic() - t0
     size_mb = db_path.stat().st_size / (1024 * 1024)

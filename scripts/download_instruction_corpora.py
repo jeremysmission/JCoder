@@ -19,6 +19,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import io
 import os
@@ -28,13 +29,9 @@ import sys
 import time
 from pathlib import Path
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
-
 import httpx
-import pyarrow.parquet as pq
+
+from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
 
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
@@ -47,6 +44,17 @@ MAX_CHARS = 4000
 _NORMALIZE_RE = re.compile(r"[_\-./\\:]")
 _CAMEL_RE1 = re.compile(r"([a-z])([A-Z])")
 _CAMEL_RE2 = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_DOWNLOADER: DownloadManager | None = None
+
+
+def _configure_stdout() -> None:
+    if sys.platform != "win32":
+        return
+    if getattr(sys.stdout, "buffer", None) is None:
+        return
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", errors="replace"
+    )
 
 
 def _normalize(text: str) -> str:
@@ -56,40 +64,48 @@ def _normalize(text: str) -> str:
     return out.lower()
 
 
+def _get_downloader() -> DownloadManager:
+    global _DOWNLOADER
+    if _DOWNLOADER is None:
+        _DOWNLOADER = DownloadManager(DOWNLOAD_DIR, read_timeout_s=600.0)
+    return _DOWNLOADER
+
+
+def _close_downloader() -> None:
+    global _DOWNLOADER
+    if _DOWNLOADER is not None:
+        _DOWNLOADER.close()
+        _DOWNLOADER = None
+
+
 def _download_parquet(url: str, local_path: Path) -> bool:
-    if local_path.exists() and local_path.stat().st_size > 1000:
+    relative_path = local_path.relative_to(DOWNLOAD_DIR)
+    result = _get_downloader().download_file(
+        url,
+        relative_path,
+        min_existing_bytes=1000,
+        chunk_size=256 * 1024,
+    )
+    if result.ok:
         return True
-    local_path.parent.mkdir(parents=True, exist_ok=True)
-    partial = local_path.with_suffix(".partial")
-    try:
-        with httpx.stream("GET", url, follow_redirects=True,
-                          timeout=httpx.Timeout(30.0, read=600.0)) as resp:
-            resp.raise_for_status()
-            with open(partial, "wb") as f:
-                for chunk in resp.iter_bytes(chunk_size=256 * 1024):
-                    f.write(chunk)
-        if local_path.exists():
-            local_path.unlink()
-        partial.rename(local_path)
-        return True
-    except Exception as exc:
-        print(f"    [WARN] Download failed: {exc}")
-        return False
+    print(f"    [WARN] Download failed: {result.error}")
+    return False
 
 
 def _get_parquet_urls(dataset_id: str, config: str = "default",
                       split: str = "train") -> list:
-    url = f"https://huggingface.co/api/datasets/{dataset_id}/parquet"
-    r = httpx.get(url, timeout=15, follow_redirects=True)
-    r.raise_for_status()
-    data = r.json()
-    if config in data:
-        splits = data[config]
-        if isinstance(splits, dict) and split in splits:
-            return splits[split]
-        if isinstance(splits, list):
-            return splits
-    return []
+    return fetch_huggingface_parquet_urls(
+        _get_downloader(),
+        dataset_id,
+        config=config,
+        split=split,
+    )
+
+
+def _read_parquet_table(path: Path):
+    import pyarrow.parquet as pq
+
+    return pq.read_table(str(path))
 
 
 class FTS5Builder:
@@ -151,25 +167,25 @@ def _generic_qa_processor(
     q_cols: list,
     a_cols: list,
     config: str = "default",
-):
+) -> bool:
     """Generic processor for instruction Q&A datasets."""
     db_path = INDEX_DIR / db_name
     cache_dir = DOWNLOAD_DIR / cache_subdir
 
     if db_path.exists() and db_path.stat().st_size > 100_000:
         print(f"  [OK] {db_name} already exists ({db_path.stat().st_size/1e6:.0f} MB)")
-        return
+        return True
 
     print(f"  Downloading {dataset_id}...")
     try:
         urls = _get_parquet_urls(dataset_id, config=config)
     except Exception as exc:
         print(f"  [FAIL] Could not get Parquet URLs: {exc}")
-        return
+        return False
 
     if not urls:
         print(f"  [WARN] No Parquet files found for {dataset_id}")
-        return
+        return False
 
     print(f"  {len(urls)} Parquet files")
 
@@ -185,13 +201,13 @@ def _generic_qa_processor(
 
     if not local_files:
         print(f"  [FAIL] No files downloaded")
-        return
+        return False
 
     print(f"  Building FTS5 index...")
     builder = FTS5Builder(db_path)
 
     for f in local_files:
-        table = pq.read_table(str(f))
+        table = _read_parquet_table(f)
         cols = table.column_names
 
         for i in range(len(table)):
@@ -227,14 +243,15 @@ def _generic_qa_processor(
 
     entries, chunks, size = builder.finish()
     print(f"  [OK] {db_name}: {entries:,} entries, {chunks:,} chunks ({size:.0f} MB)")
+    return True
 
 
 # -----------------------------------------------------------------------
 # Dataset processors
 # -----------------------------------------------------------------------
 
-def process_python_instructions():
-    _generic_qa_processor(
+def process_python_instructions() -> bool:
+    return _generic_qa_processor(
         dataset_id="iamtarun/python_code_instructions_18k_alpaca",
         db_name="python_instructions.fts5.db",
         cache_subdir="python_instructions",
@@ -244,8 +261,8 @@ def process_python_instructions():
     )
 
 
-def process_code_alpaca():
-    _generic_qa_processor(
+def process_code_alpaca() -> bool:
+    return _generic_qa_processor(
         dataset_id="sahil2801/CodeAlpaca-20k",
         db_name="code_alpaca.fts5.db",
         cache_subdir="code_alpaca",
@@ -255,8 +272,8 @@ def process_code_alpaca():
     )
 
 
-def process_code_instructions_122k():
-    _generic_qa_processor(
+def process_code_instructions_122k() -> bool:
+    return _generic_qa_processor(
         dataset_id="TokenBender/code_instructions_122k_alpaca_style",
         db_name="code_instructions_122k.fts5.db",
         cache_subdir="code_instructions_122k",
@@ -266,8 +283,8 @@ def process_code_instructions_122k():
     )
 
 
-def process_tiny_codes():
-    _generic_qa_processor(
+def process_tiny_codes() -> bool:
+    return _generic_qa_processor(
         dataset_id="nampdn-ai/tiny-codes",
         db_name="tiny_codes.fts5.db",
         cache_subdir="tiny_codes",
@@ -277,8 +294,8 @@ def process_tiny_codes():
     )
 
 
-def process_self_oss_instruct():
-    _generic_qa_processor(
+def process_self_oss_instruct() -> bool:
+    return _generic_qa_processor(
         dataset_id="bigcode/self-oss-instruct-sc2-exec-filter-50k",
         db_name="self_oss_instruct.fts5.db",
         cache_subdir="self_oss_instruct",
@@ -288,8 +305,8 @@ def process_self_oss_instruct():
     )
 
 
-def process_python_scripts():
-    _generic_qa_processor(
+def process_python_scripts() -> bool:
+    return _generic_qa_processor(
         dataset_id="flytech/python-scripts-validation",
         db_name="python_scripts_val.fts5.db",
         cache_subdir="python_scripts_val",
@@ -299,8 +316,8 @@ def process_python_scripts():
     )
 
 
-def process_math_instruct():
-    _generic_qa_processor(
+def process_math_instruct() -> bool:
+    return _generic_qa_processor(
         dataset_id="TIGER-Lab/MathInstruct",
         db_name="math_instruct.fts5.db",
         cache_subdir="math_instruct",
@@ -325,10 +342,11 @@ ALL_PROCESSORS = {
 }
 
 
-def main():
-    only = None
-    if len(sys.argv) > 2 and sys.argv[1] == "--only":
-        only = sys.argv[2]
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Download instruction corpora and build FTS5 indexes")
+    parser.add_argument("--only", help="Run only the named dataset processor")
+    args = parser.parse_args(argv)
+    only = args.only
 
     print("=" * 60)
     print("JCoder Instruction Corpora Download + Indexing")
@@ -338,15 +356,26 @@ def main():
     print("=" * 60)
 
     t0 = time.time()
+    had_failure = False
 
-    for name, processor in ALL_PROCESSORS.items():
-        if only and name != only:
-            continue
+    selected = [
+        (name, processor)
+        for name, processor in ALL_PROCESSORS.items()
+        if not only or name == only
+    ]
+    if only and not selected:
+        print(f"[FAIL] Unknown dataset: {only}")
+        return 1
+
+    for name, processor in selected:
         print(f"\n--- {name.upper()} ---")
         try:
-            processor()
+            ok = processor()
+            if not ok:
+                had_failure = True
         except Exception as exc:
             print(f"  [FAIL] {name}: {exc}")
+            had_failure = True
 
     elapsed = time.time() - t0
     print("\n" + "=" * 60)
@@ -358,7 +387,12 @@ def main():
         if size_mb > 0.1:
             print(f"  {db.name:35s} {size_mb:>8.0f} MB")
     print("=" * 60)
+    return 1 if had_failure else 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        _configure_stdout()
+        raise SystemExit(main())
+    finally:
+        _close_downloader()

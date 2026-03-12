@@ -21,6 +21,8 @@ import tarfile
 import time
 from pathlib import Path
 
+from core.download_manager import DownloadManager
+
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -49,13 +51,11 @@ def _ensure_dirs():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _download_archive() -> Path:
+def _download_archive(downloader: DownloadManager) -> Path:
     """Download the Python docs tar.bz2 archive. Returns path to archive.
 
     Skips if already downloaded.
     """
-    import httpx
-
     archive_path = DOWNLOAD_DIR / "python-3.13.3-docs-text.tar.bz2"
 
     if archive_path.exists() and archive_path.stat().st_size > 10000:
@@ -63,42 +63,21 @@ def _download_archive() -> Path:
         print(f"[OK] Archive already exists ({size_mb:.1f} MB), skipping download")
         return archive_path
 
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            print(f"     Downloading Python docs archive (attempt {attempt}/{MAX_RETRIES})...")
-            partial_path = DOWNLOAD_DIR / "python-docs.tar.bz2.partial"
+    print("     Downloading Python docs archive...")
+    result = downloader.download_file(
+        DOCS_URL,
+        archive_path.name,
+        min_existing_bytes=10000,
+        chunk_size=CHUNK_SIZE,
+        progress_label="python-docs",
+        progress_every_bytes=1024 * 1024,
+    )
+    if result.ok:
+        size_mb = result.path.stat().st_size / (1024 * 1024)
+        print(f"[OK] Downloaded Python docs archive ({size_mb:.1f} MB)")
+        return result.path
 
-            with httpx.stream("GET", DOCS_URL, follow_redirects=True,
-                              timeout=httpx.Timeout(30.0, read=300.0)) as resp:
-                resp.raise_for_status()
-                total = int(resp.headers.get("content-length", 0))
-                downloaded = 0
-                with open(partial_path, "wb") as f:
-                    for chunk in resp.iter_bytes(chunk_size=CHUNK_SIZE):
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total > 0 and downloaded % (1024 * 1024) < CHUNK_SIZE:
-                            pct = downloaded * 100 // total
-                            print(f"     {downloaded // (1024*1024)} / "
-                                  f"{total // (1024*1024)} MB ({pct}%)")
-
-            if partial_path.exists():
-                if archive_path.exists():
-                    archive_path.unlink()
-                partial_path.rename(archive_path)
-
-            size_mb = archive_path.stat().st_size / (1024 * 1024)
-            print(f"[OK] Downloaded Python docs archive ({size_mb:.1f} MB)")
-            return archive_path
-
-        except Exception as exc:
-            print(f"[WARN] Download attempt {attempt} failed: {exc}")
-            if attempt < MAX_RETRIES:
-                wait = 5 * attempt
-                print(f"     Retrying in {wait}s...")
-                time.sleep(wait)
-
-    print(f"[FAIL] Could not download Python docs after {MAX_RETRIES} attempts")
+    print(f"[FAIL] Could not download Python docs: {result.error}")
     return archive_path
 
 
@@ -334,9 +313,10 @@ def download_python_docs() -> dict:
 
     t0 = time.time()
 
-    archive_path = _download_archive()
-    extract_dir = _extract_archive(archive_path)
-    stats = _convert_docs(extract_dir)
+    with DownloadManager(DOWNLOAD_DIR, max_retries=MAX_RETRIES, read_timeout_s=300.0) as downloader:
+        archive_path = _download_archive(downloader)
+        extract_dir = _extract_archive(archive_path)
+        stats = _convert_docs(extract_dir)
 
     elapsed = time.time() - t0
 

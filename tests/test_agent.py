@@ -5,7 +5,9 @@ Covers: tool safety, tool registry, LLM backends, agent core loop, goal queue.
 
 import json
 import os
+import subprocess
 
+import httpx
 import pytest
 
 from agent.llm_backend import (
@@ -16,6 +18,7 @@ from agent.llm_backend import (
     ToolCall,
     create_backend,
 )
+from agent.session import SessionStore
 from agent.tools import ToolRegistry, ToolResult, TOOL_SCHEMAS, _is_command_safe
 from agent.core import Agent, AgentResult, AgentStep
 from agent.goals import Goal, GoalQueue, PENDING, COMPLETED, FAILED
@@ -69,6 +72,11 @@ class TestToolSafety:
         safe, reason = _is_command_safe("")
         assert not safe
         assert "Empty" in reason
+
+    def test_blocked_shell_operators(self):
+        safe, reason = _is_command_safe("git status && whoami")
+        assert not safe
+        assert "Shell operator" in reason
 
 
 # ===========================================================================
@@ -159,6 +167,54 @@ class TestToolRegistry:
         assert not result.success
         assert "outside" in result.error.lower() or "PermissionError" in result.error
 
+    def test_prefix_match_escape_is_blocked(self, tmp_path):
+        allowed = tmp_path / "safe"
+        sibling = tmp_path / "safe_evil"
+        allowed.mkdir()
+        sibling.mkdir()
+        target = sibling / "secret.txt"
+        target.write_text("nope", encoding="utf-8")
+
+        reg = ToolRegistry(working_dir=str(allowed), allowed_dirs=[str(allowed)])
+        result = reg.execute("read_file", {"path": str(target)})
+
+        assert not result.success
+        assert "outside allowed" in result.error.lower()
+
+    def test_symlink_escape_is_blocked(self, tmp_path):
+        allowed = tmp_path / "safe"
+        allowed.mkdir()
+        outside = tmp_path / "outside.txt"
+        outside.write_text("secret", encoding="utf-8")
+        link = allowed / "link.txt"
+
+        try:
+            os.symlink(outside, link)
+        except (AttributeError, NotImplementedError, OSError):
+            pytest.skip("symlinks unavailable in this environment")
+
+        reg = ToolRegistry(working_dir=str(allowed), allowed_dirs=[str(allowed)])
+        result = reg.execute("read_file", {"path": str(link)})
+
+        assert not result.success
+        assert "outside allowed" in result.error.lower()
+
+    def test_run_command_uses_shell_false(self, tmp_path, monkeypatch):
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            captured["shell"] = kwargs.get("shell")
+            return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
+
+        monkeypatch.setattr("agent.tools.subprocess.run", fake_run)
+        reg = ToolRegistry(working_dir=str(tmp_path))
+        result = reg.execute("run_command", {"command": 'python -c "print(1)"'})
+
+        assert result.success
+        assert captured["shell"] is False
+        assert captured["cmd"] == ["python", "-c", "print(1)"]
+
     def test_rag_query_no_callback(self, tmp_path):
         reg = ToolRegistry(working_dir=str(tmp_path), rag_callback=None)
         result = reg.execute("rag_query", {"query": "how to sort a list"})
@@ -221,6 +277,41 @@ class TestLLMBackend:
     def test_chat_response_no_tool_calls(self):
         resp = ChatResponse(content="done")
         assert resp.has_tool_calls is False
+
+    def test_openai_backend_rejects_malformed_tool_json(self):
+        payload = {
+            "choices": [{
+                "message": {
+                    "content": "",
+                    "tool_calls": [{
+                        "id": "tc1",
+                        "function": {"name": "read_file", "arguments": "{not json"},
+                    }],
+                }
+            }],
+            "usage": {},
+        }
+        backend = OpenAIBackend(endpoint="http://example.test/v1", model="demo")
+        backend._client = httpx.Client(
+            transport=httpx.MockTransport(
+                lambda request: httpx.Response(200, json=payload, request=request)
+            )
+        )
+        with pytest.raises(ValueError, match="Malformed tool arguments"):
+            backend.chat([{"role": "user", "content": "hi"}])
+        backend.close()
+
+    def test_anthropic_backend_rejects_malformed_tool_json(self):
+        backend = AnthropicBackend(model="claude-test", api_key="sk-test")
+        with pytest.raises(ValueError, match="Malformed tool arguments"):
+            backend._convert_messages([{
+                "role": "assistant",
+                "tool_calls": [{
+                    "id": "tc1",
+                    "function": {"name": "read_file", "arguments": "{not json"},
+                }],
+            }])
+        backend.close()
 
 
 # ===========================================================================
@@ -310,6 +401,60 @@ class TestAgent:
         assert result.iterations == 1
         assert len(result.steps) == 1
         assert result.steps[0].tool_name == "task_complete"
+
+    def test_agent_resume_restores_prior_token_totals(self, tmp_path):
+        store = SessionStore(store_dir=str(tmp_path / "sessions"))
+        store.save(
+            session_id="resume_tokens",
+            task="Continue prior work",
+            history=[
+                {"role": "system", "content": "system"},
+                {"role": "user", "content": "continue"},
+            ],
+            status="active",
+            iterations=1,
+            tokens=168,
+            input_tokens=123,
+            output_tokens=45,
+        )
+        backend = MockBackend([
+            ChatResponse(content="done", input_tokens=11, output_tokens=7),
+        ])
+        tools = ToolRegistry(working_dir=str(tmp_path))
+        agent = Agent(
+            backend=backend,
+            tools=tools,
+            max_iterations=5,
+            session_store=store,
+        )
+
+        result = agent.resume("resume_tokens")
+
+        assert result.success
+        assert result.total_input_tokens == 134
+        assert result.total_output_tokens == 52
+        assert result.tokens == 186
+
+    def test_agent_resume_missing_session_releases_running_flag(self, tmp_path):
+        store = SessionStore(store_dir=str(tmp_path / "sessions"))
+        backend = MockBackend([
+            ChatResponse(content="fresh run", input_tokens=3, output_tokens=2),
+        ])
+        tools = ToolRegistry(working_dir=str(tmp_path))
+        agent = Agent(
+            backend=backend,
+            tools=tools,
+            max_iterations=5,
+            session_store=store,
+        )
+
+        with pytest.raises(FileNotFoundError):
+            agent.resume("missing-session")
+
+        result = agent.run("start over")
+
+        assert result.success
+        assert result.summary == "fresh run"
 
 
 # ===========================================================================

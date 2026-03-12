@@ -122,8 +122,12 @@ class AgentEvalRunner:
         t0 = time.time()
         result = self.agent.run(q["question"])
         elapsed = time.time() - t0
-        answer_text = result.answer if hasattr(result, "answer") else str(result)
-        tokens = result.tokens_used if hasattr(result, "tokens_used") else 0
+        answer_text = (result.answer if hasattr(result, "answer")
+                       else result.summary if hasattr(result, "summary")
+                       else str(result))
+        tokens = (result.tokens_used if hasattr(result, "tokens_used")
+                  else result.tokens if hasattr(result, "tokens")
+                  else 0)
         sub = self.score_answer(q, answer_text)
         score = sub.get("weighted_total", 0.0)
         return EvalResult(question_id=question_id, category=q["category"],

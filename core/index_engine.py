@@ -17,7 +17,7 @@ import json
 import os
 import re
 import sqlite3
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 try:
     import faiss
@@ -135,7 +135,19 @@ class IndexEngine:
             self._fts_conn = sqlite3.connect(
                 self._db_path, check_same_thread=False,
             )
+            self._configure_fts_conn(self._fts_conn)
         return self._fts_conn
+
+    @staticmethod
+    def _configure_fts_conn(conn: sqlite3.Connection) -> None:
+        """Apply conservative SQLite settings for read-heavy FTS5 use."""
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=30000")
+
+    def _metadata_at(self, idx: int) -> Optional[Dict]:
+        if 0 <= idx < len(self.metadata):
+            return self.metadata[idx]
+        return None
 
     def _close_fts_conn(self):
         """Close persistent FTS5 connection if open."""
@@ -330,12 +342,17 @@ class IndexEngine:
             # Apply path-prior boost before final sort
             boosted = []
             for idx, score in keyword_results:
-                path = self.metadata[idx].get("source_path", "")
-                boosted.append((idx, score + self._path_prior_boost(query_text, path)))
-            boosted.sort(key=lambda x: x[1], reverse=True)
+                meta = self._metadata_at(idx)
+                if meta is None:
+                    continue
+                path = meta.get("source_path", "")
+                boosted.append(
+                    (score + self._path_prior_boost(query_text, path), meta)
+                )
+            boosted.sort(key=lambda x: x[0], reverse=True)
             results = []
-            for idx, score in boosted[:k]:
-                results.append((score, self.metadata[idx]))
+            for score, meta in boosted[:k]:
+                results.append((score, meta))
             return results
 
         vector_results = self.search_vectors(query_vector, k)
@@ -355,37 +372,47 @@ class IndexEngine:
 
         results = []
         for idx, score in ranked[:k]:
-            results.append((score, self.metadata[idx]))
+            meta = self._metadata_at(idx)
+            if meta is not None:
+                results.append((score, meta))
         return results
 
     def _build_fts5(self):
         """Build per-index FTS5 DB from current metadata."""
         self._close_fts_conn()
         conn = sqlite3.connect(self._db_path)
-        conn.execute("DROP TABLE IF EXISTS chunks")
-        conn.execute(
-            "CREATE VIRTUAL TABLE chunks "
-            "USING fts5(search_content, source_path, chunk_id)"
-        )
-        rows = [
-            (
-                _normalize_for_search(m.get("content", "")),
-                m.get("source_path", ""),
-                m.get("id", ""),
+        self._configure_fts_conn(conn)
+        try:
+            conn.execute("BEGIN")
+            conn.execute("DROP TABLE IF EXISTS chunks")
+            conn.execute(
+                "CREATE VIRTUAL TABLE chunks "
+                "USING fts5(search_content, source_path, chunk_id)"
             )
-            for m in self.metadata
-        ]
-        conn.executemany(
-            "INSERT INTO chunks(search_content, source_path, chunk_id) "
-            "VALUES (?, ?, ?)",
-            rows,
-        )
-        conn.commit()
-        conn.close()
+            rows = [
+                (
+                    _normalize_for_search(m.get("content", "")),
+                    m.get("source_path", ""),
+                    m.get("id", ""),
+                )
+                for m in self.metadata
+            ]
+            conn.executemany(
+                "INSERT INTO chunks(search_content, source_path, chunk_id) "
+                "VALUES (?, ?, ?)",
+                rows,
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
         # Re-open as persistent connection (thread-safe for parallel search)
         self._fts_conn = sqlite3.connect(
             self._db_path, check_same_thread=False,
         )
+        self._configure_fts_conn(self._fts_conn)
 
     def save(self, name: str):
         """Save FAISS index, metadata, and per-index FTS5 DB to disk."""

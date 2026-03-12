@@ -76,26 +76,28 @@ def _build_fts5(db_path: str, chunks: List[Dict]) -> int:
 
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     conn = sqlite3.connect(db_path)
-    conn.execute("DROP TABLE IF EXISTS chunks")
-    conn.execute(
-        "CREATE VIRTUAL TABLE chunks "
-        "USING fts5(search_content, source_path, chunk_id)"
-    )
-    rows = [
-        (
-            _normalize_for_search(m.get("content", "")),
-            m.get("source_path", ""),
-            m.get("id", ""),
+    try:
+        conn.execute("DROP TABLE IF EXISTS chunks")
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks "
+            "USING fts5(search_content, source_path, chunk_id)"
         )
-        for m in chunks
-    ]
-    conn.executemany(
-        "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
-        rows,
-    )
-    conn.commit()
-    count = conn.execute("SELECT count(*) FROM chunks").fetchone()[0]
-    conn.close()
+        rows = [
+            (
+                _normalize_for_search(m.get("content", "")),
+                m.get("source_path", ""),
+                m.get("id", ""),
+            )
+            for m in chunks
+        ]
+        conn.executemany(
+            "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
+            rows,
+        )
+        conn.commit()
+        count = conn.execute("SELECT count(*) FROM chunks").fetchone()[0]
+    finally:
+        conn.close()
     return count
 
 

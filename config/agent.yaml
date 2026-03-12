@@ -1,7 +1,7 @@
 agent:
   backend: openai
-  model: ""  # empty = auto-detect
-  endpoint: ""  # empty = auto-detect from backend type
+  model: "gpt-5.4"
+  endpoint: "https://api.openai.com/v1"
   max_iterations: 50
   max_tokens_budget: 500000
   working_dir: "."
@@ -22,3 +22,35 @@ agent:
   safety:
     allowed_dirs: []  # empty = working_dir only
     max_command_timeout_s: 120
+
+  # Self-learning pipeline (Sprint 8)
+  self_learning:
+    pipeline_enabled: true
+    continual_learner_enabled: true
+    regression_margin: 0.05
+    confidence_gate: 0.2
+
+  # Reasoning modules (Sprint 9)
+  reasoning:
+    star_enabled: true
+    reflection_enabled: true
+    best_of_n_enabled: true
+    best_of_n_candidates: 3
+
+  # Corrective retrieval and smart orchestrator (Sprint 10)
+  corrective:
+    corrective_retrieval_enabled: true
+    smart_orchestrator_enabled: true
+    corrective_confidence_threshold: 0.5
+    knowledge_graph_enabled: true
+
+  # Prompt evolution and adversarial hardening (Sprint 11)
+  evolution:
+    prompt_evolver_enabled: true
+    adversarial_self_play_enabled: true
+    rapid_digest_enabled: true
+    stigmergy_enabled: true
+
+  # Cascade router and model orchestration (Sprint 12)
+  cascade:
+    cascade_enabled: true

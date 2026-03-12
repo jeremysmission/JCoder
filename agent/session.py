@@ -58,6 +58,8 @@ class SessionStore:
         status: str = "active",
         iterations: int = 0,
         tokens: int = 0,
+        input_tokens: Optional[int] = None,
+        output_tokens: Optional[int] = None,
     ) -> None:
         """Save (or overwrite) a session to disk.
 
@@ -87,6 +89,10 @@ class SessionStore:
             "message_count": len(history),
             "history": history,
         }
+        if input_tokens is not None:
+            payload["input_tokens"] = input_tokens
+        if output_tokens is not None:
+            payload["output_tokens"] = output_tokens
 
         tmp = target.with_suffix(".tmp")
         try:

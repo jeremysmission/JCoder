@@ -37,8 +37,9 @@ DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
 INDEX_DIR.mkdir(parents=True, exist_ok=True)
 
-# Two possible archive locations
+# Archive locations searched in order
 ARCHIVE_DIRS = [
+    Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data")),
     Path(r"D:\Projects\KnowledgeBase\stackexchange_20251231"),
     Path(r"D:\RAG Source Data\stackexchange_20251231"),
 ]
@@ -72,6 +73,23 @@ TARGET_SITES = [
     "tex.stackexchange.com",
     "wordpress.stackexchange.com",
     "salesforce.stackexchange.com",
+    "bioinformatics.stackexchange.com",
+    "blender.stackexchange.com",
+    "civicrm.stackexchange.com",
+    "craftcms.stackexchange.com",
+    "drupal.stackexchange.com",
+    "elementaryos.stackexchange.com",
+    "engineering.stackexchange.com",
+    "iot.stackexchange.com",
+    "joomla.stackexchange.com",
+    "monero.stackexchange.com",
+    "quantumcomputing.stackexchange.com",
+    "retrocomputing.stackexchange.com",
+    "scicomp.stackexchange.com",
+    "sitecore.stackexchange.com",
+    "sqa.stackexchange.com",
+    "tor.stackexchange.com",
+    "ux.stackexchange.com",
 ]
 
 BATCH_SIZE = 5000
@@ -161,15 +179,18 @@ def _is_build_complete(db_path: Path) -> bool:
     """Check whether a previous build finished successfully."""
     if not db_path.exists():
         return False
+    conn = None
     try:
         conn = sqlite3.connect(str(db_path))
         rows = conn.execute(
             "SELECT value FROM _build_meta WHERE key='build_complete'"
         ).fetchone()
-        conn.close()
         return rows is not None and rows[0] == "1"
     except sqlite3.OperationalError:
         return False
+    finally:
+        if conn is not None:
+            conn.close()
 
 
 def _mark_build_complete(conn: sqlite3.Connection) -> None:
@@ -198,104 +219,106 @@ def _parse_and_index(xml_path: Path, site_key: str, db_path: Path) -> tuple:
     sites like StackOverflow proper.
     """
     conn = sqlite3.connect(str(db_path))
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS chunks "
-        "USING fts5(search_content, source_path, chunk_id)"
-    )
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS chunks "
+            "USING fts5(search_content, source_path, chunk_id)"
+        )
 
-    # -- Pass 1: collect questions ------------------------------------------
-    questions = {}  # id -> {title, body, score, tags}
-    for _, elem in ET.iterparse(str(xml_path), events=("end",)):
-        if elem.tag != "row":
-            continue
-        if elem.get("PostTypeId") == "1":
-            score = int(elem.get("Score", "0"))
-            body = elem.get("Body", "")
-            if score >= MIN_SCORE and body:
-                questions[elem.get("Id", "")] = {
-                    "title": elem.get("Title", ""),
-                    "body": body,
-                    "score": score,
-                    "tags": elem.get("Tags", ""),
-                }
-        elem.clear()
+        # -- Pass 1: collect questions --------------------------------------
+        questions = {}  # id -> {title, body, score, tags}
+        for _, elem in ET.iterparse(str(xml_path), events=("end",)):
+            if elem.tag != "row":
+                continue
+            if elem.get("PostTypeId") == "1":
+                score = int(elem.get("Score", "0"))
+                body = elem.get("Body", "")
+                if score >= MIN_SCORE and body:
+                    questions[elem.get("Id", "")] = {
+                        "title": elem.get("Title", ""),
+                        "body": body,
+                        "score": score,
+                        "tags": elem.get("Tags", ""),
+                    }
+            elem.clear()
 
-    # -- Pass 2: collect answers keyed by parent question -------------------
-    answers: dict[str, list[str]] = {}
-    for _, elem in ET.iterparse(str(xml_path), events=("end",)):
-        if elem.tag != "row":
-            continue
-        if elem.get("PostTypeId") == "2":
-            parent = elem.get("ParentId", "")
-            score = int(elem.get("Score", "0"))
-            body = elem.get("Body", "")
-            if score >= MIN_SCORE and body and parent in questions:
-                answers.setdefault(parent, []).append(body)
-        elem.clear()
+        # -- Pass 2: collect answers keyed by parent question ---------------
+        answers: dict[str, list[str]] = {}
+        for _, elem in ET.iterparse(str(xml_path), events=("end",)):
+            if elem.tag != "row":
+                continue
+            if elem.get("PostTypeId") == "2":
+                parent = elem.get("ParentId", "")
+                score = int(elem.get("Score", "0"))
+                body = elem.get("Body", "")
+                if score >= MIN_SCORE and body and parent in questions:
+                    answers.setdefault(parent, []).append(body)
+            elem.clear()
 
-    # -- Build Q+A pairs and write to FTS5 ----------------------------------
-    batch = []
-    total_entries = 0
-    total_chunks = 0
-    skipped = 0
+        # -- Build Q+A pairs and write to FTS5 ------------------------------
+        batch = []
+        total_entries = 0
+        total_chunks = 0
+        skipped = 0
 
-    for qid, q in questions.items():
-        title = _strip_html(q["title"])
-        q_body = _strip_html(q["body"])
-        tags = q["tags"].replace("><", ", ").strip("<>")
+        for qid, q in questions.items():
+            title = _strip_html(q["title"])
+            q_body = _strip_html(q["body"])
+            tags = q["tags"].replace("><", ", ").strip("<>")
 
-        parts = [f"Q: {title}"]
-        if tags:
-            parts.append(f"Tags: {tags}")
-        parts.append(q_body)
+            parts = [f"Q: {title}"]
+            if tags:
+                parts.append(f"Tags: {tags}")
+            parts.append(q_body)
 
-        ans_list = answers.get(qid, [])
-        for ans_body in ans_list[:3]:  # top 3 answers
-            parts.append(f"\nA: {_strip_html(ans_body)}")
+            ans_list = answers.get(qid, [])
+            for ans_body in ans_list[:3]:  # top 3 answers
+                parts.append(f"\nA: {_strip_html(ans_body)}")
 
-        text = "\n\n".join(parts)
-        if len(text) < 50:
-            skipped += 1
-            continue
+            text = "\n\n".join(parts)
+            if len(text) < 50:
+                skipped += 1
+                continue
 
-        total_entries += 1
-        source_id = f"{site_key}_{total_entries:07d}"
+            total_entries += 1
+            source_id = f"{site_key}_{total_entries:07d}"
 
-        # Chunk
-        pos = 0
-        cidx = 0
-        while pos < len(text):
-            end = min(pos + MAX_CHARS, len(text))
-            if end < len(text):
-                nl = text.rfind("\n", pos, end)
-                if nl > pos:
-                    end = nl + 1
-            chunk = text[pos:end]
-            if chunk.strip():
-                cid = hashlib.sha256(f"{source_id}:{cidx}".encode()).hexdigest()
-                batch.append((_normalize(chunk), source_id, cid))
-                cidx += 1
-                total_chunks += 1
-            pos = end
+            # Chunk
+            pos = 0
+            cidx = 0
+            while pos < len(text):
+                end = min(pos + MAX_CHARS, len(text))
+                if end < len(text):
+                    nl = text.rfind("\n", pos, end)
+                    if nl > pos:
+                        end = nl + 1
+                chunk = text[pos:end]
+                if chunk.strip():
+                    cid = hashlib.sha256(f"{source_id}:{cidx}".encode()).hexdigest()
+                    batch.append((_normalize(chunk), source_id, cid))
+                    cidx += 1
+                    total_chunks += 1
+                pos = end
 
-        if len(batch) >= BATCH_SIZE:
+            if len(batch) >= BATCH_SIZE:
+                conn.executemany(
+                    "INSERT INTO chunks(search_content, source_path, chunk_id) "
+                    "VALUES (?, ?, ?)", batch)
+                conn.commit()
+                batch = []
+
+        # Flush
+        if batch:
             conn.executemany(
                 "INSERT INTO chunks(search_content, source_path, chunk_id) "
                 "VALUES (?, ?, ?)", batch)
             conn.commit()
-            batch = []
 
-    # Flush
-    if batch:
-        conn.executemany(
-            "INSERT INTO chunks(search_content, source_path, chunk_id) "
-            "VALUES (?, ?, ?)", batch)
-        conn.commit()
-
-    _mark_build_complete(conn)
-    conn.close()
+        _mark_build_complete(conn)
+    finally:
+        conn.close()
     return total_entries, total_chunks, skipped
 
 

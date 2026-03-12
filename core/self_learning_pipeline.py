@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import threading
 import time
 
 log = logging.getLogger(__name__)
@@ -167,6 +168,7 @@ class SelfLearningPipeline:
         self.continual = continual
         self.confidence_gate = confidence_gate
         self._query_count = 0
+        self._query_lock = threading.Lock()
 
     def answer(self, question: str) -> PipelineAnswer:
         """
@@ -181,7 +183,8 @@ class SelfLearningPipeline:
         query_id = hashlib.sha256(
             f"{question}:{t0}".encode()
         ).hexdigest()[:12]
-        self._query_count += 1
+        with self._query_lock:
+            self._query_count += 1
 
         # --- Step 1: Strategy Selection ---
         strategy = "standard"
@@ -278,24 +281,33 @@ class SelfLearningPipeline:
 
         # Stigmergy deposit
         if self.stigmergy:
-            self.stigmergy.deposit(chunk_ids, query_type, success)
+            try:
+                self.stigmergy.deposit(chunk_ids, query_type, success)
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # Experience storage (only high quality)
         if self.experience and confidence >= 0.6:
-            self.experience.store(
-                exp_id=query_id,
-                query=question,
-                answer=response,
-                source_files=sources,
-                confidence=confidence,
-            )
+            try:
+                self.experience.store(
+                    exp_id=query_id,
+                    query=question,
+                    answer=response,
+                    source_files=sources,
+                    confidence=confidence,
+                )
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # Meta-cognitive outcome
         if self.meta:
-            self.meta.report_outcome(
-                question, strategy, confidence,
-                latency_ms=(time.time() - t0) * 1000,
-            )
+            try:
+                self.meta.report_outcome(
+                    question, strategy, confidence,
+                    latency_ms=(time.time() - t0) * 1000,
+                )
+            except Exception as exc:
+                log.debug("Pipeline step failed: %s", exc)
 
         # Telemetry
         learning_value = 0.0

@@ -11,6 +11,7 @@ regardless of which index it came from.
 """
 
 import hashlib
+import logging
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -21,6 +22,8 @@ import numpy as np
 
 from .embedding_engine import EmbeddingEngine
 from .index_engine import IndexEngine
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -94,6 +97,7 @@ class FederatedSearch:
         self._rrf_k = rrf_k
         self._max_workers = max_workers
         self._pool: Optional[ThreadPoolExecutor] = None
+        self._pool_lock = threading.Lock()
         self._cache = _SearchCache(maxsize=cache_maxsize, ttl_s=cache_ttl_s)
 
     # -- Index management --------------------------------------------------
@@ -217,9 +221,10 @@ class FederatedSearch:
 
     def close(self):
         """Shut down the thread pool (if active)."""
-        if self._pool is not None:
-            self._pool.shutdown(wait=False)
-            self._pool = None
+        with self._pool_lock:
+            if self._pool is not None:
+                self._pool.shutdown(wait=True, cancel_futures=True)
+                self._pool = None
 
     # -- Internals ---------------------------------------------------------
 
@@ -248,9 +253,10 @@ class FederatedSearch:
             return results
 
         # Lazy-init thread pool (reused across searches)
-        if self._pool is None:
-            workers = min(self._max_workers, len(targets))
-            self._pool = ThreadPoolExecutor(max_workers=workers)
+        with self._pool_lock:
+            if self._pool is None:
+                workers = min(self._max_workers, len(targets))
+                self._pool = ThreadPoolExecutor(max_workers=workers)
 
         def _do_search(name: str) -> Tuple[str, List]:
             r = self._search_single(
@@ -268,8 +274,12 @@ class FederatedSearch:
             try:
                 name, hits = future.result()
                 result_map[name] = hits
-            except Exception:
-                pass  # Index search failure is non-fatal
+            except Exception as exc:
+                log.warning(
+                    "Federated search failed for index %s: %s",
+                    futures[future],
+                    exc,
+                )
         # Return in original target order for deterministic RRF
         return [(name, result_map[name]) for name in targets
                 if name in result_map]
@@ -289,11 +299,11 @@ class FederatedSearch:
             return index.search_fts5_direct(query_text, k)
         # FTS5 with preloaded metadata (small indexes, .meta.json)
         kw_results = index.search_keywords(query_text, k)
-        return [
-            (score, index.metadata[idx])
-            for idx, score in kw_results
-            if idx < len(index.metadata)
-        ]
+        results = []
+        for idx, score in kw_results:
+            if 0 <= idx < len(index.metadata):
+                results.append((score, index.metadata[idx]))
+        return results
 
     @staticmethod
     def _make_result(

@@ -299,27 +299,50 @@ def phase2_embed(
     endpoint = embed_endpoint.rstrip("/") + "/embeddings"
     client = httpx.Client(timeout=httpx.Timeout(120.0), transport=httpx.HTTPTransport(retries=2))
 
+    def _embed_batch(texts):
+        """Embed a batch; on context-length error, fall back to one-at-a-time."""
+        resp = client.post(
+            endpoint, json={"model": embed_model, "input": texts},
+        )
+        if resp.status_code == 200:
+            data = resp.json()["data"]
+            vecs = [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
+            return np.array(vecs, dtype=np.float32)
+        # Context-length exceeded -- embed individually
+        if resp.status_code == 400 and len(texts) > 1:
+            vecs = []
+            for t in texts:
+                r = client.post(
+                    endpoint, json={"model": embed_model, "input": [t]},
+                )
+                if r.status_code == 200:
+                    vecs.append(r.json()["data"][0]["embedding"])
+                else:
+                    # Truncate to ~2000 chars as last resort
+                    r2 = client.post(
+                        endpoint,
+                        json={"model": embed_model, "input": [t[:2000]]},
+                    )
+                    r2.raise_for_status()
+                    vecs.append(r2.json()["data"][0]["embedding"])
+            return np.array(vecs, dtype=np.float32)
+        resp.raise_for_status()
+
     try:
         t0 = time.time()
+        done = 0
         for i in range(0, total, embed_batch_size):
             batch = [m["content"] for m in metadata[i:i + embed_batch_size]]
-            response = client.post(
-                endpoint,
-                json={"model": embed_model, "input": batch},
-            )
-            response.raise_for_status()
-            data = response.json()["data"]
-            vectors = [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
-            arr = np.array(vectors, dtype=np.float32)
+            arr = _embed_batch(batch)
             norms = np.linalg.norm(arr, axis=1, keepdims=True)
             norms[norms == 0] = 1.0
             arr = arr / norms
             end = min(i + embed_batch_size, total)
             all_vectors[i:end] = arr
+            done = end
 
-            if (i // embed_batch_size) % 100 == 0:
+            if (i // embed_batch_size) % 10 == 0:
                 elapsed = time.time() - t0
-                done = end
                 rate = done / elapsed if elapsed > 0 else 0
                 print(f"  {done:,}/{total:,} embedded ({rate:.0f} chunks/s)")
 
@@ -334,6 +357,57 @@ def phase2_embed(
     index.add(all_vectors)
     faiss.write_index(index, base_path + ".faiss")
     print(f"[OK] FAISS index saved ({dim}d, {total:,} vectors)")
+
+
+# ---------------------------------------------------------------------------
+# Generate meta.json from FTS5 (for indexes that only have .fts5.db)
+# ---------------------------------------------------------------------------
+
+def generate_meta_from_fts5(index_name: str, index_dir: str) -> int:
+    """Extract chunk content from FTS5 and write .meta.json for Phase 2."""
+    base_path = os.path.join(index_dir, index_name)
+    fts5_path = base_path + ".fts5.db"
+    meta_path = base_path + ".meta.json"
+
+    if not os.path.exists(fts5_path):
+        print(f"[FAIL] FTS5 database not found: {fts5_path}")
+        return 1
+
+    if os.path.exists(meta_path):
+        print(f"[WARN] {meta_path} already exists, skipping (delete to regenerate)")
+        return 0
+
+    conn = sqlite3.connect(fts5_path)
+    cur = conn.cursor()
+    cur.execute("SELECT count(*) FROM chunks")
+    total = cur.fetchone()[0]
+
+    if total == 0:
+        print(f"[WARN] {index_name}: 0 chunks in FTS5, skipping")
+        conn.close()
+        return 0
+
+    print(f"[OK] Extracting {total:,} chunks from {index_name}.fts5.db...")
+    cur.execute("SELECT search_content, source_path, chunk_id FROM chunks")
+    metadata = []
+    for row in cur:
+        metadata.append({
+            "id": row[2],
+            "content": row[0],
+            "source_path": row[1] or "",
+            "source_type": "fts5_extract",
+            "ingestion_date": datetime.now().isoformat(),
+            "content_hash": _content_hash(row[0]),
+        })
+
+    conn.close()
+
+    with open(meta_path, "w", encoding="utf-8") as f:
+        json.dump(metadata, f)
+
+    size_mb = os.path.getsize(meta_path) / (1024 * 1024)
+    print(f"[OK] Wrote {meta_path} ({len(metadata):,} chunks, {size_mb:.1f} MB)")
+    return 0
 
 
 # ---------------------------------------------------------------------------
@@ -368,16 +442,28 @@ def main():
         "--embed-model", default="nomic-embed-text",
         help="Embedding model name",
     )
+    parser.add_argument(
+        "--embed-batch-size", type=int, default=EMBED_BATCH,
+        help=f"Embedding batch size (default: {EMBED_BATCH}; use 8 for CPU-only Ollama)",
+    )
+    parser.add_argument(
+        "--generate-meta", action="store_true",
+        help="Generate .meta.json from FTS5 database (needed before Phase 2)",
+    )
     args = parser.parse_args()
 
     cfg = load_config(None)
     index_dir = cfg.storage.index_dir
+
+    if args.generate_meta:
+        return generate_meta_from_fts5(args.index_name, index_dir)
 
     if args.phase2_embed:
         print(f"[OK] Phase 2: Embedding chunks for index '{args.index_name}'")
         phase2_embed(
             args.index_name, index_dir,
             args.embed_endpoint, args.embed_model,
+            embed_batch_size=args.embed_batch_size,
         )
         return 0
 

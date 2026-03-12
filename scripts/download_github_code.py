@@ -30,6 +30,8 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
+from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
+
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "stack_smol_xl"
@@ -37,7 +39,6 @@ INDEX_DIR.mkdir(parents=True, exist_ok=True)
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 DATASET_ID = "bigcode/the-stack-smol-xl"
-API_URL = f"https://huggingface.co/api/datasets/{DATASET_ID}/parquet"
 
 # Languages we want (lowercase for matching)
 TARGET_LANGUAGES = {
@@ -66,46 +67,31 @@ def _lang_key(lang: str) -> str:
 
 def _download_parquet_files() -> list:
     """Download all Parquet files to local cache. Returns list of local paths."""
-    import httpx
+    with DownloadManager(DOWNLOAD_DIR, read_timeout_s=300.0) as downloader:
+        print(f"Fetching Parquet file list from {DATASET_ID}...")
+        urls = fetch_huggingface_parquet_urls(downloader, DATASET_ID)
+        print(f"  {len(urls)} Parquet files found")
 
-    print(f"Fetching Parquet file list from {DATASET_ID}...")
-    r = httpx.get(API_URL, timeout=30)
-    r.raise_for_status()
-    data = r.json()
-    urls = data["default"]["train"]
-    print(f"  {len(urls)} Parquet files found")
+        local_files = []
+        for i, url in enumerate(urls):
+            local_path = DOWNLOAD_DIR / f"train_{i:02d}.parquet"
+            result = downloader.download_file(
+                url,
+                local_path.relative_to(DOWNLOAD_DIR),
+                min_existing_bytes=1000,
+                chunk_size=256 * 1024,
+            )
+            if not result.ok:
+                raise RuntimeError(f"Download failed for {url}: {result.error}")
 
-    local_files = []
-    for i, url in enumerate(urls):
-        local_path = DOWNLOAD_DIR / f"train_{i:02d}.parquet"
-        if local_path.exists() and local_path.stat().st_size > 1000:
-            size_mb = local_path.stat().st_size / 1e6
-            print(f"  [{i+1}/{len(urls)}] Already cached ({size_mb:.0f} MB)")
-            local_files.append(local_path)
-            continue
+            size_mb = result.path.stat().st_size / 1e6
+            if result.status == "cached":
+                print(f"  [{i+1}/{len(urls)}] Already cached ({size_mb:.0f} MB)")
+            else:
+                print(f"  [{i+1}/{len(urls)}] Downloaded {size_mb:.0f} MB")
+            local_files.append(result.path)
 
-        print(f"  [{i+1}/{len(urls)}] Downloading {url.split('/')[-1]}...")
-        partial = local_path.with_suffix(".partial")
-        with httpx.stream("GET", url, follow_redirects=True,
-                          timeout=httpx.Timeout(30.0, read=300.0)) as resp:
-            resp.raise_for_status()
-            total = int(resp.headers.get("content-length", 0))
-            downloaded = 0
-            with open(partial, "wb") as f:
-                for chunk in resp.iter_bytes(chunk_size=256 * 1024):
-                    f.write(chunk)
-                    downloaded += len(chunk)
-
-            if partial.exists():
-                if local_path.exists():
-                    local_path.unlink()
-                partial.rename(local_path)
-
-        size_mb = local_path.stat().st_size / 1e6
-        print(f"    [OK] {size_mb:.0f} MB")
-        local_files.append(local_path)
-
-    return local_files
+        return local_files
 
 
 def _process_parquet_files(parquet_files: list):

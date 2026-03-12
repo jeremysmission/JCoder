@@ -64,6 +64,17 @@ python main.py --mock eval --benchmark evaluation/agent_eval_set_200.json
 python main.py eval --benchmark evaluation/agent_eval_set.json
 ```
 
+### Run Download Backlog
+```bash
+python scripts/run_download_queue.py --list
+python scripts/run_download_queue.py
+python scripts/run_download_queue.py --only learn_rust
+```
+
+Use the inclusive downloader for new acquisition work:
+- `core/download_manager.py`
+- `docs/INCLUSIVE_DOWNLOADER.md`
+
 ### Benchmark Search Latency
 ```bash
 python main.py bench-search --queries 10 --top-k 10

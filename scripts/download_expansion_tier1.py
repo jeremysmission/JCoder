@@ -22,6 +22,7 @@ Usage:
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import io
 import json
@@ -32,13 +33,9 @@ import sys
 import time
 from pathlib import Path
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
-
 import httpx
-import pyarrow.parquet as pq
+
+from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
 
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
@@ -51,6 +48,27 @@ MAX_CHARS = 4000
 _NORMALIZE_RE = re.compile(r"[_\-./\\:]")
 _CAMEL_RE1 = re.compile(r"([a-z])([A-Z])")
 _CAMEL_RE2 = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_DOWNLOADER: DownloadManager | None = None
+_LEARN_RUST_RAW_FILES = [
+    (
+        "rust-books.txt",
+        "https://huggingface.co/datasets/gaianet/learn-rust/raw/main/rust-books.txt",
+    ),
+    (
+        "rust-qa.txt",
+        "https://huggingface.co/datasets/gaianet/learn-rust/raw/main/rust-qa.txt",
+    ),
+]
+
+
+def _configure_stdout() -> None:
+    if sys.platform != "win32":
+        return
+    if getattr(sys.stdout, "buffer", None) is None:
+        return
+    sys.stdout = io.TextIOWrapper(
+        sys.stdout.buffer, encoding="utf-8", errors="replace"
+    )
 
 
 def _normalize(text: str) -> str:
@@ -60,47 +78,71 @@ def _normalize(text: str) -> str:
     return out.lower()
 
 
+def _get_downloader() -> DownloadManager:
+    global _DOWNLOADER
+    if _DOWNLOADER is None:
+        _DOWNLOADER = DownloadManager(DOWNLOAD_DIR, read_timeout_s=600.0)
+    return _DOWNLOADER
+
+
+def _close_downloader() -> None:
+    global _DOWNLOADER
+    if _DOWNLOADER is not None:
+        _DOWNLOADER.close()
+        _DOWNLOADER = None
+
+
 def _download_parquet(url: str, local_path: Path) -> bool:
-    if local_path.exists() and local_path.stat().st_size > 1000:
+    relative_path = local_path.relative_to(DOWNLOAD_DIR)
+    result = _get_downloader().download_file(
+        url,
+        relative_path,
+        min_existing_bytes=1000,
+        chunk_size=256 * 1024,
+    )
+    if result.ok:
         return True
-    local_path.parent.mkdir(parents=True, exist_ok=True)
-    partial = local_path.with_suffix(".partial")
-    try:
-        with httpx.stream("GET", url, follow_redirects=True,
-                          timeout=httpx.Timeout(30.0, read=600.0)) as resp:
-            resp.raise_for_status()
-            with open(partial, "wb") as f:
-                for chunk in resp.iter_bytes(chunk_size=256 * 1024):
-                    f.write(chunk)
-        if local_path.exists():
-            local_path.unlink()
-        partial.rename(local_path)
+    print(f"    [WARN] Download failed: {result.error}")
+    return False
+
+
+def _download_text_asset(url: str, local_path: Path) -> bool:
+    relative_path = local_path.relative_to(DOWNLOAD_DIR)
+    result = _get_downloader().download_file(
+        url,
+        relative_path,
+        min_existing_bytes=10,
+        chunk_size=256 * 1024,
+    )
+    if result.ok:
         return True
-    except Exception as exc:
-        print(f"    [WARN] Download failed: {exc}")
-        return False
+    print(f"    [WARN] Download failed: {result.error}")
+    return False
 
 
 def _get_parquet_urls(dataset_id: str, config: str = "default",
                       split: str = "train") -> list:
-    url = f"https://huggingface.co/api/datasets/{dataset_id}/parquet"
-    r = httpx.get(url, timeout=30, follow_redirects=True)
-    r.raise_for_status()
-    data = r.json()
-    # Try exact config match
-    if config in data:
-        splits = data[config]
-        if isinstance(splits, dict) and split in splits:
-            return splits[split]
-        if isinstance(splits, list):
-            return splits
-    # Fallback: try first config
-    for cfg_name, cfg_data in data.items():
-        if isinstance(cfg_data, dict) and split in cfg_data:
-            return cfg_data[split]
-        if isinstance(cfg_data, list):
-            return cfg_data
-    return []
+    return fetch_huggingface_parquet_urls(
+        _get_downloader(),
+        dataset_id,
+        config=config,
+        split=split,
+        fallback_to_first_config=True,
+    )
+
+
+def _split_text_blocks(text: str) -> list[str]:
+    normalized = text.replace("\r\n", "\n")
+    blocks = [block.strip() for block in normalized.split("\n\n") if len(block.strip()) >= 50]
+    if len(blocks) > 1:
+        return blocks
+    return [line.strip() for line in normalized.splitlines() if len(line.strip()) >= 50]
+
+
+def _read_parquet_table(path: Path):
+    import pyarrow.parquet as pq
+
+    return pq.read_table(str(path))
 
 
 class FTS5Builder:
@@ -191,25 +233,25 @@ def _extract_sharegpt_text(conversations) -> str:
 # -------------------------------------------------------------------
 
 def _generic_qa(dataset_id, db_name, cache_subdir, prefix,
-                q_cols, a_cols, config="default"):
+                q_cols, a_cols, config="default") -> bool:
     """Generic Q&A processor for instruction datasets."""
     db_path = INDEX_DIR / db_name
     cache_dir = DOWNLOAD_DIR / cache_subdir
 
     if db_path.exists() and db_path.stat().st_size > 100_000:
         print(f"  [OK] {db_name} exists ({db_path.stat().st_size/1e6:.0f} MB)")
-        return
+        return True
 
     print(f"  Downloading {dataset_id}...")
     try:
         urls = _get_parquet_urls(dataset_id, config=config)
     except Exception as exc:
         print(f"  [FAIL] Could not get Parquet URLs: {exc}")
-        return
+        return False
 
     if not urls:
         print(f"  [WARN] No Parquet files found")
-        return
+        return False
     print(f"  {len(urls)} Parquet files")
 
     local_files = []
@@ -225,13 +267,13 @@ def _generic_qa(dataset_id, db_name, cache_subdir, prefix,
 
     if not local_files:
         print(f"  [FAIL] No files downloaded")
-        return
+        return False
 
     print(f"  Building FTS5 index...")
     builder = FTS5Builder(db_path)
 
     for f in local_files:
-        table = pq.read_table(str(f))
+        table = _read_parquet_table(f)
         cols = table.column_names
 
         for i in range(len(table)):
@@ -263,28 +305,29 @@ def _generic_qa(dataset_id, db_name, cache_subdir, prefix,
     entries, chunks, size = builder.finish()
     print(f"  [OK] {db_name}: {entries:,} entries, {chunks:,} chunks "
           f"({size:.0f} MB)")
+    return True
 
 
 def _generic_sharegpt(dataset_id, db_name, cache_subdir, prefix,
-                      conv_col="conversations", config="default"):
+                      conv_col="conversations", config="default") -> bool:
     """Generic processor for ShareGPT-format conversation datasets."""
     db_path = INDEX_DIR / db_name
     cache_dir = DOWNLOAD_DIR / cache_subdir
 
     if db_path.exists() and db_path.stat().st_size > 100_000:
         print(f"  [OK] {db_name} exists ({db_path.stat().st_size/1e6:.0f} MB)")
-        return
+        return True
 
     print(f"  Downloading {dataset_id}...")
     try:
         urls = _get_parquet_urls(dataset_id, config=config)
     except Exception as exc:
         print(f"  [FAIL] Could not get Parquet URLs: {exc}")
-        return
+        return False
 
     if not urls:
         print(f"  [WARN] No Parquet files found")
-        return
+        return False
     print(f"  {len(urls)} Parquet files")
 
     local_files = []
@@ -300,13 +343,13 @@ def _generic_sharegpt(dataset_id, db_name, cache_subdir, prefix,
 
     if not local_files:
         print(f"  [FAIL] No files downloaded")
-        return
+        return False
 
     print(f"  Building FTS5 index...")
     builder = FTS5Builder(db_path)
 
     for f in local_files:
-        table = pq.read_table(str(f))
+        table = _read_parquet_table(f)
         cols = table.column_names
 
         # Find the conversation column
@@ -342,15 +385,16 @@ def _generic_sharegpt(dataset_id, db_name, cache_subdir, prefix,
     entries, chunks, size = builder.finish()
     print(f"  [OK] {db_name}: {entries:,} entries, {chunks:,} chunks "
           f"({size:.0f} MB)")
+    return True
 
 
 # -------------------------------------------------------------------
 # Dataset processors
 # -------------------------------------------------------------------
 
-def process_code_290k():
+def process_code_290k() -> bool:
     """ajibawa-2023/Code-290k-ShareGPT -- 290K code conversations."""
-    _generic_sharegpt(
+    return _generic_sharegpt(
         dataset_id="ajibawa-2023/Code-290k-ShareGPT",
         db_name="code_290k_sharegpt.fts5.db",
         cache_subdir="code_290k_sharegpt",
@@ -358,9 +402,9 @@ def process_code_290k():
     )
 
 
-def process_python_23k():
+def process_python_23k() -> bool:
     """ajibawa-2023/Python-Code-23k-ShareGPT -- Python-only conversations."""
-    _generic_sharegpt(
+    return _generic_sharegpt(
         dataset_id="ajibawa-2023/Python-Code-23k-ShareGPT",
         db_name="python_23k_sharegpt.fts5.db",
         cache_subdir="python_23k_sharegpt",
@@ -368,9 +412,9 @@ def process_python_23k():
     )
 
 
-def process_code_74k():
+def process_code_74k() -> bool:
     """ajibawa-2023/Code-74k-ShareGPT -- 74K code conversations."""
-    _generic_sharegpt(
+    return _generic_sharegpt(
         dataset_id="ajibawa-2023/Code-74k-ShareGPT",
         db_name="code_74k_sharegpt.fts5.db",
         cache_subdir="code_74k_sharegpt",
@@ -378,9 +422,9 @@ def process_code_74k():
     )
 
 
-def process_glaive_v3():
+def process_glaive_v3() -> bool:
     """glaiveai/glaive-code-assistant-v3 -- Code Q&A set."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="glaiveai/glaive-code-assistant-v3",
         db_name="glaive_code_v3.fts5.db",
         cache_subdir="glaive_code_v3",
@@ -390,9 +434,9 @@ def process_glaive_v3():
     )
 
 
-def process_evol_codealpaca():
+def process_evol_codealpaca() -> bool:
     """theblackcat102/evol-codealpaca-v1 -- WizardCoder Evol-Instruct 110K."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="theblackcat102/evol-codealpaca-v1",
         db_name="evol_codealpaca.fts5.db",
         cache_subdir="evol_codealpaca",
@@ -402,9 +446,9 @@ def process_evol_codealpaca():
     )
 
 
-def process_strandset_rust():
+def process_strandset_rust() -> bool:
     """Fortytwo-Network/Strandset-Rust-v1 -- 191K Rust tasks."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="Fortytwo-Network/Strandset-Rust-v1",
         db_name="strandset_rust.fts5.db",
         cache_subdir="strandset_rust",
@@ -414,19 +458,56 @@ def process_strandset_rust():
     )
 
 
-def process_learn_rust():
+def process_learn_rust() -> bool:
     """gaianet/learn-rust -- Rust learning dataset."""
-    _generic_sharegpt(
-        dataset_id="gaianet/learn-rust",
-        db_name="learn_rust.fts5.db",
-        cache_subdir="learn_rust",
-        prefix="lrust",
-    )
+    db_path = INDEX_DIR / "learn_rust.fts5.db"
+    cache_dir = DOWNLOAD_DIR / "learn_rust"
+
+    if db_path.exists() and db_path.stat().st_size > 100_000:
+        print(f"  [OK] {db_path.name} exists ({db_path.stat().st_size/1e6:.0f} MB)")
+        return True
+
+    print("  Downloading gaianet/learn-rust raw text assets...")
+    local_files: list[Path] = []
+    for index, (filename, url) in enumerate(_LEARN_RUST_RAW_FILES, start=1):
+        local_path = cache_dir / filename
+        print(f"    [{index}/{len(_LEARN_RUST_RAW_FILES)}] {filename}: ", end="", flush=True)
+        if _download_text_asset(url, local_path):
+            print(f"{local_path.stat().st_size / 1e6:.1f} MB", flush=True)
+            local_files.append(local_path)
+        else:
+            print("FAILED", flush=True)
+
+    if not local_files:
+        print("  [FAIL] No learn-rust source files downloaded")
+        return False
+
+    print("  Building FTS5 index...")
+    builder = FTS5Builder(db_path)
+    total_sections = 0
+
+    for path in local_files:
+        text = path.read_text(encoding="utf-8", errors="replace")
+        sections = _split_text_blocks(text)
+        if not sections:
+            continue
+        for section in sections:
+            builder.add(section, f"lrust_{path.stem}_{total_sections:07d}")
+            total_sections += 1
+        print(f"    {path.name}: {len(sections):,} sections")
+
+    entries, chunks, size = builder.finish()
+    if entries == 0:
+        print("  [FAIL] learn_rust produced no indexable text")
+        return False
+
+    print(f"  [OK] {db_path.name}: {entries:,} entries, {chunks:,} chunks ({size:.0f} MB)")
+    return True
 
 
-def process_ml_arxiv():
+def process_ml_arxiv() -> bool:
     """CShorten/ML-ArXiv-Papers -- 100K+ ML papers from arXiv."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="CShorten/ML-ArXiv-Papers",
         db_name="ml_arxiv_papers.fts5.db",
         cache_subdir="ml_arxiv_papers",
@@ -436,9 +517,9 @@ def process_ml_arxiv():
     )
 
 
-def process_python_codes_25k():
+def process_python_codes_25k() -> bool:
     """flytech/python-codes-25k -- 25K Python codes."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="flytech/python-codes-25k",
         db_name="python_codes_25k.fts5.db",
         cache_subdir="python_codes_25k",
@@ -448,9 +529,9 @@ def process_python_codes_25k():
     )
 
 
-def process_tiny_codes():
+def process_tiny_codes() -> bool:
     """nampdn-ai/tiny-codes -- Beginner code examples (large)."""
-    _generic_qa(
+    return _generic_qa(
         dataset_id="nampdn-ai/tiny-codes",
         db_name="tiny_codes.fts5.db",
         cache_subdir="tiny_codes",
@@ -460,9 +541,9 @@ def process_tiny_codes():
     )
 
 
-def process_capybara():
+def process_capybara() -> bool:
     """LDJnr/Capybara -- Multi-turn reasoning conversations."""
-    _generic_sharegpt(
+    return _generic_sharegpt(
         dataset_id="LDJnr/Capybara",
         db_name="capybara.fts5.db",
         cache_subdir="capybara",
@@ -490,10 +571,11 @@ ALL_PROCESSORS = {
 }
 
 
-def main():
-    only = None
-    if len(sys.argv) > 2 and sys.argv[1] == "--only":
-        only = sys.argv[2]
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Download expansion datasets and build FTS5 indexes")
+    parser.add_argument("--only", help="Run only the named dataset processor")
+    args = parser.parse_args(argv)
+    only = args.only
 
     print("=" * 60)
     print("JCoder Expansion Tier 1: Download + Index")
@@ -505,17 +587,30 @@ def main():
 
     t0 = time.time()
     results = {}
+    had_failure = False
 
-    for name, processor in ALL_PROCESSORS.items():
-        if only and name != only:
-            continue
+    selected = [
+        (name, processor)
+        for name, processor in ALL_PROCESSORS.items()
+        if not only or name == only
+    ]
+    if only and not selected:
+        print(f"[FAIL] Unknown dataset: {only}")
+        return 1
+
+    for name, processor in selected:
         print(f"\n--- {name.upper()} ---")
         try:
-            processor()
-            results[name] = "OK"
+            ok = processor()
+            if ok:
+                results[name] = "OK"
+            else:
+                results[name] = "FAIL"
+                had_failure = True
         except Exception as exc:
             print(f"  [FAIL] {name}: {exc}")
             results[name] = f"FAIL: {exc}"
+            had_failure = True
 
     elapsed = time.time() - t0
     print("\n" + "=" * 60)
@@ -536,7 +631,12 @@ def main():
             print(f"  {db.name:40s} {size_mb:>8.0f} MB")
     print(f"  {'TOTAL':40s} {total_size:>8.0f} MB")
     print("=" * 60)
+    return 1 if had_failure else 0
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        _configure_stdout()
+        raise SystemExit(main())
+    finally:
+        _close_downloader()

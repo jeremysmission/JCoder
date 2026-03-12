@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import json
 import os
 import re
 import sqlite3
@@ -21,12 +22,7 @@ import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(
-        sys.stdout.buffer, encoding="utf-8", errors="replace"
-    )
-
-import httpx
+from core.download_manager import DownloadManager
 
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
@@ -40,6 +36,7 @@ MAX_CHARS = 4000
 _NORMALIZE_RE = re.compile(r"[_\-./\\:]")
 _CAMEL_RE1 = re.compile(r"([a-z])([A-Z])")
 _CAMEL_RE2 = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_DOWNLOADER: DownloadManager | None = None
 
 
 def _normalize(text: str) -> str:
@@ -47,6 +44,36 @@ def _normalize(text: str) -> str:
     out = _CAMEL_RE1.sub(r"\1 \2", out)
     out = _CAMEL_RE2.sub(r"\1 \2", out)
     return out.lower()
+
+
+def _configure_stdout() -> None:
+    if sys.platform != "win32":
+        return
+    buffer = getattr(sys.stdout, "buffer", None)
+    if buffer is None:
+        return
+    sys.stdout = io.TextIOWrapper(buffer, encoding="utf-8", errors="replace")
+
+
+def _get_downloader() -> DownloadManager:
+    global _DOWNLOADER
+    if _DOWNLOADER is None:
+        _DOWNLOADER = DownloadManager(DOWNLOAD_DIR, read_timeout_s=60.0)
+    return _DOWNLOADER
+
+
+def _close_downloader() -> None:
+    global _DOWNLOADER
+    if _DOWNLOADER is not None:
+        _DOWNLOADER.close()
+        _DOWNLOADER = None
+
+
+def _fetch_arxiv_feed(url: str) -> str:
+    return _get_downloader().fetch_text(
+        url,
+        headers={"Accept": "application/atom+xml"},
+    )
 
 
 # All arXiv IDs from Awesome-Self-Evolving-Agents survey
@@ -119,20 +146,18 @@ def fetch_arxiv_metadata(arxiv_id: str) -> dict | None:
     """Fetch title + abstract from arXiv API."""
     cache_file = DOWNLOAD_DIR / f"{arxiv_id.replace('/', '_')}.json"
     if cache_file.exists():
-        import json
         return json.loads(cache_file.read_text(encoding="utf-8"))
 
     url = f"http://export.arxiv.org/api/query?id_list={arxiv_id}"
     try:
-        r = httpx.get(url, timeout=30, follow_redirects=True)
-        r.raise_for_status()
+        feed_text = _fetch_arxiv_feed(url)
     except Exception as exc:
         print(f"    [WARN] API error for {arxiv_id}: {exc}")
         return None
 
     # Parse XML
     try:
-        root = ET.fromstring(r.text)
+        root = ET.fromstring(feed_text)
         ns = {"atom": "http://www.w3.org/2005/Atom"}
         entry = root.find("atom:entry", ns)
         if entry is None:
@@ -167,7 +192,6 @@ def fetch_arxiv_metadata(arxiv_id: str) -> dict | None:
         }
 
         # Cache
-        import json
         cache_file.write_text(
             json.dumps(result, indent=2), encoding="utf-8"
         )
@@ -270,9 +294,7 @@ def build_broad_ml_search():
         )
         print(f"  Searching: {q[:50]}...", flush=True)
         try:
-            r = httpx.get(url, timeout=60, follow_redirects=True)
-            r.raise_for_status()
-            root = ET.fromstring(r.text)
+            root = ET.fromstring(_fetch_arxiv_feed(url))
             ns = {"atom": "http://www.w3.org/2005/Atom"}
 
             for entry in root.findall("atom:entry", ns):
@@ -351,6 +373,7 @@ def build_broad_ml_search():
 
 
 def main():
+    _configure_stdout()
     print("=" * 60)
     print("JCoder arXiv Agentic AI Paper Downloader")
     print(f"Index dir: {INDEX_DIR}")
@@ -370,4 +393,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        _close_downloader()

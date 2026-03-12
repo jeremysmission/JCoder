@@ -51,6 +51,27 @@ class ChatResponse:
         return len(self.tool_calls) > 0
 
 
+def _decode_tool_arguments(args: Any, *, tool_name: str) -> Dict[str, Any]:
+    """Normalize LLM tool arguments into a dict with clear errors."""
+    if args in (None, ""):
+        return {}
+
+    parsed = args
+    if isinstance(args, str):
+        try:
+            parsed = json.loads(args)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"Malformed tool arguments for {tool_name or 'tool'}: {exc.msg}"
+            ) from exc
+
+    if not isinstance(parsed, dict):
+        raise ValueError(
+            f"Tool arguments for {tool_name or 'tool'} must decode to an object"
+        )
+    return parsed
+
+
 # ---------------------------------------------------------------------------
 # Abstract backend
 # ---------------------------------------------------------------------------
@@ -113,11 +134,14 @@ class OpenAIBackend(LLMBackend):
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
 
+        # Newer models (gpt-5+, gpt-4.1, o-series) require max_completion_tokens
+        _new_style = any(self.model.startswith(p) for p in ("gpt-5", "gpt-4.1", "o1", "o3", "o4"))
+        token_key = "max_completion_tokens" if _new_style else "max_tokens"
         payload: Dict[str, Any] = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": max_tokens,
+            token_key: max_tokens,
         }
         if tools:
             payload["tools"] = tools
@@ -133,12 +157,13 @@ class OpenAIBackend(LLMBackend):
         for tc in msg.get("tool_calls") or []:
             fn = tc.get("function", {})
             args = fn.get("arguments", "{}")
-            if isinstance(args, str):
-                args = json.loads(args)
             tool_calls.append(ToolCall(
                 id=tc.get("id", ""),
                 name=fn.get("name", ""),
-                arguments=args,
+                arguments=_decode_tool_arguments(
+                    args,
+                    tool_name=fn.get("name", ""),
+                ),
             ))
 
         usage = data.get("usage", {})
@@ -270,13 +295,14 @@ class AnthropicBackend(LLMBackend):
                 for tc in m["tool_calls"]:
                     fn = tc.get("function", tc)
                     args = fn.get("arguments", {})
-                    if isinstance(args, str):
-                        args = json.loads(args)
                     content.append({
                         "type": "tool_use",
                         "id": tc.get("id", ""),
                         "name": fn.get("name", ""),
-                        "input": args,
+                        "input": _decode_tool_arguments(
+                            args,
+                            tool_name=fn.get("name", ""),
+                        ),
                     })
                 result.append({"role": "assistant", "content": content})
             else:

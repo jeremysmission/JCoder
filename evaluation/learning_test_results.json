@@ -1,0 +1,122 @@
+[
+  {
+    "question_id": "dbg_171",
+    "category": "debugging",
+    "baseline_score": 0.8,
+    "baseline_answer_snippet": "To find performance bottlenecks with **cProfile**:\n\n1. **Run your script with cProfile**:\n\n```bash\npython -m cProfile -s time your_script.py\n```\n\n- `-s time` sorts output by time spent in each functio",
+    "post_score": 0.925,
+    "post_answer_snippet": "To find performance bottlenecks using `cProfile`:\n\n1. **Import cProfile**:\n```python\nimport cProfile\n```\n\n2. **Profile your script or function**:\n- For a function:\n```python\ncProfile.run('your_functio",
+    "distilled_marker": "The default `cProfile.run()` output sorts by internal time (`tottime`), but sorting by `'cumulative'` often reveals bottlenecks hidden in sub-function calls.",
+    "marker_found_in_answer": false,
+    "improvement": 0.125,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "js_071",
+    "category": "javascript",
+    "baseline_score": 0.625,
+    "baseline_answer_snippet": "You can create a mapped type that makes all properties `readonly` and, if the property is a method, transforms its return type to a `Promise` of the original return type.\n\nHere's an example:\n\n```ts\nty",
+    "post_score": 0.625,
+    "post_answer_snippet": "You can create a mapped type that makes all properties `readonly` and transforms all method return types to `Promise<ReturnType>`. Here's how to do it in TypeScript:\n\n```typescript\ntype AsyncReadonly<",
+    "distilled_marker": "TypeScript's mapped types allow conditional transformation of method return types by using `extends (...args: infer A) => infer R` to infer argument and return types, enabling precise wrapping of return types such as `Promise<R>` while preserving method signatures.",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "alg_150",
+    "category": "algorithms",
+    "baseline_score": 0.325,
+    "baseline_answer_snippet": "**Amortized analysis** is a technique used in algorithm analysis to average the running time of operations over a sequence of operations, ensuring that the average cost per operation is small, even if",
+    "post_score": 0.325,
+    "post_answer_snippet": "Amortized analysis is a technique in algorithm analysis used to average the time taken by a sequence of operations over all the operations performed, smoothing out expensive operations by spreading th",
+    "distilled_marker": "In Python's list implementation, the resize growth factor is approximately 1.125 (not exactly doubling), balancing memory usage and append speed.",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "dbg_158",
+    "category": "debugging",
+    "baseline_score": 0.825,
+    "baseline_answer_snippet": "This error means Python cannot find the module `my_package` in its module search path.\n\nCommon reasons and fixes:\n\n1. **Check your current working directory**  \n   Run `import os; print(os.getcwd())` ",
+    "post_score": 0.625,
+    "post_answer_snippet": "The error `ImportError: No module named 'my_package'` means Python cannot find the package in its module search path.\n\n**Common causes and fixes:**\n\n1. **Check your current working directory**  \n   Ma",
+    "distilled_marker": "Python 3.3+ supports implicit namespace packages that allow directories without `__init__.py` to be treated as packages, but this can cause import errors in some tooling and older environments, so adding `__init__.py` is still recommended for compatibility.",
+    "marker_found_in_answer": false,
+    "improvement": -0.2,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "multi_197",
+    "category": "shell",
+    "baseline_score": 0.625,
+    "baseline_answer_snippet": "Bash parameter expansion allows you to manipulate the value of variables in various ways directly in the shell.\n\n### 1. Default Values\n- `${var:-default}`  \n  Use `default` if `var` is unset or null.\n",
+    "post_score": 0.625,
+    "post_answer_snippet": "Bash parameter expansion is a powerful feature to manipulate variables. Here are key forms including default values, substring extraction, pattern replacement, and variable indirection:\n\n1. **Default ",
+    "distilled_marker": "In Bash, substring extraction with a negative offset requires a space before the minus sign (e.g., `${var: -3}`) to distinguish it from `${var:-default}` syntax, which is a common source of syntax errors.",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "sys_003",
+    "category": "systems",
+    "baseline_score": 0.6,
+    "baseline_answer_snippet": "**Hard Links:**\n- Point directly to the inode of a file.\n- Multiple hard links to the same file share the same inode number.\n- Cannot link directories (to avoid loops).\n- Cannot link files across diff",
+    "post_score": 0.5,
+    "post_answer_snippet": "Hard links and soft links (symbolic links) in Linux differ as follows:\n\n- **Hard Link**:\n  - Points directly to the inode of the file.\n  - Acts as an additional name for the same file.\n  - Cannot link",
+    "distilled_marker": "The `ln` command without `-s` creates hard links that share the same inode number, while `ln -s` creates symbolic links with a different inode that store the path to the target file.",
+    "marker_found_in_answer": false,
+    "improvement": -0.1,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "sys_095",
+    "category": "systems",
+    "baseline_score": 0.8,
+    "baseline_answer_snippet": "To set up and manage git submodules to include an external repository within your project, follow these steps:\n\n1. **Add a submodule**  \n   Run this in your project root to add the external repo as a ",
+    "post_score": 0.8,
+    "post_answer_snippet": "To include an external repository as a git submodule in your project, follow these steps:\n\n1. **Add the submodule:**\n\n```bash\ngit submodule add <repository-url> <path-in-your-project>\n```\n\nExample:\n\n`",
+    "distilled_marker": "When running `git submodule update --init --recursive`, Git will initialize and update all nested submodules recursively, ensuring even deeply nested submodules are properly set up in one command.",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "multi_196",
+    "category": "shell",
+    "baseline_score": 0.75,
+    "baseline_answer_snippet": "Here's a concise example demonstrating bash arrays and associative arrays with iteration, adding, removing, and checking elements:\n\n```bash\n#!/bin/bash\n\n# Indexed array\narr=(\"apple\" \"banana\" \"cherry\")",
+    "post_score": 0.75,
+    "post_answer_snippet": "Here's a concise example demonstrating bash arrays and associative arrays with iteration, adding, removing, and checking elements:\n\n```bash\n#!/bin/bash\n\n# Indexed array example\narr=(apple banana cherr",
+    "distilled_marker": "Bash 4.2 introduced the `[[ -v varname",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "dbg_175",
+    "category": "debugging",
+    "baseline_score": 0.725,
+    "baseline_answer_snippet": "To use **line_profiler** to identify slow lines in a Python function:\n\n1. **Install line_profiler** (if not installed):\n```bash\npip install line_profiler\n```\n\n2. **Add the `@profile` decorator** to th",
+    "post_score": 0.725,
+    "post_answer_snippet": "To use `line_profiler` to identify which specific lines of a function are slowest in Python, follow these steps:\n\n1. **Install line_profiler** (if not installed):\n```bash\npip install line_profiler\n```",
+    "distilled_marker": "The `@profile` decorator is not defined in your script but is injected by `kernprof` at runtime; running the script normally without defining `profile` causes a `NameError`.",
+    "marker_found_in_answer": false,
+    "improvement": 0.0,
+    "learned_from_rag": false
+  },
+  {
+    "question_id": "js_009",
+    "category": "javascript",
+    "baseline_score": 1.0,
+    "baseline_answer_snippet": "In TypeScript:\n\n- **`interface`**:\n  - Primarily used to define the shape of an object.\n  - Supports declaration merging (you can define the same interface multiple times and TypeScript merges them).\n",
+    "post_score": 0.7,
+    "post_answer_snippet": "In TypeScript:\n\n- **`type`** defines a type alias. It can represent primitives, unions, intersections, tuples, or object shapes. It is very flexible.\n\n- **`interface`** defines the shape of an object ",
+    "distilled_marker": "In TypeScript 4.2 and later, `interface` can extend a `type` alias if it resolves to an object type, enabling more flexible type composition.",
+    "marker_found_in_answer": false,
+    "improvement": -0.3,
+    "learned_from_rag": false
+  }
+]

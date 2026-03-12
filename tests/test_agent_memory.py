@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import List
 
+import numpy as np
 import pytest
 
 from agent.core import AgentResult, AgentStep
@@ -120,6 +121,44 @@ class TestAgentMemory:
 
     def test_empty_search(self, mem):
         assert mem.search("anything at all", top_k=5) == []
+
+    def test_search_skips_stale_keyword_hits(self, mem):
+        mem._index.metadata = [{"id": "1", "content": "kept", "source_task": "t"}]
+        mem._index.search_keywords = lambda query, k: [(999, 1.0), (0, 0.5)]
+
+        results = mem.search("kept", top_k=5)
+
+        assert len(results) == 1
+        assert results[0]["content"] == "kept"
+
+    def test_ingest_ignores_stale_duplicate_hits(self, tmp_path):
+        class FakeEmbedder:
+            def embed_single(self, text):
+                return np.zeros(4, dtype=np.float32)
+
+        mem = AgentMemory(
+            embedding_engine=FakeEmbedder(),
+            index_dir=str(tmp_path / "idx"),
+            index_name="mem",
+            knowledge_dir=str(tmp_path / "knowledge"),
+            dimension=4,
+        )
+        mem._index.metadata = [{
+            "id": "old",
+            "content": "existing",
+            "source_task": "old-task",
+            "tags": [],
+            "confidence": 1.0,
+            "timestamp": "",
+            "tokens_used": 0,
+        }]
+        mem._index.search_vectors = lambda query_vec, k: [(999, 0.99)]
+
+        entry = mem.ingest("new content", "task")
+
+        assert entry.id != "old"
+        assert any(m.get("id") == entry.id for m in mem._index.metadata)
+        mem.close()
 
     def test_persistence(self, tmp_path):
         kw = dict(index_dir=str(tmp_path / "idx"), index_name="persist",

@@ -1,0 +1,23 @@
+{
+  "ran_at": "2026-03-11T20:56:08.833130-06:00",
+  "summary_path": "D:\\JCoder\\docs\\WEEKLY_SUBJECT_SUMMARY_2026-03-12.md",
+  "summary_sha256": "f0508a22c0241375b7d91184f6661a96d2a2b9f04f862ec8d1251878638d1946",
+  "subjects": [
+    "Python and Python Tooling",
+    "JavaScript, TypeScript, and Runtime Tooling",
+    "Rust, Go, Java, and .NET",
+    "DevOps, Systems, and Security",
+    "Web APIs, HTTP, and Standards",
+    "AI Coding Agents, RAG, and Model Tooling",
+    "Code Quality, Review, and Testing"
+  ],
+  "entry_ids": [
+    "dd2576ba-3e66-4869-a648-ce7dc0b29f62",
+    "7f25882e-35c8-4f3a-be98-c0f6f1a7a374",
+    "1c8428f9-ea75-4383-8ca8-0ddae3f4eff7",
+    "a8c66495-d54e-4b1d-831c-4141e87bdaa9",
+    "9cd26e70-c3bf-4a8e-999e-c359c21f1f1c",
+    "d1f0c2b3-a3c1-4849-8111-f76e08618198",
+    "1dbf8749-750f-427e-8425-9719f83116ca"
+  ]
+}

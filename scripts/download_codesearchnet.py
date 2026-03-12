@@ -22,6 +22,8 @@ import time
 import zipfile
 from pathlib import Path
 
+from core.download_manager import DownloadManager
+
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -53,13 +55,11 @@ def _ensure_dirs():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def _download_zip(language: str) -> Path:
+def _download_zip(language: str, downloader: DownloadManager) -> Path:
     """Download a language zip from S3. Returns path to zip file.
 
     Skips if already downloaded. Retries up to MAX_RETRIES times.
     """
-    import httpx
-
     url = BASE_URL.format(language=language)
     zip_path = DOWNLOAD_DIR / f"{language}.zip"
 
@@ -68,43 +68,21 @@ def _download_zip(language: str) -> Path:
         print(f"[OK] {language}.zip already exists ({size_mb:.1f} MB), skipping download")
         return zip_path
 
-    for attempt in range(1, MAX_RETRIES + 1):
-        try:
-            print(f"     Downloading {language}.zip (attempt {attempt}/{MAX_RETRIES})...")
-            # Use a partial download file to support resume on crash
-            partial_path = DOWNLOAD_DIR / f"{language}.zip.partial"
-            with httpx.stream("GET", url, follow_redirects=True,
-                              timeout=httpx.Timeout(30.0, read=300.0)) as resp:
-                resp.raise_for_status()
-                total = int(resp.headers.get("content-length", 0))
-                downloaded = 0
-                with open(partial_path, "wb") as f:
-                    for chunk in resp.iter_bytes(chunk_size=CHUNK_SIZE):
-                        f.write(chunk)
-                        downloaded += len(chunk)
-                        if total > 0 and downloaded % (5 * 1024 * 1024) < CHUNK_SIZE:
-                            pct = downloaded * 100 // total
-                            print(f"     {language}: {downloaded // (1024*1024)} / "
-                                  f"{total // (1024*1024)} MB ({pct}%)")
+    print(f"     Downloading {language}.zip...")
+    result = downloader.download_file(
+        url,
+        f"{language}.zip",
+        min_existing_bytes=1000,
+        chunk_size=CHUNK_SIZE,
+        progress_label=f"{language}.zip",
+        progress_every_bytes=5 * 1024 * 1024,
+    )
+    if result.ok:
+        size_mb = result.path.stat().st_size / (1024 * 1024)
+        print(f"[OK] Downloaded {language}.zip ({size_mb:.1f} MB)")
+        return result.path
 
-            # Rename partial to final on success
-            if partial_path.exists():
-                if zip_path.exists():
-                    zip_path.unlink()
-                partial_path.rename(zip_path)
-
-            size_mb = zip_path.stat().st_size / (1024 * 1024)
-            print(f"[OK] Downloaded {language}.zip ({size_mb:.1f} MB)")
-            return zip_path
-
-        except Exception as exc:
-            print(f"[WARN] Download attempt {attempt} failed for {language}: {exc}")
-            if attempt < MAX_RETRIES:
-                wait = 5 * attempt
-                print(f"     Retrying in {wait}s...")
-                time.sleep(wait)
-
-    print(f"[FAIL] Could not download {language}.zip after {MAX_RETRIES} attempts")
+    print(f"[FAIL] Could not download {language}.zip: {result.error}")
     return zip_path  # Caller checks existence
 
 
@@ -276,11 +254,12 @@ def download_codesearchnet() -> dict:
     t0 = time.time()
     all_stats = {}
 
-    for lang in LANGUAGES:
-        print(f"\n--- {lang.upper()} ---")
-        zip_path = _download_zip(lang)
-        lang_stats = _convert_language(lang, zip_path)
-        all_stats[lang] = lang_stats
+    with DownloadManager(DOWNLOAD_DIR, max_retries=MAX_RETRIES, read_timeout_s=300.0) as downloader:
+        for lang in LANGUAGES:
+            print(f"\n--- {lang.upper()} ---")
+            zip_path = _download_zip(lang, downloader)
+            lang_stats = _convert_language(lang, zip_path)
+            all_stats[lang] = lang_stats
 
     elapsed = time.time() - t0
     total_entries = sum(s["entries_total"] for s in all_stats.values())

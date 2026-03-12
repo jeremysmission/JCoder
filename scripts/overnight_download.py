@@ -373,71 +373,72 @@ def build_fts5_for_dir(source_dir: Path, index_name: str):
             row = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()
             if row and row[0] > 0:
                 log(f"[OK] FTS5 index '{index_name}' already has {row[0]:,} rows")
-                conn.close()
                 return row[0]
         except Exception:
             pass
-        conn.close()
+        finally:
+            conn.close()
 
     log(f"Building FTS5 index '{index_name}' from {len(files):,} files...")
 
     conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA synchronous=NORMAL")
-    conn.execute("DROP TABLE IF EXISTS chunks")
-    conn.execute(
-        "CREATE VIRTUAL TABLE chunks "
-        "USING fts5(search_content, source_path, chunk_id)"
-    )
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
+        conn.execute("DROP TABLE IF EXISTS chunks")
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks "
+            "USING fts5(search_content, source_path, chunk_id)"
+        )
 
-    batch = []
-    total = 0
-    MAX_CHARS = 4000
+        batch = []
+        total = 0
+        MAX_CHARS = 4000
 
-    for fp in files:
-        try:
-            content = fp.read_text(encoding="utf-8", errors="replace")
-        except Exception:
-            continue
+        for fp in files:
+            try:
+                content = fp.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+                continue
 
-        if not content.strip():
-            continue
+            if not content.strip():
+                continue
 
-        # Simple chunking
-        pos = 0
-        while pos < len(content):
-            end = min(pos + MAX_CHARS, len(content))
-            if end < len(content):
-                nl = content.rfind("\n", pos, end)
-                if nl > pos:
-                    end = nl + 1
-            chunk = content[pos:end]
-            if chunk.strip():
-                cid = hashlib.sha256(f"{fp}:{pos}".encode()).hexdigest()
-                batch.append((_normalize(chunk), str(fp), cid))
-            pos = end
+            # Simple chunking
+            pos = 0
+            while pos < len(content):
+                end = min(pos + MAX_CHARS, len(content))
+                if end < len(content):
+                    nl = content.rfind("\n", pos, end)
+                    if nl > pos:
+                        end = nl + 1
+                chunk = content[pos:end]
+                if chunk.strip():
+                    cid = hashlib.sha256(f"{fp}:{pos}".encode()).hexdigest()
+                    batch.append((_normalize(chunk), str(fp), cid))
+                pos = end
 
-        if len(batch) >= 5000:
+            if len(batch) >= 5000:
+                conn.executemany(
+                    "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
+                    batch,
+                )
+                conn.commit()
+                total += len(batch)
+                batch = []
+
+                if total % 50000 == 0:
+                    log(f"  {index_name}: {total:,} chunks indexed")
+
+        if batch:
             conn.executemany(
                 "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
                 batch,
             )
             conn.commit()
             total += len(batch)
-            batch = []
-
-            if total % 50000 == 0:
-                log(f"  {index_name}: {total:,} chunks indexed")
-
-    if batch:
-        conn.executemany(
-            "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
-            batch,
-        )
-        conn.commit()
-        total += len(batch)
-
-    conn.close()
+    finally:
+        conn.close()
     log(f"[OK] FTS5 index '{index_name}': {total:,} chunks")
     return total
 

@@ -5,10 +5,13 @@ Reads the integrity log to identify archives with all-zero headers,
 downloads replacements, and validates the 7z magic bytes after download.
 
 Usage:
-    python scripts/reacquire_se_archives.py [--coding-only] [--dry-run]
+    python scripts/reacquire_se_archives.py [--coding-only] [--exclude-coding] [--site SITE] [--dry-run]
 
 Flags:
     --coding-only   Only download coding/tech-relevant sites (default: all)
+    --exclude-coding
+                    Only download archives outside the coding/tech priority set
+    --site SITE     Limit to one or more specific archive site stems
     --dry-run       Print what would be downloaded without downloading
 """
 
@@ -19,12 +22,16 @@ import sys
 import time
 from pathlib import Path
 
-import httpx
+from core.download_manager import DownloadManager
 
 MAGIC_7Z = bytes.fromhex("377abcaf271c")
 BASE_URL = "https://archive.org/download/stackexchange"
-_JCODER_DATA_DIR = Path(os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data"))
+_JCODER_DATA_DIR = Path(
+    os.environ.get("JCODER_DATA")
+    or os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data")
+)
 INTEGRITY_LOG = _JCODER_DATA_DIR / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
+_DOWNLOADERS: dict[Path, DownloadManager] = {}
 
 # Sites with significant coding/tech content worth prioritizing.
 CODING_SITES = {
@@ -85,6 +92,24 @@ def load_bad_archives():
     return [r for r in data["rows"] if r.get("status") == "all_zero_header"]
 
 
+def archive_site(row):
+    return Path(row["path"]).stem
+
+
+def select_archives(rows, *, coding_only=False, exclude_coding=False, sites=None):
+    selected = list(rows)
+    if coding_only:
+        selected = [r for r in selected if archive_site(r) in CODING_SITES]
+    elif exclude_coding:
+        selected = [r for r in selected if archive_site(r) not in CODING_SITES]
+
+    wanted = {site.strip() for site in (sites or []) if site and site.strip()}
+    if wanted:
+        selected = [r for r in selected if archive_site(r) in wanted]
+
+    return selected
+
+
 def validate_7z(path):
     """Check if file starts with valid 7z magic bytes."""
     try:
@@ -95,46 +120,89 @@ def validate_7z(path):
         return False
 
 
+def resolve_download_target(dest: str | Path) -> tuple[Path, Path]:
+    dest_path = Path(dest)
+    return dest_path.parent, Path(dest_path.name)
+
+
+def _get_downloader(cache_root: Path, timeout: float = 600.0) -> DownloadManager:
+    cache_root = cache_root.resolve()
+    downloader = _DOWNLOADERS.get(cache_root)
+    if downloader is None:
+        suffix = str(os.getpid())
+        downloader = DownloadManager(
+            cache_root,
+            read_timeout_s=timeout,
+            ledger_name=f"_download_ledger_{suffix}.sqlite3",
+            staging_dir_name=f"_staging_{suffix}",
+        )
+        _DOWNLOADERS[cache_root] = downloader
+    return downloader
+
+
+def _close_downloader() -> None:
+    global _DOWNLOADERS
+    for downloader in _DOWNLOADERS.values():
+        downloader.close()
+    _DOWNLOADERS = {}
+
+
 def download_archive(url, dest, timeout=600):
     """Stream-download a file with progress reporting."""
-    tmp = dest + ".partial"
-    try:
-        with httpx.stream("GET", url, timeout=timeout, follow_redirects=True) as resp:
-            resp.raise_for_status()
-            total = int(resp.headers.get("content-length", 0))
-            downloaded = 0
-            with open(tmp, "wb") as f:
-                for chunk in resp.iter_bytes(chunk_size=1024 * 1024):
-                    f.write(chunk)
-                    downloaded += len(chunk)
-                    if total > 0:
-                        pct = downloaded / total * 100
-                        print(f"\r  {downloaded / 1e6:.0f}/{total / 1e6:.0f} MB ({pct:.0f}%)", end="", flush=True)
-            print()
-        # Rename on success
-        if os.path.exists(dest):
-            os.remove(dest)
-        os.rename(tmp, dest)
+    dest_path = Path(dest)
+    cache_root, relative_path = resolve_download_target(dest_path)
+
+    result = _get_downloader(cache_root, timeout).download_file(
+        url,
+        relative_path,
+        overwrite=True,
+        chunk_size=1024 * 1024,
+        progress_label=dest_path.name,
+        progress_every_bytes=1024 * 1024,
+    )
+    if result.ok:
         return True
-    except Exception as e:
-        print(f"\n  [FAIL] {e}")
-        if os.path.exists(tmp):
-            os.remove(tmp)
-        return False
+
+    print(f"\n  [FAIL] {result.error}")
+    return False
 
 
 def main():
     parser = argparse.ArgumentParser(description="Re-acquire corrupt SE archives")
     parser.add_argument("--coding-only", action="store_true", help="Only coding/tech sites")
+    parser.add_argument(
+        "--exclude-coding",
+        action="store_true",
+        help="Only sites outside the coding/tech priority set",
+    )
+    parser.add_argument(
+        "--site",
+        action="append",
+        default=[],
+        help="Limit to one or more archive site stems (repeatable)",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Print plan without downloading")
     args = parser.parse_args()
+
+    if args.coding_only and args.exclude_coding:
+        parser.error("--coding-only and --exclude-coding cannot be combined")
 
     bad = load_bad_archives()
     print(f"[OK] {len(bad)} corrupt archives found in integrity log")
 
+    bad = select_archives(
+        bad,
+        coding_only=args.coding_only,
+        exclude_coding=args.exclude_coding,
+        sites=args.site,
+    )
+
     if args.coding_only:
-        bad = [r for r in bad if Path(r["path"]).stem in CODING_SITES]
         print(f"[OK] {len(bad)} are coding/tech-relevant")
+    elif args.exclude_coding:
+        print(f"[OK] {len(bad)} are outside the coding/tech priority set")
+    if args.site:
+        print(f"[OK] Filtered to {len(bad)} requested site(s)")
 
     total_bytes = sum(r["size"] for r in bad)
     print(f"[OK] Total to download: {total_bytes / 1e9:.2f} GB")
@@ -175,4 +243,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        _close_downloader()

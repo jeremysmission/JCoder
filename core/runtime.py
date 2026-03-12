@@ -112,7 +112,19 @@ class Runtime:
         response = self._client.post(url, json=payload)
         response.raise_for_status()
 
-        return response.json()["choices"][0]["message"]["content"]
+        try:
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            import logging
+            logging.getLogger(__name__).error(
+                "Unexpected LLM response structure: %s -- raw keys: %s",
+                exc,
+                list(data.keys()) if isinstance(data, dict) else type(data).__name__,
+            )
+            raise ValueError(
+                f"LLM response missing expected fields: {exc}"
+            ) from exc
 
     def close(self):
         """Release HTTP connection pool."""

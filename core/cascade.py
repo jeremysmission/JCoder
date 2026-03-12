@@ -20,6 +20,7 @@ Only hard architectural questions consume full-power resources.
 from __future__ import annotations
 
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -144,16 +145,18 @@ class ModelCascade:
         self.gate = gate or NetworkGate(mode="localhost")
         self.confidence_threshold = confidence_threshold
         self._runtimes: Dict[str, Runtime] = {}
+        self._runtime_lock = threading.Lock()
 
     def _get_runtime(self, level: CascadeLevel) -> Runtime:
         """Lazy-init runtimes for each cascade level."""
-        if level.name not in self._runtimes:
-            self._runtimes[level.name] = Runtime(
-                level.model_config,
-                timeout=level.timeout_s,
-                gate=self.gate,
-            )
-        return self._runtimes[level.name]
+        with self._runtime_lock:
+            if level.name not in self._runtimes:
+                self._runtimes[level.name] = Runtime(
+                    level.model_config,
+                    timeout=level.timeout_s,
+                    gate=self.gate,
+                )
+            return self._runtimes[level.name]
 
     def route(
         self,
@@ -218,6 +221,7 @@ class ModelCascade:
 
     def close(self) -> None:
         """Release all runtime connections."""
-        for rt in self._runtimes.values():
-            rt.close()
-        self._runtimes.clear()
+        with self._runtime_lock:
+            for rt in self._runtimes.values():
+                rt.close()
+            self._runtimes.clear()

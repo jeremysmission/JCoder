@@ -29,6 +29,17 @@ from ingestion.repo_loader import RepoLoader
 console = Console()
 
 
+def _ensure_download_queue_running() -> None:
+    """Best-effort downloader autostart for pending queue work."""
+    try:
+        from scripts.run_download_queue import ensure_queue_running
+
+        ensure_queue_running()
+    except Exception:
+        # Downloader supervision must not block the main CLI path.
+        return
+
+
 def _build_embedder(config: JCoderConfig, gate: NetworkGate):
     """Canonical embedder builder: DualEmbeddingEngine when dual models configured."""
     p = config.policies
@@ -83,6 +94,9 @@ def cli(ctx, config_dir: Optional[str], mock: bool):
     ctx.ensure_object(dict)
     ctx.obj["config"] = load_config(config_dir)
     ctx.obj["mock"] = mock
+    # Note: _ensure_download_queue_running() is NOT called here to
+    # avoid hidden side effects on every CLI invocation.  Use the
+    # download subcommand or call it explicitly when needed.
 
 
 @cli.command()

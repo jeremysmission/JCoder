@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -149,6 +150,8 @@ class Agent:
         self._steps: List[AgentStep] = []
         self._total_input_tokens = 0
         self._total_output_tokens = 0
+        self._run_lock = threading.Lock()
+        self._running = False
 
     # -- Public API --------------------------------------------------------
 
@@ -157,6 +160,18 @@ class Agent:
         Execute a task autonomously. Returns when the agent finishes,
         signals task_complete, or exhausts its budget.
         """
+        self._claim_run_slot()
+
+        try:
+            return self._run_loop(task)
+        finally:
+            # Safety net: normal paths release via _save_session, but
+            # unexpected exceptions could bypass those.  _release_run_slot
+            # is idempotent so the double-call on normal exits is harmless.
+            self._release_run_slot()
+
+    def _run_loop(self, task: str) -> AgentResult:
+        """Inner loop for run(), separated so run() can wrap in try/finally."""
         t_start = time.monotonic()
 
         # Initialise conversation
@@ -254,14 +269,15 @@ class Agent:
                     )
 
                 result = self._tools.execute(tc.name, tc.arguments)
+                tool_output = result.output or ""
 
                 # Compose result text for the LLM
                 if result.success:
-                    result_text = result.output
+                    result_text = tool_output
                 else:
                     result_text = f"ERROR: {result.error}"
-                    if result.output:
-                        result_text = f"{result.output}\nERROR: {result.error}"
+                    if tool_output:
+                        result_text = f"{tool_output}\nERROR: {result.error}"
 
                 log.info(
                     "  Result: success=%s  (%.1fs)  %s",
@@ -294,8 +310,8 @@ class Agent:
                 ))
 
                 # Check for task completion signal
-                if result.success and result.output.startswith(_TASK_COMPLETE_PREFIX):
-                    summary = result.output[len(_TASK_COMPLETE_PREFIX):].strip()
+                if result.success and tool_output.startswith(_TASK_COMPLETE_PREFIX):
+                    summary = tool_output[len(_TASK_COMPLETE_PREFIX):].strip()
                     log.info("Task complete: %s", summary)
                     total_tok = (self._total_input_tokens
                                  + self._total_output_tokens)
@@ -396,90 +412,44 @@ class Agent:
         if not self._session_store:
             raise RuntimeError("Cannot resume: no session_store configured")
 
-        data = self._session_store.load(session_id)
-        self._session_id = session_id
-        self._history = data["history"]
-        self._total_input_tokens = 0
-        self._total_output_tokens = 0
-        self._steps = []
-
-        task = data["task"]
-        prior_iterations = data.get("iterations", 0)
-        remaining = max(1, self._max_iterations - prior_iterations)
-
-        log.info(
-            "Resuming session %s (%d prior iterations, %d messages)",
-            session_id, prior_iterations, len(self._history),
-        )
-
-        t_start = time.monotonic()
-
-        for iteration in range(prior_iterations + 1,
-                               prior_iterations + remaining + 1):
-            log.info("Iteration %d / %d", iteration, self._max_iterations)
-
+        self._claim_run_slot()
+        try:
+            data = self._session_store.load(session_id)
+            self._session_id = session_id
             try:
-                response = self._backend.chat(
-                    self._history, tools=self._tools.schemas,
-                )
-            except Exception as exc:
-                log.error("LLM call failed: %s", exc)
-                self._save_session(task, "failed", iteration)
-                return AgentResult(
-                    success=False,
-                    summary=f"LLM error on iteration {iteration}: {exc}",
-                    steps=list(self._steps),
-                    total_input_tokens=self._total_input_tokens,
-                    total_output_tokens=self._total_output_tokens,
-                    total_elapsed_s=time.monotonic() - t_start,
-                    iterations=iteration,
-                )
+                self._history = data["history"]
+                task = data["task"]
+            except KeyError as e:
+                raise RuntimeError(
+                    f"Corrupt session {session_id}: missing key {e}"
+                ) from e
+            self._steps = []
+            self._restore_token_totals(data)
 
-            self._total_input_tokens += response.input_tokens
-            self._total_output_tokens += response.output_tokens
+            prior_iterations = data.get("iterations", 0)
+            remaining = max(1, self._max_iterations - prior_iterations)
 
-            if not response.has_tool_calls:
-                self._save_session(task, "completed", iteration)
-                return AgentResult(
-                    success=True,
-                    summary=response.content,
-                    steps=list(self._steps),
-                    total_input_tokens=self._total_input_tokens,
-                    total_output_tokens=self._total_output_tokens,
-                    total_elapsed_s=time.monotonic() - t_start,
-                    iterations=iteration,
-                )
-
-            assistant_msg = self._build_assistant_message(
-                response.content, response.tool_calls,
+            log.info(
+                "Resuming session %s (%d prior iterations, %d messages)",
+                session_id, prior_iterations, len(self._history),
             )
-            self._history.append(assistant_msg)
 
-            for tc in response.tool_calls:
-                result = self._tools.execute(tc.name, tc.arguments)
-                result_text = (
-                    result.output if result.success
-                    else f"ERROR: {result.error}"
-                )
-                self._history.append({
-                    "role": "tool",
-                    "tool_call_id": tc.id,
-                    "content": result_text,
-                })
-                self._steps.append(AgentStep(
-                    iteration=iteration,
-                    tool_name=tc.name,
-                    tool_args=tc.arguments,
-                    tool_result=result_text,
-                    tool_success=result.success,
-                    elapsed_s=result.elapsed_s,
-                ))
+            t_start = time.monotonic()
 
-                if result.success and result.output.startswith(_TASK_COMPLETE_PREFIX):
-                    summary = result.output[len(_TASK_COMPLETE_PREFIX):].strip()
-                    self._save_session(task, "completed", iteration)
+            for iteration in range(prior_iterations + 1,
+                                   prior_iterations + remaining + 1):
+                log.info("Iteration %d / %d", iteration, self._max_iterations)
+
+                try:
+                    response = self._backend.chat(
+                        self._history, tools=self._tools.schemas,
+                    )
+                except Exception as exc:
+                    log.error("LLM call failed: %s", exc)
+                    self._save_session(task, "failed", iteration)
                     return AgentResult(
-                        success=True, summary=summary,
+                        success=False,
+                        summary=f"LLM error on iteration {iteration}: {exc}",
                         steps=list(self._steps),
                         total_input_tokens=self._total_input_tokens,
                         total_output_tokens=self._total_output_tokens,
@@ -487,32 +457,87 @@ class Agent:
                         iterations=iteration,
                     )
 
-            self._save_session(task, "active", iteration)
+                self._total_input_tokens += response.input_tokens
+                self._total_output_tokens += response.output_tokens
 
-            total_tokens = self._total_input_tokens + self._total_output_tokens
-            if total_tokens >= self._max_tokens_budget:
-                self._save_session(task, "failed", iteration)
-                return AgentResult(
-                    success=False,
-                    summary=f"Token budget exhausted ({total_tokens:,} tokens)",
-                    steps=list(self._steps),
-                    total_input_tokens=self._total_input_tokens,
-                    total_output_tokens=self._total_output_tokens,
-                    total_elapsed_s=time.monotonic() - t_start,
-                    iterations=iteration, timed_out=True,
+                if not response.has_tool_calls:
+                    self._save_session(task, "completed", iteration)
+                    return AgentResult(
+                        success=True,
+                        summary=response.content,
+                        steps=list(self._steps),
+                        total_input_tokens=self._total_input_tokens,
+                        total_output_tokens=self._total_output_tokens,
+                        total_elapsed_s=time.monotonic() - t_start,
+                        iterations=iteration,
+                    )
+
+                assistant_msg = self._build_assistant_message(
+                    response.content, response.tool_calls,
                 )
+                self._history.append(assistant_msg)
 
-        final_iter = prior_iterations + remaining
-        self._save_session(task, "failed", final_iter)
-        return AgentResult(
-            success=False,
-            summary=f"Iteration limit reached after resume ({final_iter})",
-            steps=list(self._steps),
-            total_input_tokens=self._total_input_tokens,
-            total_output_tokens=self._total_output_tokens,
-            total_elapsed_s=time.monotonic() - t_start,
-            iterations=final_iter, timed_out=True,
-        )
+                for tc in response.tool_calls:
+                    result = self._tools.execute(tc.name, tc.arguments)
+                    tool_output = result.output or ""
+                    result_text = (
+                        tool_output if result.success
+                        else f"ERROR: {result.error}"
+                    )
+                    self._history.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result_text,
+                    })
+                    self._steps.append(AgentStep(
+                        iteration=iteration,
+                        tool_name=tc.name,
+                        tool_args=tc.arguments,
+                        tool_result=result_text,
+                        tool_success=result.success,
+                        elapsed_s=result.elapsed_s,
+                    ))
+
+                    if result.success and tool_output.startswith(_TASK_COMPLETE_PREFIX):
+                        summary = tool_output[len(_TASK_COMPLETE_PREFIX):].strip()
+                        self._save_session(task, "completed", iteration)
+                        return AgentResult(
+                            success=True, summary=summary,
+                            steps=list(self._steps),
+                            total_input_tokens=self._total_input_tokens,
+                            total_output_tokens=self._total_output_tokens,
+                            total_elapsed_s=time.monotonic() - t_start,
+                            iterations=iteration,
+                        )
+
+                self._save_session(task, "active", iteration)
+
+                total_tokens = self._total_input_tokens + self._total_output_tokens
+                if total_tokens >= self._max_tokens_budget:
+                    self._save_session(task, "failed", iteration)
+                    return AgentResult(
+                        success=False,
+                        summary=f"Token budget exhausted ({total_tokens:,} tokens)",
+                        steps=list(self._steps),
+                        total_input_tokens=self._total_input_tokens,
+                        total_output_tokens=self._total_output_tokens,
+                        total_elapsed_s=time.monotonic() - t_start,
+                        iterations=iteration, timed_out=True,
+                    )
+
+            final_iter = prior_iterations + remaining
+            self._save_session(task, "failed", final_iter)
+            return AgentResult(
+                success=False,
+                summary=f"Iteration limit reached after resume ({final_iter})",
+                steps=list(self._steps),
+                total_input_tokens=self._total_input_tokens,
+                total_output_tokens=self._total_output_tokens,
+                total_elapsed_s=time.monotonic() - t_start,
+                iterations=final_iter, timed_out=True,
+            )
+        finally:
+            self._release_run_slot()
 
     @property
     def step_log(self) -> List[AgentStep]:
@@ -559,6 +584,8 @@ class Agent:
         self, task: str, status: str, iteration: int,
     ) -> None:
         """Persist current session state if a store is configured."""
+        if status in ("completed", "failed"):
+            self._release_run_slot()
         if not self._session_store:
             return
         total = self._total_input_tokens + self._total_output_tokens
@@ -570,9 +597,32 @@ class Agent:
                 status=status,
                 iterations=iteration,
                 tokens=total,
+                input_tokens=self._total_input_tokens,
+                output_tokens=self._total_output_tokens,
             )
         except OSError:
             log.warning("Session save failed for %s", self._session_id)
+
+    def _claim_run_slot(self) -> None:
+        with self._run_lock:
+            if self._running:
+                raise RuntimeError("Agent is already running a task")
+            self._running = True
+
+    def _release_run_slot(self) -> None:
+        with self._run_lock:
+            self._running = False
+
+    def _restore_token_totals(self, data: Dict[str, Any]) -> None:
+        input_tokens = data.get("input_tokens")
+        output_tokens = data.get("output_tokens")
+        if input_tokens is None and output_tokens is None:
+            self._total_input_tokens = int(data.get("total_tokens", 0))
+            self._total_output_tokens = 0
+            return
+
+        self._total_input_tokens = int(input_tokens or 0)
+        self._total_output_tokens = int(output_tokens or 0)
 
 
 # ---------------------------------------------------------------------------

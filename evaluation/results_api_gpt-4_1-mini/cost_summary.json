@@ -1,0 +1,9 @@
+{
+  "model": "gpt-4.1-mini",
+  "rag": false,
+  "total_input_tokens": 61672,
+  "total_output_tokens": 41243,
+  "estimated_cost_usd": 0.0907,
+  "wall_time_s": 1686.6,
+  "questions_run": 200
+}

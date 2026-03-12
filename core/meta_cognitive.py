@@ -35,6 +35,7 @@ import math
 import random
 import re
 import sqlite3
+import threading
 import time
 
 log = logging.getLogger(__name__)
@@ -163,6 +164,7 @@ class MetaCognitiveController:
         self.exploration_bonus = exploration_bonus
         self.rng = random.Random(seed)
         self._arms: Dict[str, Dict[str, StrategyArm]] = {}
+        self._arms_lock = threading.Lock()
         self._init_db()
         self._load_arms()
 
@@ -201,24 +203,26 @@ class MetaCognitiveController:
         """Load persisted arm stats from SQLite."""
         with self._connect() as conn:
             cur = conn.execute("SELECT * FROM strategy_arms")
-            for row in cur.fetchall():
-                qtype, strategy = row[0], row[1]
-                if qtype not in self._arms:
-                    self._arms[qtype] = {}
-                self._arms[qtype][strategy] = StrategyArm(
-                    name=strategy,
-                    alpha=row[2], beta=row[3],
-                    total_uses=row[4], total_reward=row[5],
-                    avg_latency_ms=row[6],
-                )
+            with self._arms_lock:
+                for row in cur.fetchall():
+                    qtype, strategy = row[0], row[1]
+                    if qtype not in self._arms:
+                        self._arms[qtype] = {}
+                    self._arms[qtype][strategy] = StrategyArm(
+                        name=strategy,
+                        alpha=row[2], beta=row[3],
+                        total_uses=row[4], total_reward=row[5],
+                        avg_latency_ms=row[6],
+                    )
 
     def _get_arm(self, query_type: str, strategy: str) -> StrategyArm:
         """Get or create an arm for a (query_type, strategy) pair."""
-        if query_type not in self._arms:
-            self._arms[query_type] = {}
-        if strategy not in self._arms[query_type]:
-            self._arms[query_type][strategy] = StrategyArm(name=strategy)
-        return self._arms[query_type][strategy]
+        with self._arms_lock:
+            if query_type not in self._arms:
+                self._arms[query_type] = {}
+            if strategy not in self._arms[query_type]:
+                self._arms[query_type][strategy] = StrategyArm(name=strategy)
+            return self._arms[query_type][strategy]
 
     def select_strategy(self, query: str) -> Tuple[str, QuerySignature]:
         """
@@ -280,25 +284,27 @@ class MetaCognitiveController:
     def strategy_report(self) -> Dict[str, Any]:
         """Generate a human-readable report of learned strategy preferences."""
         report = {}
-        for qtype, arms in self._arms.items():
-            report[qtype] = {}
-            for strategy, arm in arms.items():
-                report[qtype][strategy] = {
-                    "mean_reward": round(arm.mean, 3),
-                    "total_uses": arm.total_uses,
-                    "avg_latency_ms": round(arm.avg_latency_ms, 1),
-                    "confidence": round(
-                        1.0 - 1.0 / (1.0 + arm.alpha + arm.beta), 3),
-                }
+        with self._arms_lock:
+            for qtype, arms in self._arms.items():
+                report[qtype] = {}
+                for strategy, arm in arms.items():
+                    report[qtype][strategy] = {
+                        "mean_reward": round(arm.mean, 3),
+                        "total_uses": arm.total_uses,
+                        "avg_latency_ms": round(arm.avg_latency_ms, 1),
+                        "confidence": round(
+                            1.0 - 1.0 / (1.0 + arm.alpha + arm.beta), 3),
+                    }
         return report
 
     def best_strategy_per_type(self) -> Dict[str, str]:
         """Return the current best strategy for each known query type."""
         result = {}
-        for qtype, arms in self._arms.items():
-            if arms:
-                best = max(arms.values(), key=lambda a: a.mean)
-                result[qtype] = best.name
+        with self._arms_lock:
+            for qtype, arms in self._arms.items():
+                if arms:
+                    best = max(arms.values(), key=lambda a: a.mean)
+                    result[qtype] = best.name
         return result
 
     def _log_decision(

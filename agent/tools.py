@@ -28,6 +28,7 @@ from __future__ import annotations
 import fnmatch
 import os
 import re
+import shlex
 import subprocess
 import time
 from dataclasses import dataclass
@@ -52,8 +53,33 @@ _BLOCKED_PATTERNS = [
     re.compile(r":\(\)\{.*:\|:&.*\};:"),  # fork bomb
     re.compile(r">\s*/dev/sd[a-z]"),  # write to raw disk
 ]
+_SHELL_OPERATOR_TOKENS = frozenset({"&&", "||", "|", ";", "&", ">", ">>", "<", "<<"})
 
 MAX_OUTPUT_BYTES = 100_000  # 100KB max output per command
+
+
+def _split_command_args(command: str) -> list[str]:
+    """Split a command string into argv without invoking a shell."""
+    parts = shlex.split(command, posix=os.name != "nt")
+    if os.name == "nt":
+        cleaned: list[str] = []
+        for part in parts:
+            if len(part) >= 2 and part[0] == part[-1] and part[0] in {"'", '"'}:
+                part = part[1:-1]
+            cleaned.append(part)
+        return cleaned
+    return parts
+
+
+def _is_within_directory(path: str, allowed_dir: str) -> bool:
+    """Return True when path is inside allowed_dir after canonicalization."""
+    try:
+        common = os.path.commonpath(
+            [os.path.normcase(path), os.path.normcase(allowed_dir)]
+        )
+    except ValueError:
+        return False
+    return common == os.path.normcase(allowed_dir)
 
 
 def _is_command_safe(command: str) -> tuple[bool, str]:
@@ -62,13 +88,25 @@ def _is_command_safe(command: str) -> tuple[bool, str]:
     if not stripped:
         return False, "Empty command"
 
-    first_token = stripped.split()[0].lower()
+    try:
+        argv = _split_command_args(stripped)
+    except ValueError as exc:
+        return False, f"Could not parse command: {exc}"
+
+    if not argv:
+        return False, "Empty command"
+
+    first_token = os.path.splitext(os.path.basename(argv[0]))[0].lower()
     if first_token in _BLOCKED_COMMANDS:
         return False, f"Blocked command: {first_token}"
 
     for pattern in _BLOCKED_PATTERNS:
         if pattern.search(stripped):
             return False, f"Blocked pattern: {pattern.pattern}"
+
+    bad_token = next((token for token in argv if token in _SHELL_OPERATOR_TOKENS), "")
+    if bad_token:
+        return False, f"Shell operator not allowed: {bad_token}"
 
     return True, ""
 
@@ -166,7 +204,9 @@ TOOL_SCHEMAS: List[Dict[str, Any]] = [
         "function": {
             "name": "run_command",
             "description": (
-                "Execute a shell command and return its output. "
+                "Execute a command and return its output. "
+                "Runs a single program with arguments (no shell operators "
+                "like |, &&, ;, or redirects). "
                 "Use for running tests, installing packages, git commands, etc."
             ),
             "parameters": {
@@ -516,11 +556,13 @@ class ToolRegistry:
         memory: Optional[Any] = None,
         web_searcher: Optional[Any] = None,
     ):
-        self.working_dir = os.path.abspath(working_dir)
+        self.working_dir = os.path.realpath(os.path.abspath(working_dir))
         self._rag_callback = rag_callback
         self._memory = memory
         self._web = web_searcher
-        self._allowed_dirs = [os.path.abspath(d) for d in (allowed_dirs or [])]
+        self._allowed_dirs = [
+            os.path.realpath(os.path.abspath(d)) for d in (allowed_dirs or [])
+        ]
         if self.working_dir not in self._allowed_dirs:
             self._allowed_dirs.append(self.working_dir)
 
@@ -572,13 +614,16 @@ class ToolRegistry:
     def _resolve_path(self, path: str) -> str:
         """Resolve a path relative to working_dir, enforce allowed dirs."""
         if os.path.isabs(path):
-            resolved = os.path.abspath(path)
+            resolved = os.path.realpath(os.path.abspath(path))
         else:
-            resolved = os.path.abspath(os.path.join(self.working_dir, path))
+            resolved = os.path.realpath(
+                os.path.abspath(os.path.join(self.working_dir, path))
+            )
 
         if self._allowed_dirs:
             if not any(
-                resolved.startswith(d) for d in self._allowed_dirs
+                _is_within_directory(resolved, allowed_dir)
+                for allowed_dir in self._allowed_dirs
             ):
                 raise PermissionError(
                     f"Path {resolved} is outside allowed directories"
@@ -589,19 +634,21 @@ class ToolRegistry:
 
     def _read_file(self, path: str, max_lines: int = 0) -> ToolResult:
         resolved = self._resolve_path(path)
-        if not os.path.isfile(resolved):
+        try:
+            with open(resolved, "r", encoding="utf-8", errors="replace") as f:
+                if max_lines > 0:
+                    lines = []
+                    for i, line in enumerate(f):
+                        if i >= max_lines:
+                            break
+                        lines.append(line)
+                    content = "".join(lines)
+                else:
+                    content = f.read()
+        except FileNotFoundError:
             return ToolResult(False, "", f"File not found: {resolved}")
-
-        with open(resolved, "r", encoding="utf-8", errors="replace") as f:
-            if max_lines > 0:
-                lines = []
-                for i, line in enumerate(f):
-                    if i >= max_lines:
-                        break
-                    lines.append(line)
-                content = "".join(lines)
-            else:
-                content = f.read()
+        except OSError as exc:
+            return ToolResult(False, "", f"Could not read file: {exc}")
 
         # Truncate huge files
         if len(content) > MAX_OUTPUT_BYTES:
@@ -623,11 +670,13 @@ class ToolRegistry:
         self, path: str, old_text: str, new_text: str
     ) -> ToolResult:
         resolved = self._resolve_path(path)
-        if not os.path.isfile(resolved):
+        try:
+            with open(resolved, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+        except FileNotFoundError:
             return ToolResult(False, "", f"File not found: {resolved}")
-
-        with open(resolved, "r", encoding="utf-8", errors="replace") as f:
-            content = f.read()
+        except OSError as exc:
+            return ToolResult(False, "", f"Could not read file: {exc}")
 
         count = content.count(old_text)
         if count == 0:
@@ -640,8 +689,11 @@ class ToolRegistry:
             )
 
         new_content = content.replace(old_text, new_text, 1)
-        with open(resolved, "w", encoding="utf-8", newline="\n") as f:
-            f.write(new_content)
+        try:
+            with open(resolved, "w", encoding="utf-8", newline="\n") as f:
+                f.write(new_content)
+        except OSError as exc:
+            return ToolResult(False, "", f"Could not write file: {exc}")
 
         return ToolResult(True, f"Edited {resolved} (1 replacement)")
 
@@ -655,9 +707,12 @@ class ToolRegistry:
             return ToolResult(False, "", f"Safety block: {reason}")
 
         try:
+            argv = _split_command_args(command)
+            if not argv:
+                return ToolResult(False, "", "Command was empty after parsing")
             proc = subprocess.run(
-                command,
-                shell=True,
+                argv,
+                shell=False,
                 capture_output=True,
                 text=True,
                 timeout=min(timeout_s, 600),
@@ -675,6 +730,8 @@ class ToolRegistry:
                 output=output,
                 error="" if proc.returncode == 0 else f"Exit code: {proc.returncode}",
             )
+        except OSError as exc:
+            return ToolResult(False, "", str(exc))
         except subprocess.TimeoutExpired:
             return ToolResult(False, "", f"Command timed out after {timeout_s}s")
 

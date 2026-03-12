@@ -143,12 +143,21 @@ def score_answer(answer: str, keywords: List[str]) -> tuple:
 # RAG pipeline (lightweight, no full agent stack)
 # ---------------------------------------------------------------------------
 
-def search_fts5(query: str, index_names: List[str], top_k: int = 5) -> List[str]:
+def search_fts5(query: str, index_names: List[str], top_k: int = 8) -> List[str]:
     """Search specific FTS5 indexes and return content chunks."""
     chunks = []
-    # Quote multi-word for FTS5
-    terms = query.split()
-    # Use OR between terms for broader matching
+    # Strip common words and punctuation for cleaner FTS5 matching
+    import re
+    stop = {"what", "is", "the", "a", "an", "and", "or", "how", "does",
+            "do", "it", "in", "of", "to", "for", "by", "that", "this",
+            "with", "from", "its", "be", "are", "was", "were", "has",
+            "have", "can", "about"}
+    raw_terms = query.split()
+    clean = [re.sub(r"[^a-zA-Z0-9_-]", "", t) for t in raw_terms]
+    meaningful = [t for t in clean if t and t.lower() not in stop]
+    # Mix: meaningful terms first, then fall back to all cleaned terms
+    terms = meaningful[:8] if len(meaningful) >= 3 else clean[:8]
+    terms = [t for t in terms if t]
     fts_query = " OR ".join(terms[:8])
 
     for idx_name in index_names:
@@ -164,40 +173,108 @@ def search_fts5(query: str, index_names: List[str], top_k: int = 5) -> List[str]
             conn.close()
             for row in rows:
                 if row[0]:
-                    chunks.append(row[0][:800])
+                    chunks.append(row[0][:1600])
         except Exception:
             pass
     return chunks
 
 
-def ask_llm(question: str, context: str, model: str = "phi4-mini",
-            endpoint: str = "http://localhost:11434/api/generate") -> str:
-    """Ask the LLM a question with optional context."""
-    import httpx
-
+def _build_prompt(question: str, context: str) -> str:
+    """Build the prompt text for any backend."""
     if context:
-        prompt = (
-            f"Answer the following question using ONLY the context provided. "
+        return (
+            f"Answer the following question using the context provided and your "
+            f"own knowledge. Prioritize information from the context but supplement "
+            f"with your knowledge where the context is incomplete. "
             f"Be specific and name techniques, methods, or systems mentioned.\n\n"
             f"CONTEXT:\n{context}\n\n"
             f"QUESTION: {question}\n\n"
             f"ANSWER:"
         )
-    else:
-        prompt = (
-            f"Answer the following question about AI and self-learning techniques. "
-            f"Be specific. If you don't know, say 'I don't know'.\n\n"
-            f"QUESTION: {question}\n\n"
-            f"ANSWER:"
-        )
+    return (
+        f"Answer the following question about AI and self-learning techniques. "
+        f"Be specific. If you don't know, say 'I don't know'.\n\n"
+        f"QUESTION: {question}\n\n"
+        f"ANSWER:"
+    )
 
+
+def ask_llm(question: str, context: str, model: str = "phi4-mini",
+            endpoint: str = "http://localhost:11434/api/generate",
+            backend: str = "ollama") -> str:
+    """Ask the LLM a question with optional context.
+
+    backend: "ollama" (local), "anthropic" (direct API), or "openai" (OpenAI-compat).
+    """
+    import httpx
+
+    prompt = _build_prompt(question, context)
+
+    if backend == "anthropic":
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return "ERROR: ANTHROPIC_API_KEY not set"
+        resp = httpx.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": model,
+                "max_tokens": 512,
+                "temperature": 0.1,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120.0,
+        )
+        data = resp.json()
+        if "content" in data and data["content"]:
+            return data["content"][0].get("text", "")
+        return data.get("error", {}).get("message", "ERROR: empty response")
+
+    if backend == "openai":
+        api_key = os.environ.get("OPENAI_API_KEY",
+                                 os.environ.get("OPENROUTER_API_KEY", ""))
+        if not api_key:
+            return "ERROR: OPENAI_API_KEY not set"
+        # Use OpenAI default if endpoint is still the Ollama default
+        openai_endpoint = endpoint
+        if "localhost" in endpoint or "11434" in endpoint:
+            openai_endpoint = "https://api.openai.com/v1"
+        # Newer models (gpt-5+, o3, o4) use max_completion_tokens
+        token_param = "max_completion_tokens" if any(
+            model.startswith(p) for p in ("gpt-5", "gpt-4.1", "o1", "o3", "o4")
+        ) else "max_tokens"
+        resp = httpx.post(
+            f"{openai_endpoint}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "content-type": "application/json",
+            },
+            json={
+                "model": model,
+                token_param: 512,
+                "temperature": 0.1,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=120.0,
+        )
+        data = resp.json()
+        choices = data.get("choices", [])
+        if choices:
+            return choices[0].get("message", {}).get("content", "")
+        return data.get("error", {}).get("message", "ERROR: empty response")
+
+    # Default: Ollama raw /api/generate
     resp = httpx.post(
         endpoint,
         json={
             "model": model,
             "prompt": prompt,
             "stream": False,
-            "options": {"temperature": 0.1, "num_predict": 300},
+            "options": {"temperature": 0.1, "num_predict": 512},
         },
         timeout=180.0,
     )
@@ -213,6 +290,7 @@ def run_test(
     condition: str,
     index_names: List[str],
     model: str = "phi4-mini",
+    backend: str = "ollama",
 ) -> TestReport:
     """Run all questions for a topic under a given condition."""
     test_set = TEST_SETS[topic]
@@ -227,8 +305,8 @@ def run_test(
 
         # Retrieve context
         if index_names:
-            chunks = search_fts5(q, index_names, top_k=5)
-            context = "\n---\n".join(chunks[:5])
+            chunks = search_fts5(q, index_names, top_k=8)
+            context = "\n---\n".join(chunks[:8])
             retrieval_hits = len(chunks)
         else:
             context = ""
@@ -236,7 +314,7 @@ def run_test(
 
         # Generate answer
         try:
-            answer = ask_llm(q, context, model=model)
+            answer = ask_llm(q, context, model=model, backend=backend)
         except Exception as exc:
             answer = f"ERROR: {exc}"
 
@@ -333,6 +411,9 @@ def main():
     parser.add_argument("--topic", default="self_learning",
                         choices=list(TEST_SETS.keys()))
     parser.add_argument("--model", default="phi4-mini")
+    parser.add_argument("--backend", default="ollama",
+                        choices=["ollama", "anthropic", "openai"],
+                        help="LLM backend: ollama (local), anthropic (direct), openai (compat)")
     parser.add_argument("--baseline-only", action="store_true",
                         help="Run only the baseline (no knowledge)")
     parser.add_argument("--learned-only", action="store_true",
@@ -354,7 +435,7 @@ def main():
     baseline = None
     if not args.learned_only:
         print("[PHASE 1] BASELINE -- answering WITHOUT knowledge index")
-        baseline = run_test(args.topic, "baseline", index_names=[], model=args.model)
+        baseline = run_test(args.topic, "baseline", index_names=[], model=args.model, backend=args.backend)
         print_report(baseline)
 
     # Phase 2: Learned (with target index)
@@ -365,6 +446,7 @@ def main():
             args.topic, "learned",
             index_names=[target_index],
             model=args.model,
+            backend=args.backend,
         )
         print_report(learned)
 

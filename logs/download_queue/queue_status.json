@@ -1,0 +1,314 @@
+{
+  "active_entry_id": "",
+  "completed_ids": [
+    "best_practices",
+    "python_docs",
+    "rfc_docs"
+  ],
+  "failed_ids": [
+    "codesearchnet",
+    "arxiv_agentic",
+    "typescript_website_repo",
+    "mdn_content_repo",
+    "kubernetes_website_repo",
+    "docker_docs_repo",
+    "react_dev_repo",
+    "fastapi_repo",
+    "django_repo",
+    "langchain_repo",
+    "autogen_repo",
+    "openai_python_repo",
+    "reacquire_coding_stackexchange",
+    "reacquire_extended_stackexchange",
+    "codeparrot",
+    "commitpack",
+    "exercises",
+    "contests",
+    "evol",
+    "feedback",
+    "python_inst",
+    "code_alpaca",
+    "code_122k",
+    "self_oss",
+    "python_scripts",
+    "math",
+    "code_290k",
+    "python_23k",
+    "code_74k",
+    "glaive_v3",
+    "strandset_rust",
+    "learn_rust",
+    "ml_arxiv",
+    "python_codes_25k",
+    "capybara",
+    "cruxeval",
+    "bigcodebench",
+    "leetcode",
+    "debugbench",
+    "codeforces"
+  ],
+  "failures": [
+    {
+      "exit_code": 120,
+      "id": "codesearchnet"
+    },
+    {
+      "exit_code": 120,
+      "id": "arxiv_agentic"
+    },
+    {
+      "exit_code": 120,
+      "id": "typescript_website_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "mdn_content_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "kubernetes_website_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "docker_docs_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "react_dev_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "fastapi_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "django_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "langchain_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "autogen_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "openai_python_repo"
+    },
+    {
+      "exit_code": 120,
+      "id": "reacquire_coding_stackexchange"
+    },
+    {
+      "exit_code": 120,
+      "id": "reacquire_extended_stackexchange"
+    },
+    {
+      "exit_code": 120,
+      "id": "codeparrot"
+    },
+    {
+      "exit_code": 120,
+      "id": "commitpack"
+    },
+    {
+      "exit_code": 120,
+      "id": "exercises"
+    },
+    {
+      "exit_code": 120,
+      "id": "contests"
+    },
+    {
+      "exit_code": 120,
+      "id": "evol"
+    },
+    {
+      "exit_code": 120,
+      "id": "feedback"
+    },
+    {
+      "exit_code": 120,
+      "id": "python_inst"
+    },
+    {
+      "exit_code": 120,
+      "id": "code_alpaca"
+    },
+    {
+      "exit_code": 120,
+      "id": "code_122k"
+    },
+    {
+      "exit_code": 120,
+      "id": "self_oss"
+    },
+    {
+      "exit_code": 120,
+      "id": "python_scripts"
+    },
+    {
+      "exit_code": 120,
+      "id": "math"
+    },
+    {
+      "exit_code": 120,
+      "id": "code_290k"
+    },
+    {
+      "exit_code": 120,
+      "id": "python_23k"
+    },
+    {
+      "exit_code": 120,
+      "id": "code_74k"
+    },
+    {
+      "exit_code": 120,
+      "id": "glaive_v3"
+    },
+    {
+      "exit_code": 120,
+      "id": "strandset_rust"
+    },
+    {
+      "exit_code": 120,
+      "id": "learn_rust"
+    },
+    {
+      "exit_code": 120,
+      "id": "ml_arxiv"
+    },
+    {
+      "exit_code": 120,
+      "id": "python_codes_25k"
+    },
+    {
+      "exit_code": 120,
+      "id": "capybara"
+    },
+    {
+      "exit_code": 120,
+      "id": "cruxeval"
+    },
+    {
+      "exit_code": 120,
+      "id": "bigcodebench"
+    },
+    {
+      "exit_code": 120,
+      "id": "leetcode"
+    },
+    {
+      "exit_code": 120,
+      "id": "debugbench"
+    },
+    {
+      "exit_code": 120,
+      "id": "codeforces"
+    }
+  ],
+  "finished_at": "2026-03-12T17:27:49Z",
+  "heartbeat_epoch": 1773336469.6195745,
+  "mode": "manual",
+  "pid": 28596,
+  "queue_signature": "47617b39fe11f05761dd51ee2e5f7f0a57796580792ac2520f14f58855fa9f2e",
+  "runnable_ids": [
+    "best_practices",
+    "python_docs",
+    "rfc_docs",
+    "codesearchnet",
+    "arxiv_agentic",
+    "typescript_website_repo",
+    "mdn_content_repo",
+    "kubernetes_website_repo",
+    "docker_docs_repo",
+    "react_dev_repo",
+    "fastapi_repo",
+    "django_repo",
+    "langchain_repo",
+    "autogen_repo",
+    "openai_python_repo",
+    "reacquire_coding_stackexchange",
+    "reacquire_extended_stackexchange",
+    "codeparrot",
+    "commitpack",
+    "exercises",
+    "contests",
+    "evol",
+    "feedback",
+    "python_inst",
+    "code_alpaca",
+    "code_122k",
+    "self_oss",
+    "python_scripts",
+    "math",
+    "code_290k",
+    "python_23k",
+    "code_74k",
+    "glaive_v3",
+    "strandset_rust",
+    "learn_rust",
+    "ml_arxiv",
+    "python_codes_25k",
+    "capybara",
+    "cruxeval",
+    "bigcodebench",
+    "leetcode",
+    "debugbench",
+    "codeforces",
+    "software_architecture",
+    "opencodereasoning2",
+    "swesmith",
+    "xlcost",
+    "opencodeinstruct",
+    "github_stack_smol",
+    "humanevalplus",
+    "mbppplus",
+    "swesmith_traj",
+    "openhands_traj",
+    "sweagent_traj",
+    "menvdata_traj",
+    "coderforge",
+    "codereview_python",
+    "codereview_general",
+    "code_act",
+    "swe_gym_traj",
+    "code_refine",
+    "github_codereview",
+    "magicoder",
+    "vuln_cwe_patch",
+    "cve_cwe_dataset",
+    "vuln_security_dpo",
+    "securecode_web",
+    "cve_training",
+    "github_code_2025",
+    "dockerfiles",
+    "sql_schemas",
+    "function_calling",
+    "commit_chronicle",
+    "hermes_function_calling",
+    "glaive_function_calling_v2",
+    "jupyter_agent",
+    "mixture_of_thoughts",
+    "verifiable_coding",
+    "swe_rebench_v2",
+    "trail_agent",
+    "openthoughts_agent",
+    "nemotron_agentic"
+  ],
+  "skip_reasons": {
+    "dotnet_runtime_repo": "giant",
+    "golang_go_repo": "giant",
+    "livecodebench": "optional",
+    "microsoft_typescript_repo": "giant",
+    "multi_swe_bench": "optional",
+    "openjdk_jdk_repo": "giant",
+    "rust_lang_rust_repo": "giant",
+    "tiny_codes": "manual-auth"
+  },
+  "started_at": "2026-03-12T16:41:57Z",
+  "status": "failed",
+  "updated_at": "2026-03-12T17:27:49Z"
+}

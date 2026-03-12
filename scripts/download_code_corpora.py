@@ -39,6 +39,8 @@ if sys.platform == "win32":
 import httpx
 import pyarrow.parquet as pq
 
+from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
+
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 INDEX_DIR = DATA_ROOT / "indexes"
 DOWNLOAD_DIR = DATA_ROOT / "downloads"
@@ -50,6 +52,7 @@ MAX_CHARS = 4000
 _NORMALIZE_RE = re.compile(r"[_\-./\\:]")
 _CAMEL_RE1 = re.compile(r"([a-z])([A-Z])")
 _CAMEL_RE2 = re.compile(r"([A-Z]+)([A-Z][a-z])")
+_DOWNLOADER: DownloadManager | None = None
 
 
 def _normalize(text: str) -> str:
@@ -59,42 +62,44 @@ def _normalize(text: str) -> str:
     return out.lower()
 
 
+def _get_downloader() -> DownloadManager:
+    global _DOWNLOADER
+    if _DOWNLOADER is None:
+        _DOWNLOADER = DownloadManager(DOWNLOAD_DIR, read_timeout_s=600.0)
+    return _DOWNLOADER
+
+
+def _close_downloader() -> None:
+    global _DOWNLOADER
+    if _DOWNLOADER is not None:
+        _DOWNLOADER.close()
+        _DOWNLOADER = None
+
+
 def _download_parquet(url: str, local_path: Path) -> bool:
     """Download a single Parquet file. Returns True on success."""
-    if local_path.exists() and local_path.stat().st_size > 1000:
+    relative_path = local_path.relative_to(DOWNLOAD_DIR)
+    result = _get_downloader().download_file(
+        url,
+        relative_path,
+        min_existing_bytes=1000,
+        chunk_size=256 * 1024,
+    )
+    if result.ok:
         return True
-    local_path.parent.mkdir(parents=True, exist_ok=True)
-    partial = local_path.with_suffix(".partial")
-    try:
-        with httpx.stream("GET", url, follow_redirects=True,
-                          timeout=httpx.Timeout(30.0, read=600.0)) as resp:
-            resp.raise_for_status()
-            with open(partial, "wb") as f:
-                for chunk in resp.iter_bytes(chunk_size=256 * 1024):
-                    f.write(chunk)
-        if local_path.exists():
-            local_path.unlink()
-        partial.rename(local_path)
-        return True
-    except Exception as exc:
-        print(f"    [WARN] Download failed: {exc}")
-        return False
+    print(f"    [WARN] Download failed: {result.error}")
+    return False
 
 
 def _get_parquet_urls(dataset_id: str, config: str = "default",
                       split: str = "train") -> list:
     """Get Parquet file URLs from HuggingFace API."""
-    url = f"https://huggingface.co/api/datasets/{dataset_id}/parquet"
-    r = httpx.get(url, timeout=15)
-    r.raise_for_status()
-    data = r.json()
-    if config in data:
-        splits = data[config]
-        if isinstance(splits, dict) and split in splits:
-            return splits[split]
-        if isinstance(splits, list):
-            return splits
-    return []
+    return fetch_huggingface_parquet_urls(
+        _get_downloader(),
+        dataset_id,
+        config=config,
+        split=split,
+    )
 
 
 class FTS5Builder:
@@ -210,9 +215,9 @@ def process_commitpackft():
     print(f"  Downloading {ds_id} (code languages)...")
 
     # Get all Parquet URLs
-    url = f"https://huggingface.co/api/datasets/{ds_id}/parquet"
-    r = httpx.get(url, timeout=15)
-    data = r.json()
+    data = _get_downloader().fetch_json(
+        f"https://huggingface.co/api/datasets/{ds_id}/parquet"
+    )
 
     builder = FTS5Builder(db_path)
     cache_dir = DOWNLOAD_DIR / "commitpackft"
@@ -495,4 +500,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    finally:
+        _close_downloader()

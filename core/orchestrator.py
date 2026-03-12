@@ -50,17 +50,15 @@ class Orchestrator:
         the worker thread will complete in the background if the HTTP
         client timeout fires first.
         """
-        pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-        future = pool.submit(self._answer_sync, question)
-        try:
-            return future.result(timeout=self._timeout)
-        except concurrent.futures.TimeoutError:
-            future.cancel()
-            raise TimeoutError(
-                f"Pipeline exceeded {self._timeout}s timeout"
-            )
-        finally:
-            pool.shutdown(wait=False)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(self._answer_sync, question)
+            try:
+                return future.result(timeout=self._timeout)
+            except concurrent.futures.TimeoutError:
+                future.cancel()
+                raise TimeoutError(
+                    f"Pipeline exceeded {self._timeout}s timeout"
+                )
 
     def _answer_sync(self, question: str) -> AnswerResult:
         """Synchronous answer pipeline (runs inside timeout wrapper)."""

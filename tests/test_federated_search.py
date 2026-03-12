@@ -228,3 +228,17 @@ class TestFederatedSearchLifecycle:
         idx = _make_mock_index("test", [])
         with pytest.raises(ValueError):
             fed.add_index("test", idx, weight=0)
+
+    def test_stale_keyword_indexes_are_skipped(self):
+        fed = FederatedSearch(embedding_engine=None)
+        idx = MagicMock()
+        idx.count = 1
+        idx.index = None
+        idx.metadata = [{"content": "valid result", "source_path": "a.txt"}]
+        idx.search_keywords = MagicMock(return_value=[(999, 1.0), (0, 0.5)])
+        fed.add_index("test", idx)
+
+        results = fed.search("valid", top_k=5)
+
+        assert len(results) == 1
+        assert results[0].content == "valid result"

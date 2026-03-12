@@ -65,3 +65,18 @@ CLI (Click) -> Orchestrator -> RetrievalEngine -> EmbeddingEngine (vLLM)
 ```bash
 pytest tests/ -v
 ```
+
+## Inclusive Downloader
+
+All new JCoder acquisition work should go through the inclusive downloader in
+`core/download_manager.py`. Do not add fresh per-script `httpx.stream(...)`
+download loops.
+
+To run the current backlog through the shared downloader path:
+
+```bash
+python scripts/run_download_queue.py --list
+python scripts/run_download_queue.py
+```
+
+Operator details are in `docs/INCLUSIVE_DOWNLOADER.md`.

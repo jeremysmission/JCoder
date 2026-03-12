@@ -1,0 +1,1217 @@
+[
+  {
+    "id": "best_practices",
+    "description": "Build the curated best-practices reference index.",
+    "command": [
+      "scripts/download_best_practices.py"
+    ],
+    "tags": [
+      "core",
+      "docs"
+    ]
+  },
+  {
+    "id": "python_docs",
+    "description": "Download and convert the Python standard library docs.",
+    "command": [
+      "scripts/download_python_docs.py"
+    ],
+    "tags": [
+      "core",
+      "docs",
+      "python"
+    ]
+  },
+  {
+    "id": "rfc_docs",
+    "description": "Download the programming-relevant RFC reference set.",
+    "command": [
+      "scripts/download_rfc.py"
+    ],
+    "tags": [
+      "core",
+      "docs",
+      "networking"
+    ]
+  },
+  {
+    "id": "codesearchnet",
+    "description": "Download and convert CodeSearchNet across all supported languages.",
+    "command": [
+      "scripts/download_codesearchnet.py"
+    ],
+    "tags": [
+      "core",
+      "code-search",
+      "multi-language"
+    ]
+  },
+  {
+    "id": "arxiv_agentic",
+    "description": "Fetch curated and broad arXiv agentic AI paper indexes.",
+    "command": [
+      "scripts/download_arxiv_agentic.py"
+    ],
+    "tags": [
+      "research",
+      "learning"
+    ]
+  },
+  {
+    "id": "openjdk_jdk_repo",
+    "description": "Clone the OpenJDK JDK repository for Java source and docs.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "openjdk_jdk"
+    ],
+    "tags": [
+      "subjects",
+      "java",
+      "repo",
+      "giant"
+    ]
+  },
+  {
+    "id": "dotnet_runtime_repo",
+    "description": "Clone the .NET runtime repository for runtime internals and platform code.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "dotnet_runtime"
+    ],
+    "tags": [
+      "subjects",
+      "dotnet",
+      "repo",
+      "giant"
+    ]
+  },
+  {
+    "id": "rust_lang_rust_repo",
+    "description": "Clone the Rust compiler repository for language internals and stdlib sources.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "rust_lang_rust"
+    ],
+    "tags": [
+      "subjects",
+      "rust",
+      "repo",
+      "giant"
+    ]
+  },
+  {
+    "id": "golang_go_repo",
+    "description": "Clone the Go language repository for toolchain, stdlib, and docs.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "golang_go"
+    ],
+    "tags": [
+      "subjects",
+      "go",
+      "repo",
+      "giant"
+    ]
+  },
+  {
+    "id": "microsoft_typescript_repo",
+    "description": "Clone the TypeScript compiler repository.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "microsoft_typescript"
+    ],
+    "tags": [
+      "subjects",
+      "typescript",
+      "repo",
+      "giant"
+    ]
+  },
+  {
+    "id": "typescript_website_repo",
+    "description": "Clone the TypeScript website and docs repository.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "typescript_website"
+    ],
+    "tags": [
+      "subjects",
+      "typescript",
+      "docs",
+      "repo"
+    ]
+  },
+  {
+    "id": "mdn_content_repo",
+    "description": "Clone the MDN content repository for Web API, HTML, CSS, and HTTP reference.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "mdn_content"
+    ],
+    "tags": [
+      "subjects",
+      "web",
+      "docs",
+      "repo"
+    ]
+  },
+  {
+    "id": "kubernetes_website_repo",
+    "description": "Clone the Kubernetes website repository for DevOps and systems docs.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "kubernetes_website"
+    ],
+    "tags": [
+      "subjects",
+      "devops",
+      "docs",
+      "repo"
+    ]
+  },
+  {
+    "id": "docker_docs_repo",
+    "description": "Clone the Docker docs repository.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "docker_docs"
+    ],
+    "tags": [
+      "subjects",
+      "devops",
+      "docs",
+      "repo"
+    ]
+  },
+  {
+    "id": "react_dev_repo",
+    "description": "Clone the React.dev documentation repository.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "react_dev"
+    ],
+    "tags": [
+      "subjects",
+      "javascript",
+      "docs",
+      "repo"
+    ]
+  },
+  {
+    "id": "fastapi_repo",
+    "description": "Clone the FastAPI repository and docs.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "fastapi"
+    ],
+    "tags": [
+      "subjects",
+      "python",
+      "repo"
+    ]
+  },
+  {
+    "id": "django_repo",
+    "description": "Clone the Django repository and docs.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "django"
+    ],
+    "tags": [
+      "subjects",
+      "python",
+      "repo"
+    ]
+  },
+  {
+    "id": "langchain_repo",
+    "description": "Clone the LangChain repository for agent and tooling patterns.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "langchain"
+    ],
+    "tags": [
+      "subjects",
+      "ai",
+      "repo"
+    ]
+  },
+  {
+    "id": "autogen_repo",
+    "description": "Clone the AutoGen repository for multi-agent orchestration patterns.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "autogen"
+    ],
+    "tags": [
+      "subjects",
+      "ai",
+      "repo"
+    ]
+  },
+  {
+    "id": "openai_python_repo",
+    "description": "Clone the OpenAI Python SDK repository for API and tool integration patterns.",
+    "command": [
+      "scripts/download_subject_repos.py",
+      "--only",
+      "openai_python"
+    ],
+    "tags": [
+      "subjects",
+      "ai",
+      "repo"
+    ]
+  },
+  {
+    "id": "reacquire_coding_stackexchange",
+    "description": "Reacquire the remaining corrupt coding StackExchange archives.",
+    "command": [
+      "scripts/reacquire_se_archives.py",
+      "--coding-only"
+    ],
+    "tags": [
+      "archives",
+      "repair",
+      "stackexchange"
+    ]
+  },
+  {
+    "id": "reacquire_extended_stackexchange",
+    "description": "Reacquire the remaining non-coding StackExchange archives after the coding-only pass.",
+    "command": [
+      "scripts/reacquire_se_archives.py",
+      "--exclude-coding"
+    ],
+    "tags": [
+      "archives",
+      "repair",
+      "stackexchange",
+      "extended"
+    ]
+  },
+  {
+    "id": "codeparrot",
+    "description": "Ingest the CodeParrot cleaned Python corpus.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "codeparrot"
+    ],
+    "tags": [
+      "code",
+      "corpus",
+      "python"
+    ]
+  },
+  {
+    "id": "commitpack",
+    "description": "Ingest commit message and diff pairs from CommitPackFT.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "commitpack"
+    ],
+    "tags": [
+      "code",
+      "git",
+      "corpus"
+    ]
+  },
+  {
+    "id": "exercises",
+    "description": "Ingest code exercise and solution pairs.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "exercises"
+    ],
+    "tags": [
+      "code",
+      "practice",
+      "corpus"
+    ]
+  },
+  {
+    "id": "contests",
+    "description": "Ingest competitive programming problems and solutions.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "contests"
+    ],
+    "tags": [
+      "code",
+      "algorithms",
+      "corpus"
+    ]
+  },
+  {
+    "id": "evol",
+    "description": "Ingest evolved code instruction pairs.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "evol"
+    ],
+    "tags": [
+      "code",
+      "instruction",
+      "corpus"
+    ]
+  },
+  {
+    "id": "feedback",
+    "description": "Ingest code feedback and review-style QA pairs.",
+    "command": [
+      "scripts/download_code_corpora.py",
+      "--only",
+      "feedback"
+    ],
+    "tags": [
+      "code",
+      "review",
+      "corpus"
+    ]
+  },
+  {
+    "id": "python_inst",
+    "description": "Ingest Python instruction-tuning pairs.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "python_inst"
+    ],
+    "tags": [
+      "instruction",
+      "python"
+    ]
+  },
+  {
+    "id": "code_alpaca",
+    "description": "Ingest the CodeAlpaca instruction corpus.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "code_alpaca"
+    ],
+    "tags": [
+      "instruction",
+      "code"
+    ]
+  },
+  {
+    "id": "code_122k",
+    "description": "Ingest the 122K alpaca-style code instruction set.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "code_122k"
+    ],
+    "tags": [
+      "instruction",
+      "code"
+    ]
+  },
+  {
+    "id": "self_oss",
+    "description": "Ingest the self-OSS high-quality instruction corpus.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "self_oss"
+    ],
+    "tags": [
+      "instruction",
+      "code",
+      "oss"
+    ]
+  },
+  {
+    "id": "python_scripts",
+    "description": "Ingest validated Python script instruction data.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "python_scripts"
+    ],
+    "tags": [
+      "instruction",
+      "python"
+    ]
+  },
+  {
+    "id": "math",
+    "description": "Ingest MathInstruct reasoning and code pairs.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "math"
+    ],
+    "tags": [
+      "instruction",
+      "math",
+      "reasoning"
+    ]
+  },
+  {
+    "id": "tiny_codes",
+    "description": "Attempt the gated tiny-codes corpus after auth is available.",
+    "command": [
+      "scripts/download_instruction_corpora.py",
+      "--only",
+      "tiny_codes"
+    ],
+    "tags": [
+      "instruction",
+      "manual-auth"
+    ]
+  },
+  {
+    "id": "code_290k",
+    "description": "Ingest the 290K ShareGPT-style code conversation corpus.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "code_290k"
+    ],
+    "tags": [
+      "expansion",
+      "conversation",
+      "code"
+    ]
+  },
+  {
+    "id": "python_23k",
+    "description": "Ingest the Python-specific ShareGPT conversation corpus.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "python_23k"
+    ],
+    "tags": [
+      "expansion",
+      "conversation",
+      "python"
+    ]
+  },
+  {
+    "id": "code_74k",
+    "description": "Ingest the 74K ShareGPT-style code conversation corpus.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "code_74k"
+    ],
+    "tags": [
+      "expansion",
+      "conversation",
+      "code"
+    ]
+  },
+  {
+    "id": "glaive_v3",
+    "description": "Ingest Glaive code assistant v3.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "glaive_v3"
+    ],
+    "tags": [
+      "expansion",
+      "assistant",
+      "code"
+    ]
+  },
+  {
+    "id": "strandset_rust",
+    "description": "Ingest the Strandset Rust dataset.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "strandset_rust"
+    ],
+    "tags": [
+      "expansion",
+      "rust"
+    ]
+  },
+  {
+    "id": "learn_rust",
+    "description": "Ingest the learn-rust raw text corpus.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "learn_rust"
+    ],
+    "tags": [
+      "expansion",
+      "rust"
+    ]
+  },
+  {
+    "id": "ml_arxiv",
+    "description": "Ingest the ML arXiv papers dataset.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "ml_arxiv"
+    ],
+    "tags": [
+      "expansion",
+      "research"
+    ]
+  },
+  {
+    "id": "python_codes_25k",
+    "description": "Ingest the Python codes 25K dataset.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "python_codes_25k"
+    ],
+    "tags": [
+      "expansion",
+      "python",
+      "code"
+    ]
+  },
+  {
+    "id": "capybara",
+    "description": "Ingest the Capybara multi-turn reasoning corpus.",
+    "command": [
+      "scripts/download_expansion_tier1.py",
+      "--only",
+      "capybara"
+    ],
+    "tags": [
+      "expansion",
+      "conversation",
+      "reasoning"
+    ]
+  },
+  {
+    "id": "cruxeval",
+    "description": "Ingest the CRUXEval self-assessment dataset.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "cruxeval"
+    ],
+    "tags": [
+      "benchmark",
+      "evaluation"
+    ]
+  },
+  {
+    "id": "bigcodebench",
+    "description": "Ingest BigCodeBench API-usage tasks.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "bigcodebench"
+    ],
+    "tags": [
+      "benchmark",
+      "evaluation",
+      "api"
+    ]
+  },
+  {
+    "id": "leetcode",
+    "description": "Ingest the LeetCode problem and solution dataset.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "leetcode"
+    ],
+    "tags": [
+      "benchmark",
+      "algorithms"
+    ]
+  },
+  {
+    "id": "debugbench",
+    "description": "Ingest DebugBench bug-fix explanations.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "debugbench"
+    ],
+    "tags": [
+      "benchmark",
+      "debugging"
+    ]
+  },
+  {
+    "id": "codeforces",
+    "description": "Ingest Codeforces problems and editorials.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "codeforces"
+    ],
+    "tags": [
+      "benchmark",
+      "algorithms"
+    ]
+  },
+  {
+    "id": "software_architecture",
+    "description": "Ingest the software architecture design corpus.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "software_architecture"
+    ],
+    "tags": [
+      "benchmark",
+      "architecture",
+      "large"
+    ]
+  },
+  {
+    "id": "opencodereasoning2",
+    "description": "Ingest OpenCodeReasoning-2 reasoning traces.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "opencodereasoning2"
+    ],
+    "tags": [
+      "benchmark",
+      "reasoning",
+      "large"
+    ]
+  },
+  {
+    "id": "swesmith",
+    "description": "Ingest SWE-smith bug-fix instances.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "swesmith"
+    ],
+    "tags": [
+      "benchmark",
+      "bugfix"
+    ]
+  },
+  {
+    "id": "xlcost",
+    "description": "Ingest XLCoST Python text-to-code pairs.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "xlcost"
+    ],
+    "tags": [
+      "benchmark",
+      "cross-language"
+    ]
+  },
+  {
+    "id": "opencodeinstruct",
+    "description": "Ingest the OpenCodeInstruct large instruction corpus.",
+    "command": [
+      "scripts/download_new_datasets_2026_03_10.py",
+      "--only",
+      "opencodeinstruct"
+    ],
+    "tags": [
+      "benchmark",
+      "instruction",
+      "large"
+    ]
+  },
+  {
+    "id": "github_stack_smol",
+    "description": "Download and index the Stack Smol XL GitHub code corpus.",
+    "command": [
+      "scripts/download_github_code.py"
+    ],
+    "tags": [
+      "code",
+      "github",
+      "large"
+    ]
+  },
+  {
+    "id": "humanevalplus",
+    "description": "Ingest the HumanEval+ benchmark.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "humanevalplus"
+    ],
+    "tags": [
+      "phase6",
+      "benchmark"
+    ]
+  },
+  {
+    "id": "mbppplus",
+    "description": "Ingest the MBPP+ benchmark.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "mbppplus"
+    ],
+    "tags": [
+      "phase6",
+      "benchmark"
+    ]
+  },
+  {
+    "id": "swesmith_traj",
+    "description": "Ingest SWE-smith trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "swesmith_traj"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "openhands_traj",
+    "description": "Ingest OpenHands trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "openhands_traj"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories",
+      "large"
+    ]
+  },
+  {
+    "id": "sweagent_traj",
+    "description": "Ingest SWE-agent trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "sweagent_traj"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories",
+      "large"
+    ]
+  },
+  {
+    "id": "menvdata_traj",
+    "description": "Ingest MEnvData SWE trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "menvdata_traj"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "coderforge",
+    "description": "Ingest the CoderForge agentic trajectory set.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "coderforge"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "codereview_python",
+    "description": "Ingest Python code-review critique and revision pairs.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "codereview_python"
+    ],
+    "tags": [
+      "phase6",
+      "review"
+    ]
+  },
+  {
+    "id": "codereview_general",
+    "description": "Ingest the general code-review dataset.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "codereview_general"
+    ],
+    "tags": [
+      "phase6",
+      "review"
+    ]
+  },
+  {
+    "id": "code_act",
+    "description": "Ingest CodeAct trajectories and conversations.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "code_act"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "swe_gym_traj",
+    "description": "Ingest sampled SWE-Gym trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "swe_gym_traj"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "code_refine",
+    "description": "Ingest code refinement before/after pairs.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "code_refine"
+    ],
+    "tags": [
+      "phase6",
+      "refactor"
+    ]
+  },
+  {
+    "id": "github_codereview",
+    "description": "Ingest GitHub code review conversations.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "github_codereview"
+    ],
+    "tags": [
+      "phase6",
+      "review",
+      "large"
+    ]
+  },
+  {
+    "id": "magicoder",
+    "description": "Ingest the Magicoder evol-instruct corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "magicoder"
+    ],
+    "tags": [
+      "phase6",
+      "instruction"
+    ]
+  },
+  {
+    "id": "vuln_cwe_patch",
+    "description": "Ingest CIRCL vulnerability, CWE, and patch data.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "vuln_cwe_patch"
+    ],
+    "tags": [
+      "phase6",
+      "security"
+    ]
+  },
+  {
+    "id": "cve_cwe_dataset",
+    "description": "Ingest the CVE and CWE historical dataset.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "cve_cwe_dataset"
+    ],
+    "tags": [
+      "phase6",
+      "security"
+    ]
+  },
+  {
+    "id": "vuln_security_dpo",
+    "description": "Ingest security DPO training data.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "vuln_security_dpo"
+    ],
+    "tags": [
+      "phase6",
+      "security"
+    ]
+  },
+  {
+    "id": "securecode_web",
+    "description": "Ingest the SecureCode web dataset.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "securecode_web"
+    ],
+    "tags": [
+      "phase6",
+      "security"
+    ]
+  },
+  {
+    "id": "cve_training",
+    "description": "Ingest large-scale CVE training examples.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "cve_training"
+    ],
+    "tags": [
+      "phase6",
+      "security",
+      "large"
+    ]
+  },
+  {
+    "id": "github_code_2025",
+    "description": "Ingest the GitHub Code 2025 repository corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "github_code_2025"
+    ],
+    "tags": [
+      "phase6",
+      "github",
+      "code",
+      "large"
+    ]
+  },
+  {
+    "id": "dockerfiles",
+    "description": "Ingest Dockerfile examples and patterns.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "dockerfiles"
+    ],
+    "tags": [
+      "phase6",
+      "devops"
+    ]
+  },
+  {
+    "id": "sql_schemas",
+    "description": "Ingest SQL schema examples.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "sql_schemas"
+    ],
+    "tags": [
+      "phase6",
+      "database"
+    ]
+  },
+  {
+    "id": "function_calling",
+    "description": "Ingest generic function-calling specifications and traces.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "function_calling"
+    ],
+    "tags": [
+      "phase6",
+      "tools"
+    ]
+  },
+  {
+    "id": "commit_chronicle",
+    "description": "Ingest the large commit chronicle corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "commit_chronicle"
+    ],
+    "tags": [
+      "phase6",
+      "git",
+      "large"
+    ]
+  },
+  {
+    "id": "hermes_function_calling",
+    "description": "Ingest the Hermes function-calling corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "hermes_function_calling"
+    ],
+    "tags": [
+      "phase6",
+      "tools"
+    ]
+  },
+  {
+    "id": "glaive_function_calling_v2",
+    "description": "Ingest the Glaive function-calling v2 corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "glaive_function_calling_v2"
+    ],
+    "tags": [
+      "phase6",
+      "tools"
+    ]
+  },
+  {
+    "id": "jupyter_agent",
+    "description": "Ingest Jupyter agent notebook interactions.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "jupyter_agent"
+    ],
+    "tags": [
+      "phase6",
+      "notebooks"
+    ]
+  },
+  {
+    "id": "mixture_of_thoughts",
+    "description": "Ingest Mixture-of-Thoughts reasoning traces.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "mixture_of_thoughts"
+    ],
+    "tags": [
+      "phase6",
+      "reasoning"
+    ]
+  },
+  {
+    "id": "verifiable_coding",
+    "description": "Ingest verifiable coding problems and test metadata.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "verifiable_coding"
+    ],
+    "tags": [
+      "phase6",
+      "benchmark"
+    ]
+  },
+  {
+    "id": "livecodebench",
+    "description": "Ingest LiveCodeBench via the streaming datasets path.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "livecodebench"
+    ],
+    "tags": [
+      "phase6",
+      "benchmark",
+      "optional"
+    ]
+  },
+  {
+    "id": "swe_rebench_v2",
+    "description": "Ingest SWE-rebench v2 multilingual trajectories.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "swe_rebench_v2"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "multi_swe_bench",
+    "description": "Ingest Multi-SWE-bench via the streaming datasets path.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "multi_swe_bench"
+    ],
+    "tags": [
+      "phase6",
+      "benchmark",
+      "optional"
+    ]
+  },
+  {
+    "id": "trail_agent",
+    "description": "Ingest the TRAIL agent trajectory dataset.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "trail_agent"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "openthoughts_agent",
+    "description": "Ingest the OpenThoughts-Agent v1 corpus.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "openthoughts_agent"
+    ],
+    "tags": [
+      "phase6",
+      "trajectories"
+    ]
+  },
+  {
+    "id": "nemotron_agentic",
+    "description": "Ingest the Nemotron agentic dataset.",
+    "command": [
+      "scripts/download_phase6_datasets.py",
+      "--only",
+      "nemotron_agentic"
+    ],
+    "tags": [
+      "phase6",
+      "agentic"
+    ]
+  }
+]

@@ -117,18 +117,25 @@ class AgentMemory:
                 _, score = hits[0]
                 if score > _DEDUP_THRESHOLD:
                     idx = hits[0][0]
-                    existing = self._index.metadata[idx]
-                    log.info("[WARN] Skipping duplicate (score=%.3f) of entry %s",
-                             score, existing.get("id", "?"))
-                    return MemoryEntry(
-                        id=existing["id"],
-                        content=existing.get("content", ""),
-                        source_task=existing.get("source_task", ""),
-                        tags=existing.get("tags", []),
-                        confidence=existing.get("confidence", 1.0),
-                        timestamp=existing.get("timestamp", ""),
-                        tokens_used=existing.get("tokens_used", 0),
-                    )
+                    if not 0 <= idx < len(self._index.metadata):
+                        log.warning(
+                            "[WARN] Ignoring stale duplicate hit idx=%s (metadata=%d)",
+                            idx,
+                            len(self._index.metadata),
+                        )
+                    else:
+                        existing = self._index.metadata[idx]
+                        log.info("[WARN] Skipping duplicate (score=%.3f) of entry %s",
+                                 score, existing.get("id", "?"))
+                        return MemoryEntry(
+                            id=existing["id"],
+                            content=existing.get("content", ""),
+                            source_task=existing.get("source_task", ""),
+                            tags=existing.get("tags", []),
+                            confidence=existing.get("confidence", 1.0),
+                            timestamp=existing.get("timestamp", ""),
+                            tokens_used=existing.get("tokens_used", 0),
+                        )
 
         entry = MemoryEntry(
             id=str(uuid.uuid4()),
@@ -212,6 +219,13 @@ class AgentMemory:
                 score, meta = item  # hybrid_search returns (score, meta_dict)
             else:
                 idx, score = item  # search_keywords returns (idx, score)
+                if not 0 <= idx < len(self._index.metadata):
+                    log.warning(
+                        "[WARN] Ignoring stale memory hit idx=%s (metadata=%d)",
+                        idx,
+                        len(self._index.metadata),
+                    )
+                    continue
                 meta = self._index.metadata[idx]
 
             results.append({

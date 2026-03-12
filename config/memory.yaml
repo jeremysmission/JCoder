@@ -121,6 +121,83 @@ federated_search:
       weight: 0.7
     se_electronics:
       weight: 0.6
+    se_robotics:
+      weight: 0.6
+    se_tex:
+      weight: 0.5
+    se_salesforce:
+      weight: 0.5
+    se_bioinformatics:
+      weight: 0.5
+    se_blender:
+      weight: 0.5
+    se_civicrm:
+      weight: 0.4
+    se_craftcms:
+      weight: 0.4
+    se_drupal:
+      weight: 0.6
+    se_elementaryos:
+      weight: 0.5
+    se_engineering:
+      weight: 0.6
+    se_iot:
+      weight: 0.6
+    se_joomla:
+      weight: 0.4
+    se_monero:
+      weight: 0.4
+    se_quantumcomputing:
+      weight: 0.6
+    se_retrocomputing:
+      weight: 0.5
+    se_scicomp:
+      weight: 0.7
+    se_sitecore:
+      weight: 0.4
+    se_sqa:
+      weight: 0.6
+    se_tor:
+      weight: 0.5
+    se_ux:
+      weight: 0.6
+    se_arduino:
+      weight: 0.7
+    se_gamedev:
+      weight: 0.6
+    se_webapps:
+      weight: 0.5
+    se_raspberrypi:
+      weight: 0.7
+    se_emacs:
+      weight: 0.6
+    se_wordpress:
+      weight: 0.5
+    # Expansion instruction/conversation datasets
+    evol_codealpaca:
+      weight: 0.7
+    glaive_code_v3:
+      weight: 0.7
+    code_290k_sharegpt:
+      weight: 0.6
+    code_74k_sharegpt:
+      weight: 0.6
+    capybara:
+      weight: 0.5
+    python_23k_sharegpt:
+      weight: 0.7
+    python_codes_25k:
+      weight: 0.7
+    strandset_rust:
+      weight: 0.8
+    learn_rust:
+      weight: 0.8
+    ml_arxiv_papers:
+      weight: 0.6
+    arxiv_agentic_ai:
+      weight: 0.7
+    arxiv_ml_broad:
+      weight: 0.5
     # Reference docs
     python_docs:
       weight: 1.2

@@ -26,7 +26,7 @@ if _ROOT not in sys.path:
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-import httpx
+from core.download_manager import DownloadManager
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -68,27 +68,27 @@ RELEVANT_RFCS = {
 }
 
 
-def _download_rfc(number: int, client: httpx.Client) -> str:
+def _download_rfc(number: int, downloader: DownloadManager) -> tuple[str, bool]:
     """Download a single RFC text file. Returns text content or empty string."""
     txt_path = DOWNLOAD_DIR / f"rfc{number}.txt"
     if txt_path.exists() and txt_path.stat().st_size > 100:
-        return txt_path.read_text(encoding="utf-8", errors="replace")
+        return txt_path.read_text(encoding="utf-8", errors="replace"), True
 
     for url_template in RFC_URLS:
         url = url_template.format(number=number)
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                resp = client.get(url)
-                resp.raise_for_status()
-                text = resp.text
-                if len(text) > 500:  # sanity check
-                    txt_path.write_text(text, encoding="utf-8")
-                    return text
-            except Exception:
-                if attempt < MAX_RETRIES:
-                    time.sleep(2 * attempt)
+        result = downloader.download_file(
+            url,
+            txt_path.name,
+            min_existing_bytes=100,
+            chunk_size=64 * 1024,
+        )
+        if not result.ok:
+            continue
+        text = result.path.read_text(encoding="utf-8", errors="replace")
+        if len(text) > 500:
+            return text, False
     print(f"[WARN] RFC {number}: download failed from all sources")
-    return ""
+    return "", False
 
 
 def _rfc_to_markdown(number: int, title: str, text: str) -> str:
@@ -124,10 +124,12 @@ def main():
     stats = {"downloaded": 0, "cached": 0, "failed": 0, "converted": 0}
     t0 = time.monotonic()
 
-    client = httpx.Client(timeout=30.0, follow_redirects=True,
-                          headers={"User-Agent": "JCoder/1.0 (educational)"})
-
-    try:
+    with DownloadManager(
+        DOWNLOAD_DIR,
+        user_agent="JCoder/1.0 (educational)",
+        max_retries=MAX_RETRIES,
+        read_timeout_s=120.0,
+    ) as downloader:
         for number, title in sorted(RELEVANT_RFCS.items()):
             md_path = OUTPUT_DIR / f"rfc{number}.md"
             if md_path.exists() and md_path.stat().st_size > 100:
@@ -135,13 +137,12 @@ def main():
                 print(f"[OK] RFC {number} already converted, skipping")
                 continue
 
-            text = _download_rfc(number, client)
+            text, from_cache = _download_rfc(number, downloader)
             if not text:
                 stats["failed"] += 1
                 continue
 
-            was_cached = (DOWNLOAD_DIR / f"rfc{number}.txt").stat().st_size > 100
-            if was_cached:
+            if from_cache:
                 stats["cached"] += 1
             else:
                 stats["downloaded"] += 1
@@ -151,8 +152,6 @@ def main():
             stats["converted"] += 1
             print(f"[OK] RFC {number}: {title} ({len(md):,} chars)")
             time.sleep(0.5)  # Be polite to the server
-    finally:
-        client.close()
 
     elapsed = time.monotonic() - t0
     print("=" * 50)
