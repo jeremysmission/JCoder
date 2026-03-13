@@ -125,12 +125,12 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 
 ### Git State
 - Authoritative worktree: `D:\HybridRAG3\_jcoder_worktree`
-- Current commit: `e338e66` (`Fix PRISMA timing path and classify reopen stress as slow`)
+- Current commit: `2ea0e35` (`Document master push completion`)
 - Checkout state: `safekeep/jcoder-2026-03-13-115114`
 - Safekeep remote branch: `origin/safekeep/jcoder-2026-03-13-115114`
 - Local `master` remains at `a90a4d3`
 - Remote: `origin https://github.com/jeremysmission/JCoder.git`
-- `origin/master` now points at `e338e66`
+- `origin/master` now points at `2ea0e35`
 - Local `master` was intentionally left untouched because the `D:\JCoder` worktree on that branch has unrelated uncommitted changes
 - Related worktrees:
   - `D:\JCoder` on `master`
@@ -200,10 +200,3 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 801fe24 Harden measure command: structured JSON output, endpoint probes, graceful degradation
 ```
 
-## No Remote
-JCoder has no git remote configured. To add one:
-```bash
-cd /d/JCoder
-git remote add origin <your-repo-url>
-git push -u origin master
-```
