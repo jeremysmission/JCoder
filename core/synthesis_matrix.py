@@ -14,12 +14,15 @@ structured grid that reveals patterns at a glance.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -251,7 +254,10 @@ class SynthesisMatrix:
             try:
                 return self._extract_themes_llm(papers, query, max_themes)
             except Exception:
-                pass  # fall through to heuristic
+                logger.info(
+                    "LLM theme extraction failed, falling back to heuristic",
+                    exc_info=True,
+                )
         return self._extract_themes_heuristic(papers, max_themes)
 
     def _extract_themes_llm(
@@ -311,7 +317,10 @@ class SynthesisMatrix:
             try:
                 return self._classify_positions_llm(papers, themes)
             except Exception:
-                pass  # fall through to heuristic
+                logger.info(
+                    "LLM position classification failed, falling back to heuristic",
+                    exc_info=True,
+                )
         return self._classify_positions_heuristic(papers, themes)
 
     def _classify_positions_llm(

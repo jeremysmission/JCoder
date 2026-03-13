@@ -5,6 +5,7 @@ Uses in-memory temp databases; no persistent state needed.
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 
@@ -194,6 +195,30 @@ class TestBuildFromChunks:
         stats = tmp_db.build_from_chunks([])
         assert stats["entities"] == 0
         assert stats["chunks_processed"] == 0
+
+
+class _BrokenConnection:
+
+    def __enter__(self):
+        raise RuntimeError("db locked")
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
+class TestLogging:
+
+    def test_write_failures_are_logged(self, tmp_db, monkeypatch, caplog):
+        monkeypatch.setattr(tmp_db, "_connect", lambda: _BrokenConnection())
+        entity = Entity(entity_id="e1", name="foo", entity_type="function", source_file="x.py")
+        relation = Relation(source_id="a", target_id="b", relation_type="calls")
+
+        with caplog.at_level(logging.WARNING, logger="core.knowledge_graph"):
+            tmp_db._add_entity(entity)
+            tmp_db._add_relation(relation)
+
+        assert any("Failed to add entity" in rec.message for rec in caplog.records)
+        assert any("Failed to add relation" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------

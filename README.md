@@ -46,7 +46,17 @@ python main.py eval --benchmark evaluation/golden_questions_v1.json
 
 # CPU-only testing (no vLLM needed)
 python main.py --mock ask "What does the chunker do?"
+
+# Launch the GUI command center
+python main.py gui
+# or
+jcoder-gui
 ```
+
+The GUI uses the HybridRAG3 dark palette and builds its forms from the live
+Click command tree, so it stays aligned with the CLI as commands change.
+Standard commands stream output into the window. The `interactive` REPL is
+launched in a separate console window because it needs live terminal input.
 
 ## Architecture
 

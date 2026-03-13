@@ -20,6 +20,7 @@ Speed principle: eliminate 70% of papers before any LLM call.
 from __future__ import annotations
 
 import hashlib
+import logging
 import re
 import time
 from datetime import datetime, timezone
@@ -27,6 +28,8 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -280,7 +283,12 @@ class LayeredTriage:
             )
             parsed = _parse_drone_response(response, len(papers))
         except Exception:
-            # LLM failure: fall back to satellite scores
+            logger.warning(
+                "Drone pass LLM call failed for query=%r, "
+                "falling back to satellite scores",
+                query,
+                exc_info=True,
+            )
             parsed = {}
 
         for i, result in enumerate(survivors):

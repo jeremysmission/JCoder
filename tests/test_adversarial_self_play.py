@@ -5,6 +5,7 @@ All LLM calls are mocked; no live runtime needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -66,6 +67,7 @@ class TestDataclasses:
             hardest_failures=[],
         )
         assert r.accuracy == 0.7
+        assert r.failed_rounds == 0
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +262,22 @@ class TestPlaySession:
         )
         result = asp.play_session([], rounds_per_game=1)
         assert result.total_challenges == 0
+
+    def test_failed_rounds_counted_and_logged(self, tmp_path, caplog):
+        db = str(tmp_path / "play.db")
+        asp = AdversarialSelfPlay(
+            runtime=_mock_runtime(), answer_fn=_mock_answer_fn(), db_path=db,
+        )
+        asp._gen_hardness_challenge = MagicMock(side_effect=RuntimeError("hard fail"))
+        asp._gen_trick_challenge = MagicMock(side_effect=RuntimeError("trick fail"))
+        asp._gen_ambiguity_challenge = MagicMock(side_effect=RuntimeError("ambig fail"))
+
+        with caplog.at_level(logging.WARNING, logger="core.adversarial_self_play"):
+            result = asp.play_session(_sample_chunks(), rounds_per_game=1)
+
+        assert result.total_challenges == 0
+        assert result.failed_rounds == 3
+        assert any("Game round failed" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------

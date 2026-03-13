@@ -27,6 +27,7 @@ Zero external dependencies beyond the LLM.
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sqlite3
 import time
@@ -34,6 +35,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -346,8 +349,13 @@ class CodeKnowledgeGraph:
                     entity.docstring, entity.chunk_id,
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Failed to add entity %s (%s): %s",
+                entity.entity_id,
+                entity.entity_type,
+                exc,
+            )
 
     def _add_relation(self, rel: Relation) -> None:
         try:
@@ -371,8 +379,14 @@ class CodeKnowledgeGraph:
                     VALUES (?, ?, ?, ?)
                 """, (rel.source_id, rel.target_id, rel.relation_type, rel.weight))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Failed to add relation %s -> %s (%s): %s",
+                rel.source_id,
+                rel.target_id,
+                rel.relation_type,
+                exc,
+            )
 
     def _find_seeds(self, query: str) -> Set[str]:
         """Find entities matching query terms."""

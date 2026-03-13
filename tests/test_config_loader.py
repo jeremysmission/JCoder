@@ -9,6 +9,7 @@ and build_agent_from_config (mocked subsystems).
 from __future__ import annotations
 
 import os
+import sqlite3
 import textwrap
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -19,6 +20,7 @@ import yaml
 from agent.config_loader import (
     AgentConfig,
     _find_config_dir,
+    _load_fts5_index,
     _load_yaml,
     _resolve_backend_defaults,
     apply_profile,
@@ -1012,3 +1014,86 @@ class TestPersistencePathsFromYaml:
                 build_agent_from_config(config=cfg)
 
         mock_session_cls.assert_called_once_with(store_dir="/my/custom/sessions")
+
+
+class TestFederatedFts5Loader:
+    """Regression coverage for threaded federated FTS5 loading."""
+
+    @staticmethod
+    def _create_fts5_db(path: Path, content: str) -> None:
+        conn = sqlite3.connect(path)
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks USING fts5(search_content, source_path, chunk_id)"
+        )
+        conn.execute(
+            "INSERT INTO chunks(search_content, source_path, chunk_id) VALUES (?, ?, ?)",
+            (content, str(path.with_suffix('.py')), path.stem),
+        )
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def _create_legacy_fts5_db(path: Path, content: str) -> None:
+        conn = sqlite3.connect(path)
+        conn.execute(
+            "CREATE VIRTUAL TABLE chunks USING fts5(content, source, category)"
+        )
+        conn.execute(
+            "INSERT INTO chunks(content, source, category) VALUES (?, ?, ?)",
+            (content, "research:absolute_zero_reasoner.md", "self_learning_research"),
+        )
+        conn.commit()
+        conn.close()
+
+    def test_load_fts5_index_keeps_connection_lazy_for_threaded_federation(self, tmp_path):
+        from core.federated_search import FederatedSearch
+
+        alpha = tmp_path / "alpha.fts5.db"
+        beta = tmp_path / "beta.fts5.db"
+        self._create_fts5_db(alpha, "def alpha_ready(): return 'ready'")
+        self._create_fts5_db(beta, "def beta_ready(): return 'ready'")
+
+        alpha_index = _load_fts5_index(str(alpha), "alpha")
+        beta_index = _load_fts5_index(str(beta), "beta")
+
+        assert alpha_index._fts_conn is None
+        assert beta_index._fts_conn is None
+
+        fed = FederatedSearch(embedding_engine=None, max_workers=2)
+        fed.add_index("alpha", alpha_index)
+        fed.add_index("beta", beta_index)
+        try:
+            results = fed.search("ready", top_k=5)
+        finally:
+            fed.close()
+            alpha_index.close()
+            beta_index.close()
+
+        found_indexes = {result.index_name for result in results}
+        assert "alpha" in found_indexes
+        assert "beta" in found_indexes
+
+    def test_load_fts5_index_supports_legacy_content_source_schema(self, tmp_path):
+        from core.federated_search import FederatedSearch
+
+        legacy = tmp_path / "research_papers.fts5.db"
+        self._create_legacy_fts5_db(
+            legacy,
+            "# Absolute Zero Reasoner\n\nAZR demonstrates reasoning gains with zero labels.",
+        )
+
+        legacy_index = _load_fts5_index(str(legacy), "research_papers")
+        fed = FederatedSearch(embedding_engine=None, max_workers=2)
+        fed.add_index("research_papers", legacy_index)
+        try:
+            results = fed.search("absolute zero reasoning", top_k=5)
+        finally:
+            fed.close()
+            legacy_index.close()
+
+        assert legacy_index._fts5_error_logged is False
+        assert len(results) == 1
+        assert results[0].index_name == "research_papers"
+        assert "Absolute Zero Reasoner" in results[0].content
+        assert results[0].source == "research:absolute_zero_reasoner.md"
+        assert results[0].metadata["id"].startswith("research:absolute_zero_reasoner.md:")

@@ -10,6 +10,12 @@ Fully local, offline CLI AI coding assistant. Ingests a codebase, builds a hybri
 - **AnswerScore: 22/40 (55%)** (mock LLM returns dummy text, score is noise until real LLM)
 - Frozen benchmark snapshot at `D:\JCoder_bench_snapshot` (git worktree pinned at e524139)
 
+## 2026-03-13 Addendum
+
+- The canonical sprint status board is `docs/SPRINT_STATUS_2026-03-11.md`.
+- The canonical completion spine is `docs/SPRINT_COMPLETION_PLAN_2026-03-13.md`.
+- Sprint `17-20` are now explicitly assigned and sliced; the old undefined gap is closed.
+
 ## Architecture
 
 ```
@@ -61,7 +67,73 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 - `python main.py measure` -- GPU/torch/CUDA measurement
 - `python main.py doctor` -- environment checks
 - `python main.py --mock ask "question" --index-name <name>` -- ask questions
+- `python main.py gui` / `jcoder-gui` -- launch the generated command-center GUI
 - `python -m pytest tests/ -q` -- 35 tests
+
+## Session 3: GUI Command Center (2026-03-13)
+
+### Changes
+- Added a new `gui/` package:
+  - `gui/theme.py` ports the HybridRAG3 dark palette and button hierarchy.
+  - `gui/command_catalog.py` builds GUI metadata from the live Click tree.
+  - `gui/runner.py` streams subprocess output without freezing tkinter.
+  - `gui/app.py` adds the command-center shell with search, generated forms, command preview, output console, and stop support.
+- Added `cli/gui_cmd.py` so the GUI launches as `jcoder gui`.
+- Added the `jcoder-gui` entry point in `pyproject.toml`.
+- Updated `README.md`, sprint tracking, and checkpoint docs for the GUI lane.
+
+### Behavior
+- Every executable leaf command in the CLI is available in the GUI through generated forms.
+- Root CLI options `--config-dir` and `--mock` are surfaced globally.
+- Standard commands run in a background subprocess and stream logs into the GUI.
+- The `interactive` REPL launches in a separate console window because it needs live terminal input.
+
+### Test Coverage
+- `python -m py_compile gui\\theme.py gui\\command_catalog.py gui\\runner.py gui\\app.py cli\\gui_cmd.py`
+  - Result: passed
+- `python -m pytest tests\\test_gui_command_catalog.py tests\\test_eval_and_cli.py -q --basetemp .tmp_pytest_gui`
+  - Result: `23 passed`
+- `python -m py_compile agent\\config_loader.py tests\\test_config_loader.py`
+  - Result: passed
+- `python -m pytest tests\\test_config_loader.py -q --basetemp .tmp_pytest_cfg_loader`
+  - Result: `63 passed`
+- Windowed startup smoke:
+  - Constructed `JCoderGuiApp`, confirmed widget/catalog initialization, ran `doctor.check` through the GUI runner, and observed streamed output plus a clean command completion path.
+  - Launched `python main.py gui`, confirmed the GUI process stayed alive until intentionally terminated by the smoke harness.
+- GUI-driven backend smoke:
+  - Instantiated the real `JCoderGuiApp` against a temporary config/data root with `--mock` enabled.
+  - Ran `ingest` against a one-file sample repo, then ran `ask` against the generated temporary index through the same GUI runner path.
+  - Both commands completed with streamed output and exit code `0`.
+- Live GUI backend smoke:
+  - Ran `agent.complete` through the real `JCoderGuiApp` against local Ollama with `phi4-mini:latest`.
+  - The command completed successfully and produced completion output in the GUI.
+  - The earlier `SQLite objects created in a thread` federated-search failure did not appear in the GUI output.
+
+### Live Validation Follow-Up
+- A direct live `agent run` smoke against local Ollama first exposed a federated-search defect where discovered FTS5 indexes reused SQLite connections across worker threads.
+- Fixed `agent/config_loader.py` so federated FTS5 indexes stay lazy and let `IndexEngine` open worker-safe connections on demand.
+- A subsequent live `agent run` smoke exposed a second federated-search issue: direct FTS5 queries assumed every index had `chunk_id`, but `research_papers.fts5.db` uses the legacy schema `content/source/category`.
+- Fixed `core/index_engine.py` so direct federated FTS5 search adapts to both modern and legacy schemas.
+- Added regression coverage in `tests/test_config_loader.py` for both threaded federation and legacy FTS5 schema compatibility.
+- Re-ran the long-running live `agent run` smoke against local Ollama. It completed successfully with `Summary: READY`, and the earlier SQLite/thread and `chunk_id` warnings no longer appeared.
+
+### Open Items
+- Bring up the configured vLLM-style endpoints on ports `8000/8001/8002` and run a live RAG-backed `ask` smoke from the GUI.
+- Run the matching CLI live-stack `ask` validation once the vLLM-style stack is online.
+- The `interactive` REPL is intentionally external-console today, not an embedded terminal tab.
+
+### Git State
+- Authoritative worktree: `D:\HybridRAG3\_jcoder_worktree`
+- Current commit: `a90a4d3` (`Fix inspection findings and complete Sprints 10-14`)
+- Checkout state: detached `HEAD`
+- Local branch at the same commit: `master`
+- Remote: `origin https://github.com/jeremysmission/JCoder.git`
+- `master` vs `origin/master`: `2 ahead, 0 behind`
+- Related worktrees:
+  - `D:\JCoder` on `master`
+  - `D:\HybridRAG3\_jcoder_worktree` on detached `HEAD`
+  - `D:\JCoder_bench_snapshot` pinned at `352cc58`
+- Current worktree is dirty with tracked and untracked sprint/GUI files; no merge conflicts were reported in this snapshot.
 
 ## Known Issues / Remaining 4 Retrieval Failures
 | ID | Question | Expected File | Problem |

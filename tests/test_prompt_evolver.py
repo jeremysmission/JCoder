@@ -5,6 +5,7 @@ All LLM calls are mocked; no live runtime needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -186,14 +187,16 @@ class TestMutations:
         child = pe._mutate(parent, "rephrase", 1, [])
         assert child is None
 
-    def test_runtime_crash_returns_none(self, tmp_path):
+    def test_runtime_crash_returns_none(self, tmp_path, caplog):
         db = str(tmp_path / "evo.db")
         rt = _mock_runtime()
         rt.generate.side_effect = RuntimeError("crash")
         pe = PromptEvolver(runtime=rt, eval_fn=_mock_eval_fn(), db_path=db)
         parent = PromptCandidate(prompt_id="p1", text=SEED_PROMPT, generation=0)
-        child = pe._mutate(parent, "rephrase", 1, [])
+        with caplog.at_level(logging.WARNING, logger="core.prompt_evolver"):
+            child = pe._mutate(parent, "rephrase", 1, [])
         assert child is None
+        assert any("Prompt mutation failed" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------

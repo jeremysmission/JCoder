@@ -92,6 +92,7 @@ class IndexEngine:
         self._sparse_only = sparse_only
         self._fts_conn: sqlite3.Connection = None
         self._db_path: str = ""
+        self._fts5_query_spec: Optional[Dict[str, str]] = None
         os.makedirs(storage.index_dir, exist_ok=True)
 
         # FAISS index -- try GPU if enough VRAM, fall back to CPU
@@ -154,6 +155,46 @@ class IndexEngine:
         if self._fts_conn is not None:
             self._fts_conn.close()
             self._fts_conn = None
+
+    def _resolve_fts5_query_spec(self) -> Dict[str, str]:
+        """Resolve column names for modern and legacy FTS5 schemas."""
+        if self._fts5_query_spec is not None:
+            return self._fts5_query_spec
+
+        conn = self._get_fts_conn()
+        if conn is None:
+            raise sqlite3.OperationalError("FTS5 database path is not configured")
+
+        columns = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(chunks)").fetchall()
+        }
+        content_col = "search_content" if "search_content" in columns else "content"
+        if content_col not in columns:
+            raise sqlite3.OperationalError(
+                "chunks table missing search_content/content column"
+            )
+
+        source_col = ""
+        if "source_path" in columns:
+            source_col = "source_path"
+        elif "source" in columns:
+            source_col = "source"
+
+        if "chunk_id" in columns:
+            id_expr = "chunk_id"
+        elif source_col:
+            id_expr = f"{source_col} || ':' || CAST(rowid AS TEXT)"
+        else:
+            id_expr = "CAST(rowid AS TEXT)"
+
+        self._fts5_query_spec = {
+            "match_col": content_col,
+            "content_col": content_col,
+            "source_expr": source_col or "''",
+            "id_expr": id_expr,
+        }
+        return self._fts5_query_spec
 
     def close(self):
         """Release FTS5 connection."""
@@ -222,9 +263,10 @@ class IndexEngine:
         rows = []
 
         try:
+            spec = self._resolve_fts5_query_spec()
             cursor = conn.execute(
-                "SELECT chunk_id, rank FROM chunks "
-                "WHERE search_content MATCH ? "
+                f"SELECT {spec['id_expr']} AS hit_id, rank FROM chunks "
+                f"WHERE {spec['match_col']} MATCH ? "
                 "ORDER BY rank LIMIT ?",
                 (or_query, k),
             )
@@ -262,9 +304,13 @@ class IndexEngine:
             return []
 
         try:
+            spec = self._resolve_fts5_query_spec()
             cursor = conn.execute(
-                "SELECT chunk_id, search_content, source_path, rank "
-                "FROM chunks WHERE search_content MATCH ? "
+                f"SELECT {spec['id_expr']} AS hit_id, "
+                f"{spec['content_col']} AS hit_content, "
+                f"{spec['source_expr']} AS hit_source, rank "
+                "FROM chunks "
+                f"WHERE {spec['match_col']} MATCH ? "
                 "ORDER BY rank LIMIT ?",
                 (or_query, k),
             )
@@ -380,6 +426,7 @@ class IndexEngine:
     def _build_fts5(self):
         """Build per-index FTS5 DB from current metadata."""
         self._close_fts_conn()
+        self._fts5_query_spec = None
         conn = sqlite3.connect(self._db_path)
         self._configure_fts_conn(conn)
         try:
@@ -432,6 +479,7 @@ class IndexEngine:
 
         # Build per-index FTS5 DB
         self._db_path = path + ".fts5.db"
+        self._fts5_query_spec = None
         self._build_fts5()
 
     def load(self, name: str):
@@ -457,6 +505,7 @@ class IndexEngine:
 
         # Connect to per-index FTS5 DB (built during save)
         self._db_path = path + ".fts5.db"
+        self._fts5_query_spec = None
         if not os.path.exists(self._db_path):
             # Legacy index without per-index FTS5 -- rebuild
             self._build_fts5()

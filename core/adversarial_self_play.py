@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import random
 import re
 import sqlite3
@@ -42,6 +43,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -75,6 +78,7 @@ class SelfPlayResult:
     accuracy: float
     weakness_report: Dict[str, int]  # failure_mode -> count
     hardest_failures: List[Dict[str, str]]  # worst failures for review
+    failed_rounds: int = 0
     total_ms: float = 0.0
 
 
@@ -208,6 +212,7 @@ class AdversarialSelfPlay:
         """
         t0 = time.time()
         outcomes: List[ChallengeOutcome] = []
+        failed_rounds = 0
 
         games = [
             ("hardness", self._gen_hardness_challenge),
@@ -231,8 +236,14 @@ class AdversarialSelfPlay:
                             difficulty += difficulty_step
                         else:
                             difficulty = max(0.1, difficulty - difficulty_step * 0.5)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    failed_rounds += 1
+                    logger.warning(
+                        "Game round failed (%s, difficulty=%.2f): %s",
+                        game_name,
+                        difficulty,
+                        exc,
+                    )
 
         # Build weakness report
         weakness = {}
@@ -258,6 +269,7 @@ class AdversarialSelfPlay:
             accuracy=correct / total if total > 0 else 0.0,
             weakness_report=weakness,
             hardest_failures=hardest_failures,
+            failed_rounds=failed_rounds,
             total_ms=(time.time() - t0) * 1000,
         )
 
@@ -495,8 +507,12 @@ class AdversarialSelfPlay:
                     outcome.latency_ms, time.time(),
                 ))
                 conn.commit()
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                "Failed to persist challenge %s: %s",
+                challenge.challenge_id,
+                exc,
+            )
 
     def weakness_analysis(self, limit: int = 50) -> Dict[str, Any]:
         """Analyze historical weaknesses from all past games."""

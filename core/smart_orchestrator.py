@@ -16,6 +16,7 @@ can be enabled/disabled independently.
 from __future__ import annotations
 
 import hashlib
+import logging
 import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -26,6 +27,8 @@ from core.reflection import ReflectionEngine
 from core.retrieval_engine import RetrievalEngine
 from core.runtime import Runtime
 from core.telemetry import QueryEvent, TelemetryStore
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -122,7 +125,12 @@ class SmartOrchestrator:
                     question, chunks, response)
                 confidence = reflection_scores.get("confidence", confidence)
             except Exception:
-                pass  # reflection failure should not block the answer
+                logger.warning(
+                    "Self-RAG reflection failed for query_id=%s, "
+                    "proceeding without reflection scores",
+                    query_id,
+                    exc_info=True,
+                )
 
         # --- Step 4: Confidence gating ---
         if confidence < self.confidence_gate:
@@ -174,4 +182,8 @@ class SmartOrchestrator:
             )
             self.telemetry.log(event)
         except Exception:
-            pass  # telemetry failure should never block answers
+            logger.warning(
+                "Telemetry logging failed for query_id=%s",
+                query_id,
+                exc_info=True,
+            )

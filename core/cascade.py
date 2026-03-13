@@ -19,6 +19,7 @@ Only hard architectural questions consume full-power resources.
 
 from __future__ import annotations
 
+import logging
 import re
 import threading
 import time
@@ -28,6 +29,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from core.config import ModelConfig
 from core.network_gate import NetworkGate
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -207,6 +210,12 @@ class ModelCascade:
                     latency_ms=latency_ms,
                 )
             except Exception:
+                logger.warning(
+                    "Cascade level %s failed for question=%r",
+                    level.name,
+                    question,
+                    exc_info=True,
+                )
                 escalated = True
                 continue  # try next level on failure
 

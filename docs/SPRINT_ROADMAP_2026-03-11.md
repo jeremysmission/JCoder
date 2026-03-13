@@ -1,6 +1,12 @@
 # JCoder Sprint Roadmap -- 2026-03-11
 # From Coding Assistant to Discovery Engine
 
+Status note (2026-03-13):
+- Completed-state tracking now lives in `docs/SPRINT_STATUS_2026-03-11.md`.
+- The canonical execution spine from the current worktree to completion now lives in
+  `docs/SPRINT_COMPLETION_PLAN_2026-03-13.md`.
+- This roadmap remains the long-range intent document for the `15+` lane.
+
 ## PHASE A: Foundation Hardening (Weeks 1-2)
 
 ### Sprint R1-R7: DPI Repair Sprints (IN PROGRESS -- Claude DPI)

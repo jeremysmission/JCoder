@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import random
 import re
 import sqlite3
@@ -38,6 +39,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -213,6 +216,12 @@ class PromptEvolver:
                         cand.scores.append(score)
                         total_evals += 1
                     except Exception:
+                        logger.warning(
+                            "Prompt evaluation failed for prompt_id=%s on query=%r",
+                            cand.prompt_id,
+                            q,
+                            exc_info=True,
+                        )
                         cand.scores.append(0.0)
                 cand.avg_score = (
                     sum(cand.scores) / len(cand.scores) if cand.scores else 0.0
@@ -351,6 +360,12 @@ class PromptEvolver:
                 mutation_type=mutation_type,
             )
         except Exception:
+            logger.warning(
+                "Prompt mutation failed for parent=%s mutation=%s",
+                parent.prompt_id,
+                mutation_type,
+                exc_info=True,
+            )
             return None
 
     def _crossover(
@@ -386,6 +401,12 @@ class PromptEvolver:
                 mutation_type="crossover",
             )
         except Exception:
+            logger.warning(
+                "Prompt crossover failed for parents=%s,%s",
+                parent_a.prompt_id,
+                parent_b.prompt_id,
+                exc_info=True,
+            )
             return None
 
     def _sample_queries(self, queries: List[str], n: int) -> List[str]:

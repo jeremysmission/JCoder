@@ -46,9 +46,10 @@ all = ["jcoder[gpu,tree-sitter,ingest,dev]"]
 
 [project.scripts]
 jcoder = "cli.commands:cli"
+jcoder-gui = "gui.app:main"
 
 [tool.setuptools.packages.find]
-include = ["agent*", "cli*", "core*", "ingestion*", "evaluation*", "scripts*"]
+include = ["agent*", "cli*", "core*", "ingestion*", "evaluation*", "scripts*", "gui*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

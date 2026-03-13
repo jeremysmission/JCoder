@@ -5,6 +5,7 @@ All runtimes are mocked; no live LLM needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -204,7 +205,7 @@ class TestRoute:
 
     @patch("core.cascade.Runtime")
     @patch("core.cascade.NetworkGate")
-    def test_escalation_on_exception(self, mock_gate, mock_rt_cls):
+    def test_escalation_on_exception(self, mock_gate, mock_rt_cls, caplog):
         call_count = [0]
         def gen_side_effect(q, ctx, **kw):
             call_count[0] += 1
@@ -217,8 +218,10 @@ class TestRoute:
         mock_rt_cls.return_value = mock_rt
 
         cascade = ModelCascade(_make_levels(2), gate=MagicMock())
-        result = cascade.route("What is foo?", ["ctx"])
+        with caplog.at_level(logging.WARNING, logger="core.cascade"):
+            result = cascade.route("What is foo?", ["ctx"])
         assert result.escalated is True
+        assert any("Cascade level" in rec.message for rec in caplog.records)
 
     @patch("core.cascade.Runtime")
     @patch("core.cascade.NetworkGate")
