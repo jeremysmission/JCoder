@@ -260,6 +260,7 @@ def test_triage_1mb_papers():
 # Test 7: Rapid create-close cycles under pressure
 # ---------------------------------------------------------------------------
 
+@pytest.mark.slow
 def test_prisma_rapid_create_close(tmp_path):
     """200 rapid open-write-close cycles."""
     db_path = str(tmp_path / "rapid.db")

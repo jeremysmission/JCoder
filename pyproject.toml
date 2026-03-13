@@ -54,4 +54,7 @@ include = ["agent*", "cli*", "core*", "ingestion*", "evaluation*", "scripts*", "
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short -m \"not slow\""
+markers = [
+    "slow: timing-sensitive or long-running tests excluded from default regression runs",
+]

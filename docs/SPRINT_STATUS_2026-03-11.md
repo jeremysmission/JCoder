@@ -63,9 +63,9 @@ is the most detailed continuation of Sprint 7 closeout.
 | R2 | Race conditions and thread safety | DONE | Agent resume regressions re-verified and fixed on 2026-03-11 |
 | R3 | Silent failure elimination | PLANNED | No completion evidence yet |
 | R4 | Config and path portability | ACTIVE | Agent/session/doctor/data-root portability slices landed, but the full repair-sprint sweep is still open |
-| R5 | SQLite connection consolidation | ACTIVE | Federated lazy SQLite loading and legacy FTS5 query compatibility landed, but the broader per-module connection consolidation is still open |
+| R5 | SQLite connection consolidation | ACTIVE | Federated lazy SQLite loading, legacy FTS5 query compatibility, and PRISMA batched/startup-safe SQLite handling landed, but the broader per-module connection consolidation is still open |
 | R6 | Data pipeline hardening | PLANNED | No completion evidence yet |
-| R7 | Test infrastructure and coverage | PLANNED | No completion evidence yet |
+| R7 | Test infrastructure and coverage | ACTIVE | Default regressions now exclude one explicit `slow` PRISMA reopen-loop timing test; the rest of the repair-sprint test work remains open |
 
 ## Data Sprints
 
