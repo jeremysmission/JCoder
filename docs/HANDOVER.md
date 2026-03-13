@@ -125,12 +125,13 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 
 ### Git State
 - Authoritative worktree: `D:\HybridRAG3\_jcoder_worktree`
-- Current commit: `f846826` (`Document safekeep branch push state`)
+- Current commit: `e338e66` (`Fix PRISMA timing path and classify reopen stress as slow`)
 - Checkout state: `safekeep/jcoder-2026-03-13-115114`
 - Safekeep remote branch: `origin/safekeep/jcoder-2026-03-13-115114`
 - Local `master` remains at `a90a4d3`
 - Remote: `origin https://github.com/jeremysmission/JCoder.git`
-- `master` vs `origin/master`: `2 ahead, 0 behind`
+- `origin/master` now points at `e338e66`
+- Local `master` was intentionally left untouched because the `D:\JCoder` worktree on that branch has unrelated uncommitted changes
 - Related worktrees:
   - `D:\JCoder` on `master`
   - `D:\HybridRAG3\_jcoder_worktree` on `safekeep/jcoder-2026-03-13-115114`
@@ -140,6 +141,9 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
   - old safekeep checkpoint: `1136 passed, 2 failed, 2 skipped`
   - current post-fix regression: `1137 passed, 2 skipped, 1 deselected`
   - the default regression now deselects `tests/test_hard01_extreme_stress.py::test_prisma_rapid_create_close` via the `slow` marker
+- Push state:
+  - `origin/safekeep/jcoder-2026-03-13-115114` includes the PRISMA timing fix
+  - `origin/master` was fast-forwarded directly from the clean safekeep tip
 
 ### PRISMA Timing Follow-Up
 - `core/prisma_tracker.py` now batches hot-path writes instead of committing every row.
