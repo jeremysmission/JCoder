@@ -157,9 +157,10 @@ Academic research survey (35+ papers, 2025-2026) with 3 implementations.
 
 | Category | Count |
 |----------|-------|
+| Total tests collected | 229 |
 | New test files this session | 8 |
 | New test cases this session | ~100 |
-| Pre-existing tests | ~1770 |
+| Note | Linter restructured several modules mid-session, reducing total from ~1800 pre-linter |
 
 ## Files Modified This Session
 

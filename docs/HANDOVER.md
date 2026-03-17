@@ -5,7 +5,7 @@ Fully local, offline CLI AI coding assistant. Ingests codebases, builds hybrid v
 
 ## Current State (2026-03-17)
 - **~264 Python files** across agent/core/cli/gui/ingestion/scripts
-- **~1800+ pytest** passing (8 new test files this session)
+- **229 pytest** collected (8 new test files this session; linter restructured modules mid-session)
 - **26 product sprints DONE**, sprints 18-20 PLANNED
 - **10 repair sprints DONE** (R1-R7 original + R8-R10 this session)
 - **174 FTS5 indexes** (~48 GB), 200-question eval set
