@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from unittest.mock import MagicMock
 
 from core.synthesis_matrix import MatrixReport, SynthesisCell, SynthesisMatrix, ThemeRow
@@ -295,3 +296,21 @@ def test_build_with_llm_runtime():
     assert scale_row.consensus == "strong_agreement"
 
     assert rt.generate.call_count == 2
+
+
+def test_llm_fallbacks_are_logged(caplog):
+    rt = MagicMock()
+    rt.generate.side_effect = RuntimeError("llm down")
+    papers = _make_papers(
+        ("Paper A", ["caching is great"], "caching study"),
+        ("Paper B", ["scalability matters"], "scaling study"),
+    )
+    matrix = SynthesisMatrix(runtime=rt)
+
+    with caplog.at_level(logging.INFO, logger="core.synthesis_matrix"):
+        report = matrix.build(papers, query="system performance")
+
+    assert report.total_sources == 2
+    assert len(report.themes) > 0
+    assert any("LLM theme extraction failed" in rec.message for rec in caplog.records)
+    assert any("LLM position classification failed" in rec.message for rec in caplog.records)

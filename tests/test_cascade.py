@@ -5,6 +5,7 @@ All runtimes are mocked; no live LLM needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -204,7 +205,7 @@ class TestRoute:
 
     @patch("core.cascade.Runtime")
     @patch("core.cascade.NetworkGate")
-    def test_escalation_on_exception(self, mock_gate, mock_rt_cls):
+    def test_escalation_on_exception(self, mock_gate, mock_rt_cls, caplog):
         call_count = [0]
         def gen_side_effect(q, ctx, **kw):
             call_count[0] += 1
@@ -217,8 +218,10 @@ class TestRoute:
         mock_rt_cls.return_value = mock_rt
 
         cascade = ModelCascade(_make_levels(2), gate=MagicMock())
-        result = cascade.route("What is foo?", ["ctx"])
+        with caplog.at_level(logging.WARNING, logger="core.cascade"):
+            result = cascade.route("What is foo?", ["ctx"])
         assert result.escalated is True
+        assert any("Cascade level" in rec.message for rec in caplog.records)
 
     @patch("core.cascade.Runtime")
     @patch("core.cascade.NetworkGate")
@@ -247,6 +250,57 @@ class TestRoute:
 # ---------------------------------------------------------------------------
 # close
 # ---------------------------------------------------------------------------
+
+class TestSkipConnection:
+    """HybridServe-inspired: skip intermediate levels on very low confidence."""
+
+    @patch("core.cascade.Runtime")
+    @patch("core.cascade.NetworkGate")
+    def test_skip_to_last_on_very_low_confidence(self, mock_gate, mock_rt_cls):
+        mock_rt = MagicMock()
+        mock_rt.generate.return_value = "maybe answer"
+        mock_rt_cls.return_value = mock_rt
+
+        levels = _make_levels(4)
+        call_count = [0]
+
+        def _low_then_ok(answer):
+            call_count[0] += 1
+            return 0.05 if call_count[0] == 1 else 0.8
+
+        cascade = ModelCascade(
+            levels, gate=MagicMock(),
+            confidence_threshold=0.4,
+            skip_threshold=0.15,
+        )
+        result = cascade.route("complex question", ["ctx"], confidence_fn=_low_then_ok)
+        assert result.escalated is True
+        assert result.level_index == 3
+        assert cascade.skip_count == 1
+
+    @patch("core.cascade.Runtime")
+    @patch("core.cascade.NetworkGate")
+    def test_no_skip_when_above_skip_threshold(self, mock_gate, mock_rt_cls):
+        mock_rt = MagicMock()
+        mock_rt.generate.return_value = "answer"
+        mock_rt_cls.return_value = mock_rt
+
+        levels = _make_levels(3)
+        call_count = [0]
+
+        def _moderate_then_ok(answer):
+            call_count[0] += 1
+            return 0.25 if call_count[0] == 1 else 0.8
+
+        cascade = ModelCascade(
+            levels, gate=MagicMock(),
+            confidence_threshold=0.4,
+            skip_threshold=0.15,
+        )
+        result = cascade.route("test", ["ctx"], confidence_fn=_moderate_then_ok)
+        assert cascade.skip_count == 0
+        assert result.level_index == 1
+
 
 class TestClose:
 

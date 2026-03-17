@@ -487,7 +487,9 @@ def _load_fts5_index(db_path: str, name: str) -> "IndexEngine":
     storage = StorageConfig(data_dir=index_dir, index_dir=index_dir)
     eng = IndexEngine(dimension=768, storage=storage, sparse_only=True)
     eng._db_path = db_path
-    eng._fts_conn = _sqlite3.connect(db_path)
+    # Keep federated indexes lazy so IndexEngine opens a worker-safe FTS5
+    # connection with check_same_thread=False on first search.
+    eng._fts_conn = None
 
     # Load .meta.json only for small indexes (<1 MB).
     # Large .meta.json files (e.g. 332K entries) eat hundreds of MB of RAM.

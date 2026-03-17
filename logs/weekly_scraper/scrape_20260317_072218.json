@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-03-17T13:22:18Z",
+  "scrapers": [
+    "rss",
+    "changelog",
+    "se"
+  ],
+  "total_collected": 98,
+  "ingested": 0,
+  "elapsed_s": 3.4,
+  "sources": {
+    "rss": 50,
+    "pypi": 20,
+    "se": 28
+  }
+}

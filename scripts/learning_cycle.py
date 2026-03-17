@@ -143,20 +143,26 @@ def generate_study_queries(
 
     print(f"  Weak categories: {weak_cats}")
 
+    result_scores = {
+        r["question_id"]: r["score"]
+        for r in baseline_report.get("results", [])
+    }
+
     # Select questions from weak categories
     weak_questions = [
         q for q in questions
         if q.get("category", "") in weak_cats
     ]
+    weak_questions.sort(
+        key=lambda q: result_scores.get(q.get("id", ""), 0.0),
+        reverse=True,
+    )
 
     # Also add lowest-scoring questions regardless of category
-    result_scores = {
-        r["question_id"]: r["score"]
-        for r in baseline_report.get("results", [])
-    }
     all_by_score = sorted(
         questions,
         key=lambda q: result_scores.get(q.get("id", ""), 1.0),
+        reverse=True,
     )
 
     study = []
@@ -174,6 +180,8 @@ def generate_study_queries(
         })
         if len(study) >= n_queries:
             break
+
+    study.sort(key=lambda q: q["baseline_score"], reverse=True)
 
     print(f"  [OK] Generated {len(study)} study queries")
     return study

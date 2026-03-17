@@ -795,6 +795,61 @@ def _try_init_pipeline(
         except Exception as exc:
             log.warning("StigmergicBooster init failed: %s", exc)
 
+    # Sprint 10: Smart orchestrator (Self-RAG + CRAG + confidence gating)
+    smart_orch = None
+    if sl_config.get("smart_orchestrator_enabled") and SmartOrchestrator is not None:
+        try:
+            smart_orch = SmartOrchestrator(
+                retriever=retriever,
+                runtime=runtime,
+                telemetry=telemetry,
+                reflection=reflection,
+                corrective=corrective,
+                confidence_gate=sl_config.get("confidence_gate", 0.2),
+            )
+            log.info("SmartOrchestrator: initialized")
+        except Exception as exc:
+            log.warning("SmartOrchestrator init failed: %s", exc)
+
+    # Sprint 12: Model cascade router (complexity-based routing)
+    cascade = None
+    if sl_config.get("cascade_enabled") and ModelCascade is not None:
+        try:
+            from core.cascade import CascadeLevel
+            from core.config import ModelConfig as _MC
+            cascade_levels_raw = sl_config.get("cascade_levels", [])
+            if cascade_levels_raw:
+                levels = [
+                    CascadeLevel(
+                        name=lv.get("name", f"level_{i}"),
+                        model_config=_MC(
+                            name=lv.get("model_name", "phi4-mini"),
+                            endpoint=lv.get("endpoint", "http://localhost:11434/v1"),
+                        ),
+                        max_complexity=lv.get("max_complexity", (i + 1) * 0.3),
+                    )
+                    for i, lv in enumerate(cascade_levels_raw)
+                ]
+            else:
+                levels = [
+                    CascadeLevel(
+                        name="default",
+                        model_config=_MC(
+                            name=sl_config.get("cascade_model", "phi4-mini"),
+                            endpoint=sl_config.get("cascade_endpoint",
+                                                   "http://localhost:11434/v1"),
+                        ),
+                        max_complexity=1.0,
+                    )
+                ]
+            cascade = ModelCascade(
+                levels=levels,
+                confidence_threshold=sl_config.get("cascade_confidence", 0.4),
+            )
+            log.info("ModelCascade: initialized with %d levels", len(levels))
+        except Exception as exc:
+            log.warning("ModelCascade init failed: %s", exc)
+
     try:
         pipeline = SelfLearningPipeline(
             retriever=retriever,
@@ -816,6 +871,8 @@ def _try_init_pipeline(
         pipeline.adversarial = adversarial
         pipeline.rapid_digest = rapid_digest
         pipeline.stigmergy_booster = stigmergy
+        pipeline.smart_orchestrator = smart_orch
+        pipeline.cascade = cascade
         return pipeline
     except Exception as exc:
         log.warning("SelfLearningPipeline init failed: %s", exc)

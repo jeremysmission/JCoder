@@ -92,6 +92,7 @@ def test_timestamps_monotonic(tmp_path):
     tracker.screen("h1", passed=True, reason="ok")
     tracker.eligible("h1", passed=True, reason="ok")
     tracker.include("h1", reason="final")
+    tracker.flow_counts()
 
     cur = tracker._conn.execute(
         "SELECT timestamp FROM prisma_log WHERE content_hash='h1' ORDER BY rowid"

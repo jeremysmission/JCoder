@@ -5,6 +5,7 @@ All LLM calls are mocked; no live runtime needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -186,14 +187,16 @@ class TestMutations:
         child = pe._mutate(parent, "rephrase", 1, [])
         assert child is None
 
-    def test_runtime_crash_returns_none(self, tmp_path):
+    def test_runtime_crash_returns_none(self, tmp_path, caplog):
         db = str(tmp_path / "evo.db")
         rt = _mock_runtime()
         rt.generate.side_effect = RuntimeError("crash")
         pe = PromptEvolver(runtime=rt, eval_fn=_mock_eval_fn(), db_path=db)
         parent = PromptCandidate(prompt_id="p1", text=SEED_PROMPT, generation=0)
-        child = pe._mutate(parent, "rephrase", 1, [])
+        with caplog.at_level(logging.WARNING, logger="core.prompt_evolver"):
+            child = pe._mutate(parent, "rephrase", 1, [])
         assert child is None
+        assert any("Prompt mutation failed" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------
@@ -289,3 +292,109 @@ class TestSampleQueries:
         pe = PromptEvolver(runtime=_mock_runtime(), eval_fn=_mock_eval_fn(), db_path=db)
         result = pe._sample_queries(["a", "b"], 5)
         assert len(result) == 2
+
+
+# ---------------------------------------------------------------------------
+# MOPrompt: Pareto-front multi-objective optimization
+# ---------------------------------------------------------------------------
+
+class TestParetoFront:
+
+    def _make(self, text: str, score: float) -> PromptCandidate:
+        return PromptCandidate(
+            prompt_id=f"p_{hash(text) & 0xFFFF:04x}",
+            text=text, generation=0, avg_score=score,
+        )
+
+    def test_empty_returns_empty(self):
+        assert PromptEvolver.pareto_front([]) == []
+
+    def test_single_candidate_is_optimal(self):
+        c = self._make("Be helpful.", 0.8)
+        front = PromptEvolver.pareto_front([c])
+        assert front == [c]
+
+    def test_dominated_candidate_excluded(self):
+        short_good = self._make("Be helpful.", 0.9)
+        long_bad = self._make("Be a very verbose and helpful assistant that...", 0.5)
+        front = PromptEvolver.pareto_front([short_good, long_bad])
+        assert len(front) == 1
+        assert front[0] is short_good
+
+    def test_pareto_optimal_tradeoff_both_kept(self):
+        short_ok = self._make("Help.", 0.6)
+        long_great = self._make("You are a code assistant. " * 3, 0.95)
+        front = PromptEvolver.pareto_front([short_ok, long_great])
+        assert len(front) == 2
+
+    def test_identical_scores_shorter_dominates(self):
+        short = self._make("Help.", 0.8)
+        long = self._make("Please help the user with their coding tasks.", 0.8)
+        front = PromptEvolver.pareto_front([short, long])
+        assert len(front) == 1
+        assert front[0] is short
+
+    def test_token_cost_property(self):
+        c = self._make("x" * 200, 0.5)
+        assert c.token_cost == 50
+
+
+class TestBestForBudget:
+
+    def _make(self, text: str, score: float) -> PromptCandidate:
+        return PromptCandidate(
+            prompt_id=f"p_{hash(text) & 0xFFFF:04x}",
+            text=text, generation=0, avg_score=score,
+        )
+
+    def test_picks_best_under_budget(self, tmp_path):
+        pe = PromptEvolver(
+            runtime=_mock_runtime(), eval_fn=_mock_eval_fn(),
+            db_path=str(tmp_path / "evo.db"),
+        )
+        short = self._make("x" * 40, 0.7)
+        medium = self._make("y" * 400, 0.85)
+        long = self._make("z" * 4000, 0.95)
+        result = pe.best_for_budget([short, medium, long], max_tokens=200)
+        assert result is medium
+
+    def test_falls_back_to_shortest_on_front(self, tmp_path):
+        pe = PromptEvolver(
+            runtime=_mock_runtime(), eval_fn=_mock_eval_fn(),
+            db_path=str(tmp_path / "evo.db"),
+        )
+        huge = self._make("z" * 8000, 0.95)
+        result = pe.best_for_budget([huge], max_tokens=100)
+        assert result is huge
+
+
+# ---------------------------------------------------------------------------
+# Prompt Duel (arXiv:2510.13907)
+# ---------------------------------------------------------------------------
+
+class TestPromptDuel:
+
+    def test_duel_returns_bool(self, tmp_path):
+        rt = _mock_runtime()
+        rt.generate = MagicMock(side_effect=[
+            "old answer", "new answer", "B",
+            "old answer", "new answer", "B",
+            "old answer", "new answer", "B",
+        ])
+        pe = PromptEvolver(
+            runtime=rt, eval_fn=_mock_eval_fn(),
+            db_path=str(tmp_path / "evo.db"), seed=42,
+        )
+        champ = PromptCandidate(prompt_id="c", text="old", generation=0)
+        challenger = PromptCandidate(prompt_id="n", text="new", generation=1)
+        result = pe.duel(champ, challenger, ["q1", "q2", "q3"], n_rounds=3)
+        assert isinstance(result, bool)
+
+    def test_duel_zero_rounds(self, tmp_path):
+        pe = PromptEvolver(
+            runtime=_mock_runtime(), eval_fn=_mock_eval_fn(),
+            db_path=str(tmp_path / "evo.db"),
+        )
+        champ = PromptCandidate(prompt_id="c", text="old", generation=0)
+        challenger = PromptCandidate(prompt_id="n", text="new", generation=1)
+        assert pe.duel(champ, challenger, ["q"], n_rounds=0) is False

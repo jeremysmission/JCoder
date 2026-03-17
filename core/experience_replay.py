@@ -37,6 +37,7 @@ class Experience:
     confidence: float
     timestamp: float
     use_count: int = 0
+    q_value: float = 0.0
 
 
 class ExperienceStore:
@@ -51,10 +52,18 @@ class ExperienceStore:
 
     MAX_EXPERIENCES = 1000  # Keep store bounded
 
-    def __init__(self, db_path: str, min_confidence: float = 0.6):
+    def __init__(
+        self,
+        db_path: str,
+        min_confidence: float = 0.6,
+        q_learning_rate: float = 0.2,
+        q_value_weight: float = 0.3,
+    ):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.min_confidence = min_confidence
+        self.q_learning_rate = q_learning_rate
+        self.q_value_weight = q_value_weight
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
@@ -71,7 +80,8 @@ class ExperienceStore:
                     confidence REAL,
                     timestamp REAL,
                     use_count INTEGER DEFAULT 0,
-                    keywords TEXT
+                    keywords TEXT,
+                    q_value REAL DEFAULT 0.0
                 )
             """)
             conn.execute("""
@@ -79,6 +89,15 @@ class ExperienceStore:
                 ON experiences(confidence DESC)
             """)
             conn.commit()
+            cols = {
+                row[1]
+                for row in conn.execute("PRAGMA table_info(experiences)").fetchall()
+            }
+            if "q_value" not in cols:
+                conn.execute(
+                    "ALTER TABLE experiences ADD COLUMN q_value REAL DEFAULT 0.0"
+                )
+                conn.commit()
 
     def store(self, exp_id: str, query: str, answer: str,
               source_files: List[str], confidence: float) -> bool:
@@ -109,8 +128,8 @@ class ExperienceStore:
             conn.execute("""
                 INSERT OR REPLACE INTO experiences
                 (exp_id, query, answer, source_files_json, confidence,
-                 timestamp, use_count, keywords)
-                VALUES (?, ?, ?, ?, ?, ?, 0, ?)
+                 timestamp, use_count, keywords, q_value)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?, 0.0)
             """, (
                 exp_id, query, answer[:2000],
                 json.dumps(source_files),
@@ -131,7 +150,7 @@ class ExperienceStore:
         with self._connect() as conn:
             cur = conn.execute(
                 "SELECT exp_id, query, answer, source_files_json, "
-                "confidence, timestamp, use_count, keywords "
+                "confidence, timestamp, use_count, keywords, q_value "
                 "FROM experiences ORDER BY confidence DESC LIMIT 100"
             )
             rows = cur.fetchall()
@@ -146,7 +165,10 @@ class ExperienceStore:
             total = len(query_keywords | exp_keywords)
             jaccard = overlap / total if total > 0 else 0.0
             # Combine keyword match with confidence
-            score = 0.6 * jaccard + 0.4 * (row[4] or 0.0)
+            score = (
+                (1.0 - self.q_value_weight) * (0.6 * jaccard + 0.4 * (row[4] or 0.0))
+                + self.q_value_weight * max(0.0, min(1.0, row[8] or 0.0))
+            )
 
             if score > 0.1:  # minimum relevance threshold
                 exp = Experience(
@@ -155,6 +177,7 @@ class ExperienceStore:
                     confidence=row[4] or 0.0,
                     timestamp=row[5] or 0.0,
                     use_count=row[6] or 0,
+                    q_value=row[8] or 0.0,
                 )
                 scored.append((score, exp))
 
@@ -200,7 +223,7 @@ class ExperienceStore:
         with self._connect() as conn:
             cur = conn.execute("""
                 SELECT COUNT(*), AVG(confidence), SUM(use_count),
-                       AVG(use_count)
+                       AVG(use_count), AVG(q_value)
                 FROM experiences
             """)
             row = cur.fetchone()
@@ -211,7 +234,40 @@ class ExperienceStore:
             "avg_confidence": round(row[1] or 0, 3),
             "total_uses": row[2] or 0,
             "avg_uses": round(row[3] or 0, 1),
+            "avg_q_value": round(row[4] or 0, 3),
         }
+
+    def update_q_value(self, exp_id: str, reward: float) -> None:
+        """Apply a simple Bellman-style update toward the observed reward."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT q_value FROM experiences WHERE exp_id = ?",
+                (exp_id,),
+            ).fetchone()
+            if row is None:
+                return
+            current = float(row[0] or 0.0)
+            updated = current + self.q_learning_rate * (float(reward) - current)
+            conn.execute(
+                "UPDATE experiences SET q_value = ? WHERE exp_id = ?",
+                (updated, exp_id),
+            )
+            conn.commit()
+
+    def replay_blend(
+        self,
+        new_experiences: List[Experience],
+        replay_ratio: float = 0.3,
+        max_total: int = 10,
+    ) -> List[Experience]:
+        """Blend fresh experiences with top stored ones."""
+        if max_total <= 0:
+            return []
+
+        replay_count = max(0, min(max_total, int(round(max_total * replay_ratio))))
+        replay = self.retrieve(" ".join(exp.query for exp in new_experiences), top_k=replay_count)
+        combined = list(new_experiences) + replay
+        return combined[:max_total]
 
     @staticmethod
     def _extract_keywords(text: str) -> str:

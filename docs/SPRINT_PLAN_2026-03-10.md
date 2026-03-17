@@ -314,6 +314,20 @@ sessions without crashes, memory leaks, or degraded performance.
 - Graceful degradation verified on Toaster
 - Full documentation suite published
 
+### 2026-03-13 Follow-Up Checkpoint
+
+- [x] Add a tkinter command-center GUI that covers every executable leaf CLI command from the live Click tree.
+- [x] Reuse the HybridRAG3 dark palette, font sizing, and button hierarchy for the JCoder shell.
+- [x] Add launch paths for both `python main.py gui` and `jcoder-gui`.
+- [x] Keep long-running commands responsive by running CLI work in background subprocesses with output streaming.
+- [x] Handle the terminal-only `interactive` REPL by launching it in a separate console window.
+- [x] Run a GUI-driven mock backend smoke (`ingest` -> `ask`) against a temporary config/data root.
+- [x] Run a manual live GUI backend smoke against local Ollama via `agent.complete`.
+- [x] Fix the federated SQLite thread-affinity defect surfaced by live `agent run` validation and add regression coverage.
+- [x] Fix legacy federated FTS5 schema compatibility (`content/source/category` without `chunk_id`) and add regression coverage.
+- [x] Re-run a successful long-running live `agent run` smoke against local Ollama after the federated fixes.
+- [ ] Bring up the configured vLLM-style `ask` stack on `8000/8001/8002` and re-run a live RAG-backed GUI smoke.
+
 ---
 
 ## Sprint 14: LimitlessApp V2 Integration (Stretch)

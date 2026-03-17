@@ -12,6 +12,7 @@ which backend is active.
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from abc import ABC, abstractmethod
@@ -40,6 +41,7 @@ class ChatResponse:
     """Unified response from any backend."""
     content: str = ""
     tool_calls: List[ToolCall] = field(default_factory=list)
+    logprobs: List[Dict[str, Any]] = field(default_factory=list)
     model: str = ""
     input_tokens: int = 0
     output_tokens: int = 0
@@ -49,6 +51,33 @@ class ChatResponse:
     @property
     def has_tool_calls(self) -> bool:
         return len(self.tool_calls) > 0
+
+    @property
+    def self_certainty(self) -> Optional[float]:
+        if not self.logprobs:
+            return None
+
+        values: list[float] = []
+        for entry in self.logprobs:
+            if not isinstance(entry, dict):
+                continue
+            if isinstance(entry.get("logprob"), (int, float)):
+                values.append(float(entry["logprob"]))
+                continue
+            top = entry.get("top_logprobs")
+            if isinstance(top, list):
+                for candidate in top:
+                    if isinstance(candidate, dict) and isinstance(
+                        candidate.get("logprob"), (int, float)
+                    ):
+                        values.append(float(candidate["logprob"]))
+                        break
+
+        if not values:
+            return None
+
+        certainty = math.exp(sum(values) / len(values))
+        return max(0.0, min(1.0, certainty))
 
 
 def _decode_tool_arguments(args: Any, *, tool_name: str) -> Dict[str, Any]:

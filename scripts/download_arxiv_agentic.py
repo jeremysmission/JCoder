@@ -36,11 +36,6 @@ MAX_CHARS = 4000
 _NORMALIZE_RE = re.compile(r"[_\-./\\:]")
 _CAMEL_RE1 = re.compile(r"([a-z])([A-Z])")
 _CAMEL_RE2 = re.compile(r"([A-Z]+)([A-Z][a-z])")
-# TODO(DRY): The _DOWNLOADER singleton + _get_downloader() boilerplate below is
-# duplicated across 8 download scripts (download_arxiv_agentic, download_code_corpora,
-# download_expansion_tier1, download_instruction_corpora, download_new_datasets_2026_03_10,
-# download_phase6_datasets, download_subject_repos, reacquire_se_archives). Consider
-# extracting a shared base class or helper function in core/download_manager.py.
 _DOWNLOADER: DownloadManager | None = None
 
 

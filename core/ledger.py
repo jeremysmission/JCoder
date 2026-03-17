@@ -76,7 +76,7 @@ class ExperimentLedger:
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT OR REPLACE INTO runs
+                INSERT OR IGNORE INTO runs
                 (run_id, created_ts, label, config_fingerprint, git_commit, metrics_json)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,

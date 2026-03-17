@@ -1,11 +1,14 @@
 """Configuration loader -- reads split YAML files, exposes typed dataclasses."""
 
+import logging
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 
 import yaml
+
+_log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -221,9 +224,10 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
     expected_files = ["ports.yaml", "models.yaml", "policies.yaml", "default.yaml"]
     missing = [f for f in expected_files if not (d / f).exists()]
     if missing:
-        import sys
-        print(f"[WARN] Config files not found in {d}: {', '.join(missing)}", file=sys.stderr)
-        print(f"       Using defaults for missing files.", file=sys.stderr)
+        _log.warning(
+            "Config files not found in %s: %s — using defaults",
+            d, ", ".join(missing),
+        )
 
     ports = _load_yaml(d / "ports.yaml")
     models = _load_yaml(d / "models.yaml")

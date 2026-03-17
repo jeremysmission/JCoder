@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import random
 import re
 import sqlite3
@@ -38,6 +39,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -51,6 +54,11 @@ class PromptCandidate:
     avg_score: float = 0.0
     eval_count: int = 0
     scores: List[float] = field(default_factory=list)
+
+    @property
+    def token_cost(self) -> int:
+        """Approximate token count (~4 chars/token) for MOPrompt cost objective."""
+        return len(self.text) // 4
 
 
 @dataclass
@@ -97,6 +105,15 @@ _CROSSOVER_PROMPT = (
     "Output ONLY the new combined prompt.\n\n"
     "Prompt A (score: {score_a:.2f}):\n{prompt_a}\n\n"
     "Prompt B (score: {score_b:.2f}):\n{prompt_b}"
+)
+
+
+_DUEL_JUDGE_PROMPT = (
+    "You are judging which of two AI coding assistant responses is better.\n\n"
+    "Question: {query}\n\n"
+    "Response A:\n{answer_a}\n\n"
+    "Response B:\n{answer_b}\n\n"
+    "Which response is better? Reply with ONLY 'A' or 'B'."
 )
 
 
@@ -213,6 +230,12 @@ class PromptEvolver:
                         cand.scores.append(score)
                         total_evals += 1
                     except Exception:
+                        logger.warning(
+                            "Prompt evaluation failed for prompt_id=%s on query=%r",
+                            cand.prompt_id,
+                            q,
+                            exc_info=True,
+                        )
                         cand.scores.append(0.0)
                 cand.avg_score = (
                     sum(cand.scores) / len(cand.scores) if cand.scores else 0.0
@@ -351,6 +374,12 @@ class PromptEvolver:
                 mutation_type=mutation_type,
             )
         except Exception:
+            logger.warning(
+                "Prompt mutation failed for parent=%s mutation=%s",
+                parent.prompt_id,
+                mutation_type,
+                exc_info=True,
+            )
             return None
 
     def _crossover(
@@ -386,6 +415,12 @@ class PromptEvolver:
                 mutation_type="crossover",
             )
         except Exception:
+            logger.warning(
+                "Prompt crossover failed for parents=%s,%s",
+                parent_a.prompt_id,
+                parent_b.prompt_id,
+                exc_info=True,
+            )
             return None
 
     def _sample_queries(self, queries: List[str], n: int) -> List[str]:
@@ -411,3 +446,101 @@ class PromptEvolver:
                 }
                 for r in cur.fetchall()
             ]
+
+    # ------------------------------------------------------------------
+    # Prompt Duel (arXiv:2510.13907) — label-free pairwise comparison
+    # ------------------------------------------------------------------
+
+    def duel(
+        self,
+        champion: PromptCandidate,
+        challenger: PromptCandidate,
+        queries: List[str],
+        n_rounds: int = 3,
+    ) -> bool:
+        """Head-to-head duel between two prompts via LLM judge.
+
+        Based on *LLM Prompt Duel Optimizer* (arXiv:2510.13907):
+        uses pairwise preference instead of absolute scoring.
+        Label-free — the LLM itself judges which answer is better.
+
+        Returns True if challenger wins (should replace champion).
+        """
+        if n_rounds < 1:
+            return False
+
+        test_qs = self._sample_queries(queries, n_rounds)
+        challenger_wins = 0
+
+        for q in test_qs:
+            try:
+                answer_a = self.runtime.generate(
+                    q, [], system_prompt=champion.text, max_tokens=512)
+                answer_b = self.runtime.generate(
+                    q, [], system_prompt=challenger.text, max_tokens=512)
+
+                # Randomize position to eliminate order bias
+                if self.rng.random() < 0.5:
+                    judge_prompt = _DUEL_JUDGE_PROMPT.format(
+                        query=q, answer_a=answer_a, answer_b=answer_b)
+                    verdict = self.runtime.generate(
+                        judge_prompt, [], max_tokens=4).strip().upper()
+                    if verdict.startswith("B"):
+                        challenger_wins += 1
+                else:
+                    judge_prompt = _DUEL_JUDGE_PROMPT.format(
+                        query=q, answer_a=answer_b, answer_b=answer_a)
+                    verdict = self.runtime.generate(
+                        judge_prompt, [], max_tokens=4).strip().upper()
+                    if verdict.startswith("A"):
+                        challenger_wins += 1
+            except Exception:
+                logger.debug("Duel round failed for query=%r", q, exc_info=True)
+
+        return challenger_wins > n_rounds // 2
+
+    # ------------------------------------------------------------------
+    # MOPrompt: Multi-objective Pareto front (accuracy vs token cost)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def pareto_front(
+        candidates: List[PromptCandidate],
+    ) -> List[PromptCandidate]:
+        """Return the Pareto-optimal set: maximize score, minimize token_cost.
+
+        Based on MOPrompt (arXiv:2508.01541): co-optimize prompt quality
+        and context size.
+        """
+        if not candidates:
+            return []
+
+        front: List[PromptCandidate] = []
+        for c in candidates:
+            dominated = False
+            for other in candidates:
+                if other is c:
+                    continue
+                if (other.avg_score >= c.avg_score
+                        and other.token_cost <= c.token_cost
+                        and (other.avg_score > c.avg_score
+                             or other.token_cost < c.token_cost)):
+                    dominated = True
+                    break
+            if not dominated:
+                front.append(c)
+
+        front.sort(key=lambda p: p.avg_score, reverse=True)
+        return front
+
+    def best_for_budget(
+        self,
+        candidates: List[PromptCandidate],
+        max_tokens: int = 500,
+    ) -> Optional[PromptCandidate]:
+        """Pick the highest-scoring Pareto-optimal prompt under a token budget."""
+        front = self.pareto_front(candidates)
+        eligible = [c for c in front if c.token_cost <= max_tokens]
+        if not eligible:
+            return min(front, key=lambda c: c.token_cost) if front else None
+        return max(eligible, key=lambda c: c.avg_score)

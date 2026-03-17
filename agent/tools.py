@@ -35,6 +35,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
+from agent.tool_defs import (
+    ToolResultCache,
+    _cache_key,
+    _validate_tool_args,
+    TOOL_PARAM_SCHEMAS as _TOOL_PARAM_SCHEMAS,
+)
+
 
 # ---------------------------------------------------------------------------
 # Safety

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -142,6 +143,27 @@ def write_run_log(run_record: dict) -> None:
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = RUN_LOG_DIR / f"weekly_subject_update_{stamp}.json"
     path.write_text(json.dumps(run_record, indent=2), encoding="utf-8")
+
+
+def optimize_fts5_indexes(index_dir: Path | str, max_indexes: int = 10) -> int:
+    """Run FTS5 OPTIMIZE on a bounded number of local index databases."""
+    root = Path(index_dir)
+    if not root.exists() or not root.is_dir():
+        return 0
+
+    optimized = 0
+    for db_path in sorted(root.glob("*.fts5.db"))[:max_indexes]:
+        try:
+            conn = sqlite3.connect(str(db_path))
+            try:
+                conn.execute("INSERT INTO chunks(chunks) VALUES ('optimize')")
+                conn.commit()
+                optimized += 1
+            finally:
+                conn.close()
+        except sqlite3.Error:
+            continue
+    return optimized
 
 
 def _resolve_repo_path(value: str) -> Path:

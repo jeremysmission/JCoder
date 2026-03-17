@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import sqlite3
 import time
@@ -35,6 +36,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -379,7 +382,12 @@ class RapidDigester:
                 estimated_effort=effort,
                 dependencies=deps,
             )
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "Failed to generate prototype for '%s': %s",
+                title,
+                exc,
+            )
             return None
 
     def _triage(
@@ -395,6 +403,7 @@ class RapidDigester:
             )
             return self._parse_triage(raw)
         except Exception:
+            logger.warning("Failed to triage paper '%s'", title, exc_info=True)
             return "skip", 0.0, "Failed to triage"
 
     def _extract(self, title: str, content: str) -> Dict[str, Any]:
@@ -410,6 +419,7 @@ class RapidDigester:
             )
             return self._parse_extraction(raw)
         except Exception:
+            logger.warning("Failed to extract paper '%s'", title, exc_info=True)
             return {}
 
     def _synthesize(
@@ -427,6 +437,7 @@ class RapidDigester:
             )
             return self._parse_synthesis(raw)
         except Exception:
+            logger.warning("Failed to synthesize paper '%s'", title, exc_info=True)
             return {}
 
     @staticmethod
@@ -554,7 +565,11 @@ class RapidDigester:
                 ))
                 conn.commit()
         except Exception:
-            pass
+            logger.warning(
+                "Failed to persist digest %s",
+                digest.digest_id,
+                exc_info=True,
+            )
 
     def top_actionable(self, limit: int = 10) -> List[Dict[str, Any]]:
         """Return most actionable digested papers."""

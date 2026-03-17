@@ -86,3 +86,21 @@ class ProceduralMemory:
                 )
             )
         return results
+
+    MAX_ENTRIES = 10_000
+
+    def prune_old(self, keep: int = 0) -> int:
+        """Delete oldest entries beyond *keep* (defaults to MAX_ENTRIES).
+
+        Returns the number of rows deleted.
+        """
+        keep = keep or self.MAX_ENTRIES
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM experiences WHERE rowid NOT IN "
+                "(SELECT rowid FROM experiences "
+                "ORDER BY timestamp DESC LIMIT ?)",
+                (keep,),
+            )
+            conn.commit()
+            return cur.rowcount

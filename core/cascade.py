@@ -19,6 +19,7 @@ Only hard architectural questions consume full-power resources.
 
 from __future__ import annotations
 
+import logging
 import re
 import threading
 import time
@@ -28,6 +29,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from core.config import ModelConfig
 from core.network_gate import NetworkGate
 from core.runtime import Runtime
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -139,6 +142,7 @@ class ModelCascade:
         levels: List[CascadeLevel],
         gate: Optional[NetworkGate] = None,
         confidence_threshold: float = 0.4,
+        skip_threshold: float = 0.15,
     ):
         # Sort levels by max_complexity (cheapest first)
         self.levels = sorted(levels, key=lambda l: l.max_complexity)
@@ -146,6 +150,10 @@ class ModelCascade:
         self.confidence_threshold = confidence_threshold
         self._runtimes: Dict[str, Runtime] = {}
         self._runtime_lock = threading.Lock()
+        # HybridServe-inspired: if first model confidence < skip_threshold,
+        # skip intermediate levels and jump to strongest model directly.
+        self._skip_threshold = skip_threshold
+        self.skip_count = 0
 
     def _get_runtime(self, level: CascadeLevel) -> Runtime:
         """Lazy-init runtimes for each cascade level."""
@@ -179,9 +187,13 @@ class ModelCascade:
         complexity = estimate_complexity(question)
         escalated = False
 
-        for i, level in enumerate(self.levels):
+        idx = 0
+        while idx < len(self.levels):
+            level = self.levels[idx]
+
             # Skip levels that are too weak for this complexity
-            if level.max_complexity < complexity and i < len(self.levels) - 1:
+            if level.max_complexity < complexity and idx < len(self.levels) - 1:
+                idx += 1
                 continue
 
             runtime = self._get_runtime(level)
@@ -192,22 +204,42 @@ class ModelCascade:
                 latency_ms = (time.time() - t0) * 1000
 
                 # Check confidence if we have a scoring function
-                if confidence_fn and i < len(self.levels) - 1:
+                if confidence_fn and idx < len(self.levels) - 1:
                     conf = confidence_fn(answer)
                     if conf < self.confidence_threshold:
                         escalated = True
+                        # HybridServe skip: very low confidence -> jump to last
+                        if (conf < self._skip_threshold
+                                and idx < len(self.levels) - 2):
+                            self.skip_count += 1
+                            logger.info(
+                                "Skip connection: conf=%.2f < %.2f, "
+                                "jumping from level %d to %d",
+                                conf, self._skip_threshold,
+                                idx, len(self.levels) - 1,
+                            )
+                            idx = len(self.levels) - 1
+                            continue
+                        idx += 1
                         continue  # try next level
 
                 return CascadeResult(
                     answer=answer,
                     model_used=level.name,
-                    level_index=i,
+                    level_index=idx,
                     complexity_score=complexity,
                     escalated=escalated,
                     latency_ms=latency_ms,
                 )
             except Exception:
+                logger.warning(
+                    "Cascade level %s failed for question=%r",
+                    level.name,
+                    question,
+                    exc_info=True,
+                )
                 escalated = True
+                idx += 1
                 continue  # try next level on failure
 
         # All levels failed -- return error from last level

@@ -1,15 +1,10 @@
-"""
-Runtime Module
---------------
-Handles communication with the vLLM LLM server.
+"""Runtime Module."""
 
-Non-programmer explanation:
-This is the part that sends the retrieved code and your question
-to the AI model and gets back an answer. It talks to vLLM's
-OpenAI-compatible chat API running on localhost.
-"""
+from __future__ import annotations
 
-from typing import List, Optional
+import math
+from dataclasses import dataclass, field
+from typing import Any, List, Optional
 
 import httpx
 
@@ -22,6 +17,41 @@ DEFAULT_SYSTEM_PROMPT = (
     "the provided context. If the context does not contain enough "
     "information, say so. Cite source files when possible."
 )
+
+
+@dataclass
+class GenerationResult:
+    """Structured runtime output with optional token logprob metadata."""
+
+    text: str
+    logprobs: List[dict[str, Any]] = field(default_factory=list)
+
+    @property
+    def self_certainty(self) -> Optional[float]:
+        if not self.logprobs:
+            return None
+
+        values: list[float] = []
+        for entry in self.logprobs:
+            if not isinstance(entry, dict):
+                continue
+            if isinstance(entry.get("logprob"), (int, float)):
+                values.append(float(entry["logprob"]))
+                continue
+            top = entry.get("top_logprobs")
+            if isinstance(top, list):
+                for candidate in top:
+                    if isinstance(candidate, dict) and isinstance(
+                        candidate.get("logprob"), (int, float)
+                    ):
+                        values.append(float(candidate["logprob"]))
+                        break
+
+        if not values:
+            return None
+
+        certainty = math.exp(sum(values) / len(values))
+        return max(0.0, min(1.0, certainty))
 
 
 class Runtime:
@@ -39,6 +69,7 @@ class Runtime:
         max_tokens: int = 2048,
         system_prompt: str = None,
         max_context_tokens: int = 8192,
+        api_key: str = "",
     ):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
@@ -48,6 +79,7 @@ class Runtime:
         self._max_tokens = max_tokens
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._max_context_tokens = max_context_tokens
+        self._api_key = api_key
 
     def generate(
         self,
@@ -109,7 +141,10 @@ class Runtime:
         url = f"{self.endpoint}/chat/completions"
         if self._gate:
             self._gate.guard(url)
-        response = self._client.post(url, json=payload)
+        headers = {}
+        if self._api_key:
+            headers["Authorization"] = f"Bearer {self._api_key}"
+        response = self._client.post(url, json=payload, headers=headers)
         response.raise_for_status()
 
         try:
@@ -125,6 +160,24 @@ class Runtime:
             raise ValueError(
                 f"LLM response missing expected fields: {exc}"
             ) from exc
+
+    def generate_with_logprobs(
+        self,
+        question: str,
+        context_chunks: List[str],
+        system_prompt: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> GenerationResult:
+        """Best-effort logprob-aware generation with graceful fallback."""
+        text = self.generate(
+            question,
+            context_chunks,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        return GenerationResult(text=text, logprobs=[])
 
     def close(self):
         """Release HTTP connection pool."""

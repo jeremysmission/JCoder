@@ -1,5 +1,8 @@
 """Tests for layered triage engine (Satellite / Drone / Deep Dive)."""
 
+import logging
+from unittest.mock import MagicMock
+
 from core.layered_triage import LayeredTriage, TriageResult, _content_hash, _parse_drone_response
 
 
@@ -140,6 +143,20 @@ def test_empty_papers():
     lt = LayeredTriage(runtime=None)
     results = lt.triage_batch([], "anything")
     assert results == []
+
+
+def test_drone_failure_logs_and_falls_back(caplog):
+    runtime = MagicMock()
+    runtime.generate.side_effect = RuntimeError("llm down")
+    lt = LayeredTriage(runtime=runtime)
+    paper = _make_paper(title="Novel RAG Framework", year=2026, citations=50)
+    survivors = lt._satellite_pass([paper], "rag", cutoff=0.0)
+
+    with caplog.at_level(logging.WARNING, logger="core.layered_triage"):
+        results = lt._drone_pass(survivors, [paper], "rag")
+
+    assert results[0].drone_score == results[0].satellite_score
+    assert any("Drone pass LLM call failed" in rec.message for rec in caplog.records)
 
 
 def test_content_hash_deterministic():

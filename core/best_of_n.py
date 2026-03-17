@@ -27,7 +27,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
-from core.runtime import Runtime
+from core.runtime import GenerationResult, Runtime
 
 
 @dataclass
@@ -35,6 +35,7 @@ class Candidate:
     """A single generated candidate with verification scores."""
     text: str
     index: int
+    self_certainty: float = 0.0
     syntax_valid: bool = False
     import_score: float = 0.0
     structure_score: float = 0.0
@@ -183,6 +184,7 @@ class BestOfNGenerator:
         n: int = 3,
         temperature_spread: Tuple[float, ...] = (0.1, 0.3, 0.5),
         reflection_fn: Optional[Callable[[str, List[Dict], str], float]] = None,
+        use_self_certainty: bool = False,
     ):
         self.runtime = runtime
         self.n = n
@@ -191,6 +193,7 @@ class BestOfNGenerator:
         while len(self.temperatures) < n:
             self.temperatures = (*self.temperatures, self.temperatures[-1])
         self.reflection_fn = reflection_fn
+        self.use_self_certainty = use_self_certainty
 
     def generate(
         self,
@@ -206,14 +209,37 @@ class BestOfNGenerator:
 
         for i in range(self.n):
             t_gen = time.time()
-            text = self.runtime.generate(
-                question, context_chunks,
-                system_prompt=system_prompt,
-                temperature=self.temperatures[i],
-            )
+            gen_result: Optional[GenerationResult] = None
+            if self.use_self_certainty and hasattr(self.runtime, "generate_with_logprobs"):
+                maybe_result = self.runtime.generate_with_logprobs(
+                    question,
+                    context_chunks,
+                    system_prompt=system_prompt,
+                    temperature=self.temperatures[i],
+                )
+                if isinstance(maybe_result, GenerationResult):
+                    gen_result = maybe_result
+                    text = maybe_result.text
+                else:
+                    text = str(maybe_result)
+            else:
+                text = self.runtime.generate(
+                    question, context_chunks,
+                    system_prompt=system_prompt,
+                    temperature=self.temperatures[i],
+                )
             gen_ms = (time.time() - t_gen) * 1000
 
-            cand = Candidate(text=text, index=i, generation_ms=gen_ms)
+            cand = Candidate(
+                text=text,
+                index=i,
+                generation_ms=gen_ms,
+                self_certainty=(
+                    gen_result.self_certainty
+                    if gen_result and gen_result.self_certainty is not None
+                    else 0.0
+                ),
+            )
 
             # Run verifications
             cand.syntax_valid = _check_syntax(text)
@@ -235,7 +261,8 @@ class BestOfNGenerator:
                 0.15 * cand.import_score +
                 0.15 * cand.structure_score +
                 0.1 * cand.pattern_score +
-                0.3 * cand.reflection_score
+                0.3 * cand.reflection_score +
+                (0.1 * cand.self_certainty if self.use_self_certainty else 0.0)
             )
 
             candidates.append(cand)

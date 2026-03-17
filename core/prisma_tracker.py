@@ -38,31 +38,43 @@ _ALL_STAGES = ("identified", "screened", "eligible", "included", "excluded")
 class PrismaTracker:
     """PRISMA-compliant pipeline tracker with SQLite backend."""
 
+    _initialized_paths: set[str] = set()
+    _initialized_lock = threading.Lock()
+
     def __init__(self, db_path: str):
         self._db_path = Path(db_path)
         self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._db_key = str(self._db_path.resolve())
         self._lock = threading.RLock()
         self._conn = sqlite3.connect(
             str(self._db_path),
             timeout=30,
             check_same_thread=False,
         )
-        self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.execute("PRAGMA busy_timeout=30000")
         # Buffered inserts dramatically reduce commit overhead under stress.
         self._pending_rows: List[Tuple[str, str, str, str, float, str]] = []
-         # Defer flushes so hot-path logging avoids commit overhead.
+        # Defer flushes so hot-path logging avoids per-row commit overhead.
         self._flush_every = 20000
         self._closed = False
-        self._init_db()
+        self._ensure_db_ready()
         # In-memory title cache to avoid repeated lookups
         self._title_cache: Dict[str, Tuple[str, str]] = {}
+
+    def _ensure_db_ready(self) -> None:
+        """Initialize schema once per database path in the current process."""
+        with self._initialized_lock:
+            if self._db_key in self._initialized_paths:
+                return
+            self._init_db()
+            self._initialized_paths.add(self._db_key)
 
     def _init_db(self) -> None:
         for attempt in range(20):
             try:
                 with self._lock:
+                    self._conn.execute("PRAGMA journal_mode=WAL")
                     self._conn.execute("""
                         CREATE TABLE IF NOT EXISTS prisma_log (
                             content_hash TEXT,
@@ -115,14 +127,15 @@ class PrismaTracker:
 
     def _log(self, content_hash: str, title: str, stage: str,
              reason: str, source: str) -> None:
-        """Log an event row and flush to the database."""
+        """Log an event row and flush when the batch threshold is reached."""
         with self._lock:
             if self._closed:
                 raise RuntimeError("PrismaTracker is closed")
             self._pending_rows.append(
                 (content_hash, title, stage, reason, time.time(), source)
             )
-            self._flush_locked()
+            if len(self._pending_rows) >= self._flush_every:
+                self._flush_locked()
 
     def _lookup_title(self, content_hash: str) -> Tuple[str, str]:
         """Return (title, source) for a known hash."""

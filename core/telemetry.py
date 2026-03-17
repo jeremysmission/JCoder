@@ -201,3 +201,21 @@ class TelemetryStore:
             reflection_useful=row[12] or 0.0,
             feedback=row[13],
         )
+
+    MAX_ROWS = 100_000
+
+    def prune_old(self, keep: int = 0) -> int:
+        """Delete oldest rows beyond *keep* (defaults to MAX_ROWS).
+
+        Returns the number of rows deleted.
+        """
+        keep = keep or self.MAX_ROWS
+        with self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM query_events WHERE query_id NOT IN "
+                "(SELECT query_id FROM query_events "
+                "ORDER BY timestamp DESC LIMIT ?)",
+                (keep,),
+            )
+            conn.commit()
+            return cur.rowcount

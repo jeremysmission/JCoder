@@ -5,6 +5,7 @@ All dependencies are mocked; no live runtime needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -239,7 +240,7 @@ class TestTelemetry:
         so.answer("test")
         tel.log.assert_called_once()
 
-    def test_telemetry_failure_isolated(self):
+    def test_telemetry_failure_isolated(self, caplog):
         chunks = _sample_chunks()
         tel = MagicMock()
         tel.log.side_effect = RuntimeError("db error")
@@ -249,8 +250,10 @@ class TestTelemetry:
             telemetry=tel,
         )
         # Should not raise despite telemetry crash
-        result = so.answer("test")
+        with caplog.at_level(logging.WARNING, logger="core.smart_orchestrator"):
+            result = so.answer("test")
         assert isinstance(result, SmartAnswerResult)
+        assert any("Telemetry logging failed" in rec.message for rec in caplog.records)
 
     def test_no_telemetry_still_works(self):
         chunks = _sample_chunks()

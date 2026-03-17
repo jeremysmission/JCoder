@@ -5,6 +5,7 @@ All LLM calls are mocked; no live runtime needed.
 
 from __future__ import annotations
 
+import logging
 from unittest.mock import MagicMock
 
 import pytest
@@ -251,6 +252,18 @@ class TestGeneratePrototype:
         db = str(tmp_path / "digest.db")
         rd = RapidDigester(runtime=_mock_runtime(), db_path=db)
         assert rd.generate_prototype("Test", "", "sketch") is None
+
+    def test_extract_failure_logs_warning(self, tmp_path, caplog):
+        db = str(tmp_path / "digest.db")
+        rt = _mock_runtime()
+        rt.generate.side_effect = RuntimeError("llm down")
+        rd = RapidDigester(runtime=rt, db_path=db)
+
+        with caplog.at_level(logging.WARNING, logger="core.rapid_digest"):
+            result = rd._extract("Broken Paper", "content")
+
+        assert result == {}
+        assert any("Failed to extract paper" in rec.message for rec in caplog.records)
 
 
 # ---------------------------------------------------------------------------
