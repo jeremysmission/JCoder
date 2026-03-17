@@ -109,4 +109,4 @@ def test_gui_command_help_is_available_without_launching_tk() -> None:
     result = runner.invoke(cli, ["gui", "--help"])
 
     assert result.exit_code == 0
-    assert "Launch the desktop GUI wrapper" in result.output
+    assert "Launch the JCoder command-center GUI" in result.output

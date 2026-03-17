@@ -122,6 +122,64 @@ def estimate_complexity(query: str) -> float:
 
 
 # ---------------------------------------------------------------------------
+# Answer confidence estimation
+# ---------------------------------------------------------------------------
+
+_HEDGE_WORDS = {
+    "maybe", "perhaps", "possibly", "might", "not sure",
+    "i think", "i believe", "i guess", "not certain",
+    "could be", "don't know", "uncertain",
+}
+
+
+def estimate_answer_confidence(answer: str) -> float:
+    """
+    Heuristic confidence score for a generated answer (0.0-1.0).
+
+    Signals:
+    - Empty / very short answers -> low confidence
+    - Hedging language -> penalty
+    - Code blocks -> bonus (specificity)
+    - Backtick references -> bonus (specificity)
+    - Length (moderate length is good)
+    """
+    if not answer or not answer.strip():
+        return 0.0
+
+    a_lower = answer.lower()
+    words = a_lower.split()
+    n_words = len(words)
+
+    score = 0.0
+
+    # Length signal
+    if n_words <= 5:
+        score += 0.1
+    elif n_words <= 20:
+        score += 0.3
+    elif n_words <= 80:
+        score += 0.5
+    else:
+        score += 0.45
+
+    # Code block bonus
+    code_blocks = a_lower.count("```")
+    if code_blocks >= 2:
+        score += 0.25
+
+    # Backtick references bonus
+    backtick_refs = a_lower.count("`") - code_blocks * 3
+    if backtick_refs > 0:
+        score += min(0.15, backtick_refs * 0.03)
+
+    # Hedging penalty
+    hedge_hits = sum(1 for h in _HEDGE_WORDS if h in a_lower)
+    score -= min(0.4, hedge_hits * 0.1)
+
+    return max(0.0, min(1.0, score))
+
+
+# ---------------------------------------------------------------------------
 # Cascade router
 # ---------------------------------------------------------------------------
 

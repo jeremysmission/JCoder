@@ -91,7 +91,6 @@ Contact: jane@example.com
 
 # Parse headers from payload and normalize values.
 def parse_headers(payload):
-    # TODO: remove URL before publish https://example.com/u/jane
     return payload.get("headers", {})
 ''',
     )
