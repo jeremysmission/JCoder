@@ -20,6 +20,12 @@ Fully local, offline CLI AI coding assistant. Ingests codebases, builds hybrid v
 - The canonical completion spine is `docs/SPRINT_COMPLETION_PLAN_2026-03-13.md`.
 - Sprint `17-20` are now explicitly assigned and sliced; the old undefined gap is closed.
 
+## 2026-03-13 Addendum
+
+- The canonical sprint status board is `docs/SPRINT_STATUS_2026-03-11.md`.
+- The canonical completion spine is `docs/SPRINT_COMPLETION_PLAN_2026-03-13.md`.
+- Sprint `17-20` are now explicitly assigned and sliced; the old undefined gap is closed.
+
 ## Architecture
 
 ```
