@@ -40,8 +40,8 @@ Deeper reference material. Schedule to download while Tier 1 is being processed.
 |--------|------|--------|---------|------------------|
 | Stack Overflow Posts.7z | 20 GB | XML (7z-compressed) | All 24M questions + 35M answers, votes, tags, timestamps | `wget -P data/raw/stackoverflow https://archive.org/download/stackexchange/stackoverflow.com-Posts.7z` |
 | LeetCode solutions | 2 GB | JSON | Algorithm implementations with problem descriptions, test cases, complexity analysis | `huggingface-cli download greengerong/leetcode --local-dir data/raw/leetcode` |
-| Awesome Lists dump | 500 MB | Markdown | Curated project lists from 500+ awesome-* repos, category-tagged | `python tools/scrapers/awesome_scraper.py --output data/raw/awesome-lists` |
-| arXiv CS papers (2020-2026) | 5 GB | PDF/LaTeX/text | CS.SE, CS.AI, CS.PL, CS.CL papers -- latest research on code generation, LLMs, program analysis | `python tools/scrapers/arxiv_scraper.py --categories cs.SE cs.AI cs.PL cs.CL --start 2020-01 --output data/raw/arxiv` |
+| Awesome Lists dump | 500 MB | Markdown | Curated project lists from 500+ awesome-* repos, category-tagged | `python scripts/scrape_agentic_sources.py --output data/raw/awesome-lists` (scraper not yet implemented for awesome-lists; closest existing script) |
+| arXiv CS papers (2020-2026) | 5 GB | PDF/LaTeX/text | CS.SE, CS.AI, CS.PL, CS.CL papers -- latest research on code generation, LLMs, program analysis | `python scripts/download_arxiv_agentic.py` |
 
 **Tier 2 total**: ~27 GB raw, ~22 GB after processing (SO XML compresses well).
 
@@ -489,9 +489,9 @@ scraper that discovers, downloads, summarizes, and indexes new content.
 ### Scraper Architecture
 
 ```
-tools/scrapers/weekly_scraper.py
+scripts/weekly_scraper.py
     |
-    +-- scrapers/
+    +-- (planned sub-modules, not yet implemented)
     |     +-- github_trending.py    # GitHub trending repos
     |     +-- hackernews.py         # HN top stories + linked articles
     |     +-- reddit.py             # Multi-subreddit scraper
@@ -627,7 +627,7 @@ def is_duplicate(url: str, content: str) -> bool:
   <Actions>
     <Exec>
       <Command>D:\JCoder\.venv\Scripts\python.exe</Command>
-      <Arguments>tools/scrapers/weekly_scraper.py --all</Arguments>
+      <Arguments>scripts/weekly_scraper.py --all</Arguments>
       <WorkingDirectory>D:\JCoder</WorkingDirectory>
     </Exec>
   </Actions>
@@ -754,20 +754,17 @@ Running total of all disk usage. Must fit in 2 TB.
 A single Python script handles all downloads with resume support, verification,
 and automatic post-processing.
 
-### Script: `tools/download_data.py`
+### Script: `scripts/download_all.py`
 
 ```
 Usage:
-  python tools/download_data.py --tier 1          # Download Tier 1 only
-  python tools/download_data.py --tier 2          # Download Tier 2 only
-  python tools/download_data.py --tier 3          # Download Tier 3 only
-  python tools/download_data.py --tier 1 2        # Download Tier 1 and 2
-  python tools/download_data.py --all             # Download all tiers
-  python tools/download_data.py --source tldr     # Download single source
-  python tools/download_data.py --status          # Show download status
-  python tools/download_data.py --verify          # Verify checksums only
-  python tools/download_data.py --resume          # Resume interrupted downloads
+  python scripts/download_all.py                  # Download all configured sources
 ```
+
+Individual tier/source downloads are handled by dedicated scripts in `scripts/`:
+`download_codesearchnet.py`, `download_python_docs.py`, `download_rfc.py`,
+`download_code_corpora.py`, `download_instruction_corpora.py`,
+`download_expansion_tier1.py`, `download_arxiv_agentic.py`, etc.
 
 ### Features
 
@@ -808,7 +805,7 @@ After each source downloads successfully, the conversion pipeline runs
 automatically:
 
 1. Detect format (XML, HTML, Parquet, JSONL, Markdown, PDF)
-2. Run the appropriate converter from `tools/converters/`
+2. Run the appropriate converter (format conversion is handled within each download script)
 3. Output normalized JSONL to `data/processed/{source_name}/`
 4. Log conversion stats to `data/download_log.json`
 
@@ -892,37 +889,37 @@ The complete ingestion process from zero to fully indexed:
        --gpu-memory-utilization 0.3
 
 3. Download Tier 1
-   python tools/download_data.py --tier 1
+   python scripts/download_all.py
 
 4. Process Tier 1 (convert + chunk + dedup + filter + tag)
-   python tools/process_data.py --tier 1
+   python scripts/stage_for_indexing.py
 
 5. Embed Tier 1
-   python tools/embed_data.py --tier 1
+   python scripts/bulk_ingest_se.py
 
 6. Build initial indexes
-   python tools/build_index.py --rebuild
+   python scripts/build_fts5_indexes.py
 
 7. Verify: run test queries against Tier 1 index
-   python tools/verify_index.py --smoke-test
+   python scripts/smoke_test.py
 
 8. Download + process + embed Tier 2 (can run overnight)
-   python tools/download_data.py --tier 2
-   python tools/process_data.py --tier 2
-   python tools/embed_data.py --tier 2
-   python tools/build_index.py --incremental
+   python scripts/overnight_download.py
+   python scripts/stage_for_indexing.py
+   python scripts/bulk_ingest_se.py
+   python scripts/build_fts5_indexes.py
 
 9. Download + process + embed Tier 3 (weekend job)
-   python tools/download_data.py --tier 3
-   python tools/process_data.py --tier 3
-   python tools/embed_data.py --tier 3
-   python tools/build_index.py --incremental
+   (use individual download_*.py scripts in scripts/)
+   python scripts/stage_for_indexing.py
+   python scripts/bulk_ingest_se.py
+   python scripts/build_fts5_indexes.py
 
 10. Enable weekly scraper
-    schtasks /create /xml tools/scrapers/weekly_task.xml /tn "JCoder Weekly Scraper"
+    schtasks /create /xml scripts/install_weekly_subject_update_task.ps1
 
 11. Final verification
-    python tools/verify_index.py --full
+    python scripts/smoke_test.py
 ```
 
 **Estimated total time** (wall clock, sequential):
