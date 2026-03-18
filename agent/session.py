@@ -76,7 +76,7 @@ class SessionStore:
                 existing = json.loads(target.read_text(encoding="utf-8"))
                 created_at = existing.get("created_at", now)
             except (json.JSONDecodeError, OSError):
-                pass
+                log.debug("Failed to read existing session %s for created_at", session_id, exc_info=True)
 
         payload = {
             "session_id": session_id,

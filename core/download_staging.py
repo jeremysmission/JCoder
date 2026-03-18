@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import logging
 import os
 import shutil
 import threading
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 
 class DownloadStaging:
@@ -67,5 +70,5 @@ class DownloadStaging:
                 path.unlink()
                 removed += 1
             except OSError:
-                pass
+                log.debug("Failed to remove partial download %s", path, exc_info=True)
         return removed

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 import time
 import weakref
 from pathlib import Path
+
+log = logging.getLogger(__name__)
 
 _JOURNAL_MODE_INITIALIZED: set[tuple[str, str]] = set()
 _JOURNAL_MODE_LOCK = threading.Lock()
@@ -80,7 +83,7 @@ class _SQLiteConnectionRegistry:
             try:
                 conn.close()
             except sqlite3.Error:
-                pass
+                log.debug("SQLite connection close failed", exc_info=True)
 
 
 class SQLiteConnectionOwner:

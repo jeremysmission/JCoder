@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+_log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -247,5 +250,5 @@ def _read_jsonl(path: Path) -> List[Dict[str, Any]]:
                 except json.JSONDecodeError:
                     continue
     except OSError:
-        pass
+        _log.debug("Failed to read agent log file %s", path, exc_info=True)
     return records

@@ -392,7 +392,7 @@ class SelfLearningPipeline:
                     try:
                         report[f"{name}_stats"] = module.stats()
                     except Exception:
-                        pass
+                        log.debug("Failed to get stats for module %s", name, exc_info=True)
             else:
                 report["modules_inactive"].append(name)
 

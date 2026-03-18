@@ -457,7 +457,7 @@ class RapidDigester:
                 try:
                     relevance = float(line.split(":", 1)[1].strip())
                 except ValueError:
-                    pass
+                    logger.debug("Non-numeric RELEVANCE value in triage response")
             elif line.startswith("SUMMARY:"):
                 summary = line.split(":", 1)[1].strip()
 

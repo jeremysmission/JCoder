@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import math
 import re
 import sqlite3
@@ -41,6 +42,8 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 from core.runtime import Runtime
+
+log = logging.getLogger(__name__)
 
 _CURRENT_YEAR = datetime.now(timezone.utc).year
 
@@ -276,7 +279,7 @@ class QueryEvolver:
                 reformulations = self._llm_reformulate(topic)
                 queries.extend(reformulations)
             except Exception:
-                pass
+                log.debug("LLM query reformulation failed", exc_info=True)
 
         return queries[:n]
 
@@ -451,7 +454,7 @@ class CrossSynthesizer:
                 return result
 
         except Exception:
-            pass
+            log.warning("Cross-paper synthesis failed", exc_info=True)
 
         return None
 
@@ -713,7 +716,7 @@ class AdaptiveResearchEngine:
             try:
                 papers = self.fetch_fn(source, query)
             except Exception:
-                pass
+                log.warning("Fetch from source %s failed for query %r", source, query, exc_info=True)
 
         novel_count = 0
         novelties = []
@@ -859,7 +862,7 @@ class AdaptiveResearchEngine:
                 encoding="utf-8",
             )
         except Exception:
-            pass
+            log.warning("Failed to save adaptive research state", exc_info=True)
 
     def _load_state(self) -> None:
         """Load previously learned state."""
@@ -884,4 +887,4 @@ class AdaptiveResearchEngine:
                     SynthesisResult(**s) for s in data["syntheses"]
                 ]
         except Exception:
-            pass
+            log.warning("Failed to load adaptive research state", exc_info=True)

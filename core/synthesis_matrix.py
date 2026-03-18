@@ -485,7 +485,7 @@ class SynthesisMatrix:
             if isinstance(entries, list):
                 return entries
         except json.JSONDecodeError:
-            pass
+            logger.debug("Failed to parse LLM JSON for position entries", exc_info=True)
         return []
 
     @staticmethod

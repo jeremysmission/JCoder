@@ -11,11 +11,14 @@ cross-reference.
 
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional, Tuple
 
 from .runtime import Runtime
+
+log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +188,7 @@ class ClaimVerifier:
             lines = [ln.strip() for ln in raw.strip().splitlines() if ln.strip()]
             return lines[:3] if lines else [claim]
         except (AttributeError, Exception):
+            log.warning("LLM query generation failed for claim verification, using heuristic", exc_info=True)
             return self._generate_queries_heuristic(claim)
 
     @staticmethod
@@ -249,7 +253,7 @@ class ClaimVerifier:
                     contradicting.append(candidate)
                 # IRRELEVANT sources are dropped silently
             except (AttributeError, Exception):
-                # LLM failure -- skip this candidate
+                log.debug("LLM cross-reference call failed for candidate", exc_info=True)
                 continue
 
         return corroborating, contradicting

@@ -13,10 +13,13 @@ disconfirming evidence. This module automates that.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
 from core.runtime import Runtime
+
+log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -157,6 +160,7 @@ class DevilsAdvocate:
             ]
             return lines[:max_n]
         except Exception:
+            log.warning("LLM counter-query generation failed, using heuristic", exc_info=True)
             return self._counter_queries_heuristic(claim, max_n)
 
     @staticmethod
@@ -247,4 +251,5 @@ class DevilsAdvocate:
             ]
             return lines[:3]
         except Exception:
+            log.warning("Blind spot identification failed", exc_info=True)
             return []

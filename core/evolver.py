@@ -22,6 +22,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import logging
 import math
 import random
 import time
@@ -32,6 +33,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from core.config import JCoderConfig
 from core.evaluation_runner import EvalResult, run_eval
 from core.ledger import ExperimentLedger
+
+log = logging.getLogger(__name__)
 
 
 def _fingerprint_config(config: JCoderConfig) -> str:
@@ -50,6 +53,7 @@ def _git_commit_hash() -> str:
         )
         return result.stdout.strip() if result.returncode == 0 else ""
     except (subprocess.SubprocessError, FileNotFoundError, OSError):
+        log.debug("git commit hash retrieval failed", exc_info=True)
         return ""
 
 

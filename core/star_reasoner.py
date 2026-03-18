@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import random
 import sqlite3
 import time
@@ -34,6 +35,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
 
+log = logging.getLogger(__name__)
 
 @dataclass
 class ReasoningTrace:
@@ -284,6 +286,7 @@ class STaRReasoner:
             )
             return raw.strip() if len(raw.strip()) > 30 else None
         except Exception:
+            log.warning("STaR rationalization failed for query", exc_info=True)
             return None
 
     def _verify(
@@ -317,6 +320,7 @@ class STaRReasoner:
             m = re.search(r"\b(10|[0-9])\b", raw.strip())
             return int(m.group(1)) / 10.0 if m else 0.5
         except Exception:
+            log.warning("STaR verification LLM call failed", exc_info=True)
             return 0.5
 
     def _get_best_examples(self, k: int = 3) -> List[ReasoningTrace]:

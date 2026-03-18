@@ -15,6 +15,7 @@ for source code (nomic-embed-code) and one for documentation
 gracefully and uses a single model for everything.
 """
 
+import logging
 import re
 from typing import List, Optional
 
@@ -24,6 +25,7 @@ import numpy as np
 from .config import ModelConfig
 from .http_factory import make_client
 from .network_gate import NetworkGate
+log = logging.getLogger(__name__)
 
 
 class EmbeddingEngine:
@@ -183,6 +185,7 @@ class DualEmbeddingEngine:
             engine.embed(["probe"])
             return True
         except Exception:
+            log.debug("Embedding engine probe failed", exc_info=True)
             return False
 
     # -- routing --------------------------------------------------------

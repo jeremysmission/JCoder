@@ -14,9 +14,11 @@ if str(PROJECT_ROOT) not in sys.path:
 
 PYTEST_TEMP_ROOT = PROJECT_ROOT / ".tmp_pytest"
 PYTEST_TEMP_ROOT.mkdir(parents=True, exist_ok=True)
-for _env_var in ("TMP", "TEMP", "TMPDIR"):
-    os.environ[_env_var] = str(PYTEST_TEMP_ROOT)
-tempfile.tempdir = str(PYTEST_TEMP_ROOT)
+
+# NOTE: Do NOT override tempfile.tempdir or TMP/TEMP/TMPDIR at module level.
+# This conflicts with pytest's capture plugin (ValueError: I/O on closed file).
+# Instead, tests that need custom temp dirs should use the tmp_path fixture
+# or explicitly set tempfile.tempdir within a fixture/test scope.
 
 from agent.memory import AgentMemory
 from core.network_gate import NetworkGate

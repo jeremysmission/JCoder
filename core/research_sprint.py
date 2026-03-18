@@ -27,12 +27,15 @@ Research methodology sources:
 from __future__ import annotations
 
 import json
+import logging
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
 from core.runtime import Runtime
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -336,7 +339,7 @@ class ResearchSprinter:
                         seen_titles.add(title)
                         all_papers.append(p)
             except Exception:
-                pass
+                log.warning("Discovery failed for topic %r", topic, exc_info=True)
 
         return all_papers[:self.config.max_papers_to_triage]
 
@@ -394,7 +397,7 @@ class ResearchSprinter:
                         reason=f"digested, category={digest.category}",
                     )
             except Exception:
-                pass
+                log.warning("Digest failed for paper %r", paper.get("title", "?"), exc_info=True)
 
         digest_path = sprint_dir / "digests.json"
         digest_path.write_text(

@@ -30,12 +30,15 @@ This is 2-3x faster than generating one careful answer because:
 from __future__ import annotations
 
 import ast
+import logging
 import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
 from core.runtime import Runtime
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -231,6 +234,7 @@ class SpeculativeCodeGenerator:
                 )
                 draft = CodeDraft(text=text, draft_ms=(time.time() - t_d) * 1000)
             except Exception:
+                log.warning("Speculative draft generation failed", exc_info=True)
                 draft = CodeDraft(text="", draft_ms=(time.time() - t_d) * 1000)
             drafts.append(draft)
 
@@ -331,6 +335,6 @@ class SpeculativeCodeGenerator:
                 return corrected
 
         except Exception:
-            pass
+            log.warning("Speculative code correction failed", exc_info=True)
 
         return None
