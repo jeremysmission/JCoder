@@ -254,3 +254,19 @@ python scripts/run_download_queue.py
 ```
 
 Operator details are in `docs/INCLUSIVE_DOWNLOADER.md`.
+
+---
+
+## Related Projects
+
+These repos share infrastructure and work together on the Beast workstation:
+
+| Project | Purpose |
+|---------|---------|
+| [LimitlessApp_V2](https://github.com/jeremysmission/LimitlessApp) | Session persistence and intelligence synthesis for AI workflows |
+| [Career Moves](https://github.com/jeremysmission/career-moves) | Job intelligence copilot with FSRS-powered study system |
+| [Ionogram Quality Tracker](https://github.com/jeremysmission/ionogram-quality-tracker) | Ionogram quality monitoring with automated review pipeline |
+| [TheBeast](https://github.com/jeremysmission/TheBeast) | Dual RTX 3090 workstation orchestration and GPU serving |
+| [HybridRAG3](https://github.com/jeremysmission/HybridRAG3_Cdrive) | Document RAG system with hybrid vector+keyword search |
+
+*Documentation review: 2026-03-18 — Documentation Engineer*
