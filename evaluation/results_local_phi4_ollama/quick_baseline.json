@@ -1,0 +1,87 @@
+{
+  "answered": 9,
+  "total": 10,
+  "avg_latency_s": 10.83,
+  "results": [
+    {
+      "question": "How do I recursively find all .py files in a directory using pathlib?",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": true,
+      "latency_s": 12.4,
+      "answer_length": 500
+    },
+    {
+      "question": "How do I count word frequencies in a text file using collections.Counter?",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": true,
+      "latency_s": 10.4,
+      "answer_length": 500
+    },
+    {
+      "question": "Show me how to flatten a list of lists using itertools.chain.from_iterable.",
+      "category": "python",
+      "difficulty": "hard",
+      "answered": true,
+      "latency_s": 7.0,
+      "answer_length": 500
+    },
+    {
+      "question": "Write a simple async TCP echo server using asyncio that handles multiple clients concurrently.",
+      "category": "python",
+      "difficulty": "hard",
+      "answered": true,
+      "latency_s": 13.4,
+      "answer_length": 500
+    },
+    {
+      "question": "How do I read and write JSON files in Python using the json module?",
+      "category": "python",
+      "difficulty": "easy",
+      "answered": true,
+      "latency_s": 12.9,
+      "answer_length": 500
+    },
+    {
+      "question": "Write a decorator that logs the execution time of any function it wraps.",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": true,
+      "latency_s": 13.6,
+      "answer_length": 500
+    },
+    {
+      "question": "Write a context manager class that temporarily changes the working directory and restores it on exit.",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": true,
+      "latency_s": 10.0,
+      "answer_length": 500
+    },
+    {
+      "question": "Write a generator function that yields Fibonacci numbers indefinitely.",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": true,
+      "latency_s": 8.2,
+      "answer_length": 500
+    },
+    {
+      "question": "Implement the singleton pattern in Python using a metaclass.",
+      "category": "python",
+      "difficulty": "hard",
+      "answered": true,
+      "latency_s": 10.0,
+      "answer_length": 500
+    },
+    {
+      "question": "I get 'TypeError: unhashable type: list' when using a list as a dictionary key. How do I fix this?",
+      "category": "python",
+      "difficulty": "medium",
+      "answered": false,
+      "latency_s": 10.4,
+      "answer_length": 500
+    }
+  ]
+}
