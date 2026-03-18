@@ -389,12 +389,13 @@ class TestAdversarialEscalation:
 class TestEdgeCases:
     """Population size 1, zero-fitness, max generations."""
 
-    def test_population_size_one_triggers_zero_division(self, tmp_path):
-        """pop_size=1 causes ZeroDivisionError in _reproduce (pop_size//2==0).
-        This documents a known edge case in the source."""
+    def test_population_size_one_succeeds(self, tmp_path):
+        """pop_size=1 previously caused ZeroDivisionError in _reproduce.
+        Fixed by clamping survivors to max(1, pop_size // 2)."""
         pe = _evo(tmp_path, pop=1)
-        with pytest.raises(ZeroDivisionError):
-            pe.evolve(SEED, ["q1"], max_generations=2, evals_per_candidate=1)
+        result = pe.evolve(SEED, ["q1"], max_generations=2, evals_per_candidate=1)
+        assert result.champion is not None
+        assert result.generations_run == 2
 
     def test_population_size_two_minimum_viable(self, tmp_path):
         pe = _evo(tmp_path, pop=2)

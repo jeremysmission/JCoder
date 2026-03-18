@@ -253,7 +253,7 @@ class PromptEvolver:
 
             # --- Selection + Reproduction ---
             if gen < max_generations - 1:
-                survivors = population[:self.pop_size // 2]
+                survivors = population[:max(1, self.pop_size // 2)]
                 children = self._reproduce(
                     survivors, gen + 1, failures)
                 population = survivors + children
