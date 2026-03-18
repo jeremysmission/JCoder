@@ -306,13 +306,15 @@ class TestLLMErrors:
         backend.model = "test"
         backend.chat.side_effect = RuntimeError("Connection refused")
         tools = _make_tools()
-        agent = Agent(backend=backend, tools=tools)
+        agent = Agent(
+            backend=backend, tools=tools,
+            sleep_fn=lambda _: None,  # skip backoff delays in test
+        )
 
         result = agent.run("task")
 
         assert result.success is False
-        assert "LLM error" in result.summary
-        assert "Connection refused" in result.summary
+        assert "unreachable" in result.summary.lower()
         assert result.iterations == 1
 
 

@@ -10,6 +10,12 @@ The agent receives a task, then iterates:
   4. If any tool returns TASK_COMPLETE, return with success
   5. Stop if iteration or token budget is exhausted
 
+Error recovery:
+  - Exponential backoff on LLM errors (3 retries: 1s, 2s, 4s)
+  - Tool circuit breaker (3 consecutive fails disables tool for session)
+  - Partial result recovery on max_iterations
+  - Graceful degradation on unreachable LLM
+
 Uses OpenAI message format throughout. The AnthropicBackend converts
 internally, so this module never needs to care which backend is active.
 """
@@ -22,7 +28,7 @@ import threading
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from agent.llm_backend import ChatResponse, LLMBackend, ToolCall
 from agent.logger import AgentLogger
@@ -72,6 +78,43 @@ not lengthy explanations.
 
 _TASK_COMPLETE_PREFIX = "TASK_COMPLETE:"
 
+# ---------------------------------------------------------------------------
+# Error recovery constants
+# ---------------------------------------------------------------------------
+
+LLM_MAX_RETRIES = 3
+LLM_BACKOFF_BASE_S = 1.0  # 1s, 2s, 4s
+CIRCUIT_BREAKER_THRESHOLD = 3  # consecutive fails to trip
+
+
+class CircuitBreaker:
+    """Track consecutive tool failures; disable after threshold."""
+
+    def __init__(self, threshold: int = CIRCUIT_BREAKER_THRESHOLD):
+        self._threshold = threshold
+        self._consecutive_fails: Dict[str, int] = {}
+        self._disabled: Set[str] = set()
+
+    def record_success(self, tool_name: str) -> None:
+        self._consecutive_fails[tool_name] = 0
+
+    def record_failure(self, tool_name: str) -> None:
+        count = self._consecutive_fails.get(tool_name, 0) + 1
+        self._consecutive_fails[tool_name] = count
+        if count >= self._threshold:
+            self._disabled.add(tool_name)
+
+    def is_disabled(self, tool_name: str) -> bool:
+        return tool_name in self._disabled
+
+    @property
+    def disabled_tools(self) -> Set[str]:
+        return set(self._disabled)
+
+    def reset(self) -> None:
+        self._consecutive_fails.clear()
+        self._disabled.clear()
+
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -99,6 +142,8 @@ class AgentResult:
     total_elapsed_s: float = 0.0
     iterations: int = 0
     timed_out: bool = False
+    partial_results: List[str] = field(default_factory=list)
+    disabled_tools: List[str] = field(default_factory=list)
 
     @property
     def tokens(self) -> int:
@@ -136,6 +181,7 @@ class Agent:
         max_tokens_budget: int = 500_000,
         session_store: Optional[SessionStore] = None,
         logger: Optional[AgentLogger] = None,
+        sleep_fn: Optional[Callable[[float], None]] = None,
     ):
         self._backend = backend
         self._tools = tools
@@ -145,6 +191,7 @@ class Agent:
         self._session_store = session_store
         self._logger = logger
         self._session_id: str = str(uuid.uuid4())
+        self._sleep_fn = sleep_fn or time.sleep
 
         self._history: List[Dict[str, Any]] = []
         self._steps: List[AgentStep] = []
@@ -152,6 +199,7 @@ class Agent:
         self._total_output_tokens = 0
         self._run_lock = threading.Lock()
         self._running = False
+        self._circuit_breaker = CircuitBreaker()
 
     # -- Public API --------------------------------------------------------
 
@@ -182,6 +230,7 @@ class Agent:
         self._steps = []
         self._total_input_tokens = 0
         self._total_output_tokens = 0
+        self._circuit_breaker.reset()
 
         if self._logger:
             self._logger.log_task_start(self._session_id, task)
@@ -189,34 +238,30 @@ class Agent:
         for iteration in range(1, self._max_iterations + 1):
             log.info("Iteration %d / %d", iteration, self._max_iterations)
 
-            # --- Call the LLM -------------------------------------------------
-            t_llm = time.monotonic()
-            try:
-                response = self._backend.chat(
-                    self._history,
-                    tools=self._tools.schemas,
-                )
-            except Exception as exc:
-                log.error("LLM call failed: %s", exc)
-                if self._logger:
-                    self._logger.log_error(
-                        self._session_id, str(exc),
-                        context=f"LLM call, iteration {iteration}",
-                    )
+            # --- Call the LLM with exponential backoff ------------------------
+            response = self._call_llm_with_retry(iteration)
+            if response is None:
+                # All retries exhausted -- graceful degradation
+                partial = self._collect_partial_results()
                 self._save_session(task, "failed", iteration)
                 return AgentResult(
                     success=False,
-                    summary=f"LLM error on iteration {iteration}: {exc}",
+                    summary=self._graceful_degradation_summary(
+                        iteration, partial,
+                    ),
                     steps=list(self._steps),
                     total_input_tokens=self._total_input_tokens,
                     total_output_tokens=self._total_output_tokens,
                     total_elapsed_s=time.monotonic() - t_start,
                     iterations=iteration,
+                    partial_results=partial,
+                    disabled_tools=sorted(
+                        self._circuit_breaker.disabled_tools,
+                    ),
                 )
 
             self._total_input_tokens += response.input_tokens
             self._total_output_tokens += response.output_tokens
-            llm_elapsed = time.monotonic() - t_llm
 
             if self._logger:
                 self._logger.log_llm_call(
@@ -224,7 +269,7 @@ class Agent:
                     model=getattr(self._backend, "model", "unknown"),
                     input_tokens=response.input_tokens,
                     output_tokens=response.output_tokens,
-                    elapsed_s=llm_elapsed,
+                    elapsed_s=response.elapsed_s,
                 )
 
             # --- No tool calls: final answer ----------------------------------
@@ -249,7 +294,6 @@ class Agent:
                 )
 
             # --- Execute tool calls -------------------------------------------
-            # Build the assistant message with tool_calls attached
             assistant_msg = self._build_assistant_message(
                 response.content, response.tool_calls,
             )
@@ -268,12 +312,47 @@ class Agent:
                         tc.arguments, iteration,
                     )
 
+                # Circuit breaker: skip disabled tools
+                if self._circuit_breaker.is_disabled(tc.name):
+                    result_text = (
+                        f"ERROR: Tool '{tc.name}' disabled by circuit "
+                        f"breaker ({CIRCUIT_BREAKER_THRESHOLD} consecutive "
+                        f"failures)"
+                    )
+                    log.warning("  Skipped disabled tool: %s", tc.name)
+                    self._history.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": result_text,
+                    })
+                    self._steps.append(AgentStep(
+                        iteration=iteration,
+                        tool_name=tc.name,
+                        tool_args=tc.arguments,
+                        tool_result=result_text,
+                        tool_success=False,
+                        elapsed_s=0.0,
+                    ))
+                    continue
+
                 try:
                     result = self._tools.execute(tc.name, tc.arguments)
                 except Exception as exc:
-                    log.error("Tool execution crashed for %s: %s", tc.name, exc, exc_info=True)
-                    result = ToolResult(success=False, output="", error=f"Tool crashed: {exc}")
+                    log.error(
+                        "Tool execution crashed for %s: %s",
+                        tc.name, exc, exc_info=True,
+                    )
+                    result = ToolResult(
+                        success=False, output="",
+                        error=f"Tool crashed: {exc}",
+                    )
                 tool_output = result.output or ""
+
+                # Update circuit breaker
+                if result.success:
+                    self._circuit_breaker.record_success(tc.name)
+                else:
+                    self._circuit_breaker.record_failure(tc.name)
 
                 # Compose result text for the LLM
                 if result.success:
@@ -314,11 +393,15 @@ class Agent:
                 ))
 
                 # Check for task completion signal
-                if result.success and tool_output.startswith(_TASK_COMPLETE_PREFIX):
+                if result.success and tool_output.startswith(
+                    _TASK_COMPLETE_PREFIX,
+                ):
                     summary = tool_output[len(_TASK_COMPLETE_PREFIX):].strip()
                     log.info("Task complete: %s", summary)
-                    total_tok = (self._total_input_tokens
-                                 + self._total_output_tokens)
+                    total_tok = (
+                        self._total_input_tokens
+                        + self._total_output_tokens
+                    )
                     if self._logger:
                         self._logger.log_task_complete(
                             self._session_id, success=True,
@@ -369,13 +452,17 @@ class Agent:
                     timed_out=True,
                 )
 
-        # --- Loop exhausted ---------------------------------------------------
+        # --- Loop exhausted: partial result recovery --------------------------
         log.warning("Iteration limit reached: %d", self._max_iterations)
         total_tok = self._total_input_tokens + self._total_output_tokens
+        partial = self._collect_partial_results()
         limit_msg = (
             f"Iteration limit ({self._max_iterations}) reached. "
-            f"Last response: {_truncate(self._last_assistant_content(), 500)}"
+            f"Last response: "
+            f"{_truncate(self._last_assistant_content(), 500)}"
         )
+        if partial:
+            limit_msg += f" | {len(partial)} partial result(s) recovered"
         if self._logger:
             self._logger.log_task_complete(
                 self._session_id, success=False,
@@ -392,6 +479,8 @@ class Agent:
             total_elapsed_s=time.monotonic() - t_start,
             iterations=self._max_iterations,
             timed_out=True,
+            partial_results=partial,
+            disabled_tools=sorted(self._circuit_breaker.disabled_tools),
         )
 
     @property
@@ -557,6 +646,77 @@ class Agent:
     def history(self) -> List[Dict[str, Any]]:
         """Return the full conversation history (read-only copy)."""
         return list(self._history)
+
+    # -- Error recovery helpers --------------------------------------------
+
+    def _call_llm_with_retry(
+        self, iteration: int,
+    ) -> Optional[ChatResponse]:
+        """Call the LLM with exponential backoff on failure.
+
+        Returns the ChatResponse on success, or None if all retries are
+        exhausted (graceful degradation).
+        """
+        last_exc: Optional[Exception] = None
+        for attempt in range(LLM_MAX_RETRIES + 1):
+            try:
+                response = self._backend.chat(
+                    self._history,
+                    tools=self._tools.schemas,
+                )
+                return response
+            except Exception as exc:
+                last_exc = exc
+                if attempt < LLM_MAX_RETRIES:
+                    delay = LLM_BACKOFF_BASE_S * (2 ** attempt)
+                    log.warning(
+                        "LLM call failed (attempt %d/%d), retrying in "
+                        "%.1fs: %s",
+                        attempt + 1, LLM_MAX_RETRIES + 1, delay, exc,
+                    )
+                    self._sleep_fn(delay)
+                else:
+                    log.error(
+                        "LLM call failed after %d retries: %s",
+                        LLM_MAX_RETRIES + 1, exc,
+                    )
+
+        if self._logger and last_exc:
+            self._logger.log_error(
+                self._session_id, str(last_exc),
+                context=f"LLM call, iteration {iteration} "
+                        f"(all {LLM_MAX_RETRIES + 1} attempts failed)",
+            )
+        return None
+
+    def _collect_partial_results(self) -> List[str]:
+        """Gather successful tool outputs as partial results."""
+        partials: List[str] = []
+        for step in self._steps:
+            if step.tool_success and step.tool_result:
+                partials.append(
+                    f"[{step.tool_name}] {_truncate(step.tool_result, 300)}"
+                )
+        return partials
+
+    @staticmethod
+    def _graceful_degradation_summary(
+        iteration: int,
+        partial_results: List[str],
+    ) -> str:
+        """Build summary when LLM is completely unreachable."""
+        msg = (
+            f"LLM unreachable after exhausting retries on iteration "
+            f"{iteration}."
+        )
+        if partial_results:
+            msg += (
+                f" {len(partial_results)} partial result(s) recovered "
+                f"from prior tool executions."
+            )
+        else:
+            msg += " No partial results available."
+        return msg
 
     # -- Internal helpers --------------------------------------------------
 
