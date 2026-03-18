@@ -49,7 +49,7 @@ jcoder = "cli.commands:cli"
 jcoder-gui = "gui.app:main"
 
 [tool.setuptools.packages.find]
-include = ["agent*", "cli*", "core*", "ingestion*", "evaluation*", "scripts*", "gui*"]
+include = ["jcoder*", "agent*", "cli*", "core*", "ingestion*", "evaluation*", "scripts*", "gui*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
