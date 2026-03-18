@@ -1,3 +1,5 @@
+![CI](https://github.com/jeremysmission/JCoder/actions/workflows/ci.yml/badge.svg)
+
 # JCoder
 
 Fully local, offline CLI AI coding assistant with autonomous agent, self-learning pipeline, and model cascade routing. Ingests codebases, builds hybrid vector+keyword indexes (FAISS + SQLite FTS5), answers questions using a local LLM served via vLLM, and continuously improves through automated learning cycles.
