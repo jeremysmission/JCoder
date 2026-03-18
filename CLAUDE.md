@@ -29,6 +29,14 @@ assistant with an autonomous agent, self-learning pipeline, and model cascade.
 - Prefer atomic writes for JSON/state files.
 - ASCII-only source files.
 
+## UNIVERSAL PROGRAMMING RULES (ALL REPOS)
+- No class over 500 lines of code (comments/docstrings don't count toward limit).
+- Programs must stay modular and portable.
+- No patches — only redesigns. Prefer rearchitecting over stacking narrow fixes.
+- Free and open-source software where possible.
+- Always research complex ideas before assuming AI reasoning is correct — verify independently.
+- No hardcoded drive paths. Use env vars or config-driven paths.
+
 ## TESTING RULES
 - Full regression (`pytest tests/ -q`) must pass before any commit.
 - Write new tests in `tests/test_*.py` for any new functionality.
