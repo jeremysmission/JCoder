@@ -138,3 +138,28 @@
 ### IQT Additions
 - 84 coverage gap tests, 86% overall coverage (Commit: 40c7f81)
 - 10 background collection tests (Commit: ae9ebd0)
+
+## Deep Test Coverage Push (2026-03-18 ~2AM)
+
+| Test Suite | Tests | Commit |
+|-----------|-------|--------|
+| CRAG + Self-RAG | 25 | 935c67d |
+| Prompt Evolution + Bug Fix | 37 | 7fbe417, bbe9841 |
+| Multi-Agent Coordinator | 26 | 00ab2b0 |
+| Weekly Scraper Extended | 25 | bc64146 |
+| Eval Smoke + CI | 30 | 70d04ba |
+| Federated Search | 34 | 87729c9 |
+| Security + Sanitizer | 67 | ad449ea |
+| Learning Pipeline | 42 | ea71c09 |
+| GUI Command Catalog | 50 | e10228d |
+| Storage + Telemetry | 25 | fbc5d4b |
+| Ingestion Pipeline | 35 | 2774701 |
+| Knowledge Graph | 36 | c5025b0 |
+| Web Tools + Session | 44 | 4823caf |
+| Cascade + Runtime | 40 | 5e68c38 |
+| Memory + Active Learning | 40 | 884d45a |
+| Island Model + Speculative | 30 | 69e30f2 |
+| STaR + Reflection | 35 | 1edd624 |
+
+**JCoder total: 2,511 tests (from 229)**
+**IQT total: 1,178 tests (from 537)**
