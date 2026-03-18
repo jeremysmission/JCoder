@@ -102,3 +102,39 @@
 - Ionogram Quality Tracker: C:\Users\jerem\Ionogram_Quality_Tracker (671 tests)
 - Career Moves: C:\Users\jerem\Career Moves (fresh clone, 30+ tests)
 - LimitlessAppV2: C:\Users\jerem\LimitlessApp_V2 (181 tests)
+
+## Overnight Session (2026-03-18 early AM)
+
+### AST Chunker Wired (Commit: 2f2bf73)
+- build_fts5_indexes.py routes .py/.js/.ts/.java/.go/.rs through tree-sitter
+- 19 integration tests, 36 total chunker tests pass
+
+### Agent Error Recovery (Commit: bfb9ee3)
+- Exponential backoff (3 retries), tool circuit breaker, partial results, graceful degradation
+- 20 new tests, 46 agent tests pass
+
+### CRAG + Self-RAG Tests (Commit: 935c67d)
+- 25 integration tests for corrective retrieval + self-evaluation
+- 40 total orchestrator tests pass
+
+### Prompt Evolution Tests + Bug Fix (Commits: 7fbe417, bbe9841)
+- 37 tests for mutation, fitness, population, convergence, adversarial
+- Fixed population_size=1 ZeroDivisionError
+
+### Multi-Agent Coordinator Tests (Commit: 00ab2b0)
+- 26 tests: registration, delegation, failure isolation, concurrency, message passing
+
+### Weekly Scraper Extended Tests (Commit: bc64146)
+- 25 tests: RSS/Atom/PyPI/SE scraping, dedup, rate limiting, error handling
+
+### Eval Smoke + CI Update (Commits: 70d04ba, bc81e66)
+- 30 eval smoke tests for CI, added to workflow
+
+### Beast Additions
+- Ollama preload script + 12 tests (Commit: e8e4f4b)
+- Repo backup/snapshot script + 12 tests (Commit: fcb6400)
+- PowerShell aliases + BAT launcher (Commit: b7fdc5f)
+
+### IQT Additions
+- 84 coverage gap tests, 86% overall coverage (Commit: 40c7f81)
+- 10 background collection tests (Commit: ae9ebd0)
