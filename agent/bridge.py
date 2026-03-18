@@ -70,7 +70,9 @@ class AgentBridge:
                  procedural_memory: Optional[ProceduralMemory] = None,
                  qd_archive: Optional[Any] = None,
                  continual_learner: Optional[Any] = None,
-                 pipeline: Optional[Any] = None):
+                 pipeline: Optional[Any] = None,
+                 smart_orchestrator: Optional[Any] = None,
+                 cascade: Optional[Any] = None):
         self.agent = agent
         self.telemetry = telemetry
         self.experience = experience_store
@@ -81,11 +83,14 @@ class AgentBridge:
         self.qd_archive = qd_archive
         self.continual_learner = continual_learner
         self.pipeline = pipeline
+        self.smart_orchestrator = smart_orchestrator
+        self.cascade = cascade
         active = [n for n, m in [("telemetry", telemetry), ("experience", experience_store),
                   ("active", active_learner), ("meta_cog", meta_cognitive),
                   ("memory", memory), ("procedural_memory", procedural_memory),
                   ("qd_archive", qd_archive), ("continual_learner", continual_learner),
-                  ("pipeline", pipeline)] if m]
+                  ("pipeline", pipeline), ("smart_orchestrator", smart_orchestrator),
+                  ("cascade", cascade)] if m]
         log.info("AgentBridge: modules active: %s", active or "(none)")
 
     def on_task_complete(self, task: str, result: AgentResult) -> None:
@@ -307,6 +312,64 @@ class AgentBridge:
             }
         except Exception as exc:
             log.debug("Best-of-N query: %s", exc)
+            return None
+
+    def smart_answer(self, question: str) -> Optional[Dict[str, Any]]:
+        """Route a question through the SmartOrchestrator (CRAG + Self-RAG).
+
+        Returns dict with answer, confidence, reflection scores, and retrieval
+        metadata, or None if the orchestrator is unavailable.
+        """
+        orch = self.smart_orchestrator
+        if orch is None and self.pipeline and hasattr(self.pipeline, "smart_orchestrator"):
+            orch = self.pipeline.smart_orchestrator
+        if orch is None:
+            return None
+        try:
+            result = orch.answer(question)
+            return {
+                "answer": result.answer,
+                "confidence": result.confidence,
+                "reflection": result.reflection,
+                "sources": result.sources,
+                "chunk_count": result.chunk_count,
+                "retrieval_strategy": result.retrieval_strategy,
+                "retrieval_attempts": result.retrieval_attempts,
+            }
+        except Exception as exc:
+            log.warning("SmartOrchestrator answer: %s", exc)
+            return None
+
+    def cascade_route(
+        self, question: str, context_chunks: Optional[List[str]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Route a question through the ModelCascade (complexity-based routing).
+
+        Returns dict with answer, model_used, complexity, escalation info,
+        and latency, or None if the cascade is unavailable.
+        """
+        casc = self.cascade
+        if casc is None and self.pipeline and hasattr(self.pipeline, "cascade"):
+            casc = self.pipeline.cascade
+        if casc is None:
+            return None
+        try:
+            from core.cascade import estimate_answer_confidence
+            result = casc.route(
+                question,
+                context_chunks or [],
+                confidence_fn=estimate_answer_confidence,
+            )
+            return {
+                "answer": result.answer,
+                "model_used": result.model_used,
+                "level_index": result.level_index,
+                "complexity_score": result.complexity_score,
+                "escalated": result.escalated,
+                "latency_ms": result.latency_ms,
+            }
+        except Exception as exc:
+            log.warning("ModelCascade route: %s", exc)
             return None
 
     def select_strategy(self, task: str) -> Dict[str, Any]:
@@ -537,11 +600,16 @@ def create_wired_agent(config: Optional[Any] = None, backend: Optional[Any] = No
         sl_config, stack, telemetry, experience, meta, active, continual,
     ) if sl_config.get("pipeline_enabled") else None
 
+    # Extract SmartOrchestrator and ModelCascade from pipeline (if created)
+    smart_orch = getattr(pipeline, "smart_orchestrator", None) if pipeline else None
+    cascade = getattr(pipeline, "cascade", None) if pipeline else None
+
     bridge = AgentBridge(agent=agent, telemetry=telemetry, experience_store=experience,
                          active_learner=active, meta_cognitive=meta,
                          memory=memory, procedural_memory=procedural_memory,
                          qd_archive=qd_archive, continual_learner=continual,
-                         pipeline=pipeline)
+                         pipeline=pipeline, smart_orchestrator=smart_orch,
+                         cascade=cascade)
 
     # Wrap RAG callback with telemetry if both are available
     rag_callback = getattr(stack["tools"], "_rag_callback", None)
