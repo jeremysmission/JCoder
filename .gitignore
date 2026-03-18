@@ -26,3 +26,14 @@ Thumbs.db
 .tmp_*/
 logs/weekly_scraper/*.json
 *.py.tmp.*
+
+# Experimental/research dirs (not production)
+_active_learn/
+_continual/
+_experience/
+_meta_cog/
+_procedural_memory/
+_qd_archive/
+_research/
+_runs_demo/
+_telemetry/
