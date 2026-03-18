@@ -42,6 +42,9 @@ def test_detect_gpu_no_nvidia():
 # ---- RAM detection ----
 
 def test_detect_ram_psutil():
+    psutil = pytest.importorskip("psutil", reason="psutil not installed")
+    if not hasattr(psutil, "virtual_memory"):
+        pytest.skip("psutil installed but non-functional (missing virtual_memory)")
     mod = _import_bootstrap()
     mock_mem = MagicMock()
     mock_mem.total = 128 * 1024 ** 3

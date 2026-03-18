@@ -149,6 +149,7 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
     t0 = time.monotonic()
     stats = {"name": source_name, "index": index_name, "files": 0,
              "chunks": 0, "errors": 0, "skipped": False}
+    error_lines: list[str] = []
 
     # Build in batches to SQLite
     conn = sqlite3.connect(str(db_path))
@@ -186,6 +187,7 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
                 stats["files"] += 1
             except Exception as exc:
                 stats["errors"] += 1
+                error_lines.append(f"{fpath.name}: {type(exc).__name__}: {exc}")
                 if stats["errors"] <= 5:
                     print(f"[WARN] {fpath.name}: {exc}")
 
@@ -204,6 +206,11 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
             conn.commit()
     finally:
         conn.close()
+
+    # Write error log if any errors occurred
+    if error_lines:
+        error_log_path = INDEX_DIR / f"{index_name}.errors.log"
+        error_log_path.write_text("\n".join(error_lines) + "\n", encoding="utf-8")
 
     elapsed = time.monotonic() - t0
     size_mb = db_path.stat().st_size / (1024 * 1024)

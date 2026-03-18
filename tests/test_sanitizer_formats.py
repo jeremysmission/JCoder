@@ -13,6 +13,8 @@ from pathlib import Path
 import pytest
 
 py7zr = pytest.importorskip("py7zr")
+if not hasattr(py7zr, "SevenZipFile"):
+    pytest.skip("py7zr installed but non-functional (missing SevenZipFile)", allow_module_level=True)
 pyzstd = pytest.importorskip("pyzstd")
 
 from ingestion.sanitizer import SanitizationConfig, SanitizationPipeline

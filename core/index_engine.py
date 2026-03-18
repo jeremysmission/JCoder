@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Tuple
 
 try:
     import faiss
+    if not hasattr(faiss, "IndexFlatIP"):
+        faiss = None  # type: ignore[assignment]
 except ImportError:
     faiss = None  # type: ignore[assignment]
 import numpy as np

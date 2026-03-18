@@ -7,6 +7,8 @@ from core.config import StorageConfig
 from core.index_engine import IndexEngine
 
 faiss = pytest.importorskip("faiss", reason="faiss not installed")
+if not hasattr(faiss, "IndexFlatIP"):
+    pytest.skip("faiss installed but non-functional (missing IndexFlatIP)", allow_module_level=True)
 
 
 def _make_index(tmp_path, dimension=8) -> IndexEngine:
