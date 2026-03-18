@@ -31,8 +31,8 @@ from ingestion.sanitizer import (
     SanitizationStats,
 )
 
-DEFAULT_SE_ROOT = Path(r"D:\Projects\KnowledgeBase\stackexchange_20251231")
-CLEAN_ROOT = Path(r"D:\JCoder_Data\clean_source")
+DEFAULT_SE_ROOT = Path(os.environ.get("JCODER_SE_ROOT", r"D:\Projects\KnowledgeBase\stackexchange_20251231"))
+CLEAN_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data")) / "clean_source"
 
 
 def _find_valid_archives(se_root: Path):

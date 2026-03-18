@@ -208,7 +208,7 @@ def build_prior_context(progress: dict, max_chars: int = 3000) -> str:
 # Indexes are tried in order; first found is used. Supports both data locations.
 
 D1 = str(JCODER_ROOT / "data" / "indexes")
-D2 = "D:/JCoder_Data/indexes"
+D2 = str(Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data")) / "indexes")
 
 CURRICULUM = [
     # Phase 1: Language Foundations

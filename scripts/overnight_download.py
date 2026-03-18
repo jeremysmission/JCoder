@@ -34,7 +34,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # Paths
-DATA_ROOT = Path(r"D:\JCoder_Data")
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 RAW_ROOT = DATA_ROOT / "raw_downloads"
 CLEAN_ROOT = DATA_ROOT / "clean_source"
 INDEX_DIR = PROJECT_ROOT / "data" / "indexes"

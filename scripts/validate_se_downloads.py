@@ -10,14 +10,13 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
 MAGIC_7Z = bytes.fromhex("377abcaf271c")
-DEFAULT_SE_ROOT = Path(r"D:\Projects\KnowledgeBase\stackexchange_20251231")
-INTEGRITY_LOG = Path(
-    r"D:\JCoder_Data\clean_source\_logs\stackexchange_archive_integrity_20260301.json"
-)
+DEFAULT_SE_ROOT = Path(os.environ.get("JCODER_SE_ROOT", r"D:\Projects\KnowledgeBase\stackexchange_20251231"))
+INTEGRITY_LOG = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data")) / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
 
 
 def check_7z(path: Path) -> dict:

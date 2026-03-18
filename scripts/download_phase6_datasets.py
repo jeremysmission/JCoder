@@ -37,7 +37,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 INDEX_DIR = Path(os.environ.get("JCODER_INDEX_DIR", PROJECT_ROOT / "data" / "indexes"))
 DOWNLOAD_DIR = Path(os.environ.get(
     "JCODER_DOWNLOAD_DIR",
-    Path("D:/JCoder_Data/downloads") if Path("D:/JCoder_Data").exists()
+    Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data")) / "downloads"
+    if Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data")).exists()
     else PROJECT_ROOT / "data" / "downloads",
 ))
 
