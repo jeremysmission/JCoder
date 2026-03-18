@@ -25,14 +25,20 @@ _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
-if sys.platform == "win32":
+if sys.platform == "win32" and __name__ == "__main__":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+
+from ingestion.chunker import Chunker, LANGUAGE_MAP
 
 DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
 CLEAN_DIR = DATA_ROOT / "clean_source"
 INDEX_DIR = DATA_ROOT / "indexes"
 
+# Extensions that should use AST-aware chunking
+AST_EXTENSIONS = {ext for ext, lang in LANGUAGE_MAP.items() if lang is not None}
+
 # Map source dirs to index names and chunking strategies
+# type: "qa" = Q&A markdown, "docs" = heading-split docs, "code" = AST-aware code
 SOURCE_CONFIG = {
     "codesearchnet/python":     {"index": "csn_python",     "type": "qa"},
     "codesearchnet/javascript": {"index": "csn_javascript", "type": "qa"},
@@ -42,6 +48,7 @@ SOURCE_CONFIG = {
     "codesearchnet/ruby":       {"index": "csn_ruby",       "type": "qa"},
     "python_docs":              {"index": "python_docs",    "type": "docs"},
     "rfc":                      {"index": "rfc",            "type": "docs"},
+    "repos":                    {"index": "repos",          "type": "code"},
 }
 
 # Normalize text for FTS5 (same as index_engine._normalize_for_search)
@@ -106,6 +113,35 @@ def _chunk_docs_file(fpath: Path, max_chars: int = 4000) -> list:
     return chunks
 
 
+# Shared Chunker instance for AST-aware code chunking
+_code_chunker = Chunker(max_chars=4000)
+
+
+def _chunk_code_file(fpath: Path, max_chars: int = 4000) -> list:
+    """Chunk a code file using AST-aware splitting.
+
+    Python/JS/TS/Java/Go/Rust files get tree-sitter AST chunking at
+    function/class boundaries.  Unknown extensions fall back to character
+    splitting.  Syntax errors also fall back gracefully.
+    """
+    try:
+        raw_chunks = _code_chunker.chunk_file(str(fpath))
+    except Exception:
+        # Any read/parse failure -> empty
+        return []
+
+    results = []
+    for c in raw_chunks:
+        content = c.get("content", "")
+        if content and content.strip():
+            results.append({
+                "content": content,
+                "title": fpath.stem,
+                "source": str(fpath),
+            })
+    return results
+
+
 def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict:
     """Build one FTS5 index for a data source. Returns stats dict."""
     source_dir = CLEAN_DIR / source_name
@@ -129,22 +165,42 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
     # Collect files (recursive for sources with subdirectories like python_docs)
     # Use islice when max_files is set to avoid sorting 300K+ filenames
     import itertools
-    if max_files:
-        md_files = list(itertools.islice(source_dir.glob("*.md"), max_files))
-        if not md_files:
-            md_files = list(itertools.islice(source_dir.rglob("*.md"), max_files))
+
+    if chunk_type == "code":
+        # Collect code files with AST-supported extensions + text fallback
+        all_exts = set(LANGUAGE_MAP.keys()) | {".txt", ".cfg", ".ini", ".toml"}
+        collected: list[Path] = []
+        for ext in sorted(all_exts):
+            pattern = f"*{ext}"
+            if max_files and len(collected) >= max_files:
+                break
+            found = list(source_dir.rglob(pattern))
+            collected.extend(found)
+        if max_files:
+            collected = collected[:max_files]
+        md_files = collected
     else:
-        md_files = sorted(source_dir.glob("*.md"))
-        if not md_files:
-            md_files = sorted(source_dir.rglob("*.md"))
+        if max_files:
+            md_files = list(itertools.islice(source_dir.glob("*.md"), max_files))
+            if not md_files:
+                md_files = list(itertools.islice(source_dir.rglob("*.md"), max_files))
+        else:
+            md_files = sorted(source_dir.glob("*.md"))
+            if not md_files:
+                md_files = sorted(source_dir.rglob("*.md"))
 
     if not md_files:
-        print(f"[WARN] {source_name}: no .md files found")
+        print(f"[WARN] {source_name}: no files found")
         return {"name": source_name, "files": 0, "chunks": 0, "skipped": True}
 
     print(f"[OK] {source_name}: indexing {len(md_files)} files -> {index_name}")
 
-    chunk_fn = _chunk_qa_file if chunk_type == "qa" else _chunk_docs_file
+    if chunk_type == "code":
+        chunk_fn = _chunk_code_file
+    elif chunk_type == "qa":
+        chunk_fn = _chunk_qa_file
+    else:
+        chunk_fn = _chunk_docs_file
 
     t0 = time.monotonic()
     stats = {"name": source_name, "index": index_name, "files": 0,
