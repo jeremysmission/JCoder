@@ -24,3 +24,5 @@ Thumbs.db
 *.faiss
 *.sqlite
 .tmp_*/
+logs/weekly_scraper/*.json
+*.py.tmp.*
