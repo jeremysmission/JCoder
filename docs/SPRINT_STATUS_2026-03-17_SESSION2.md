@@ -79,3 +79,26 @@
 - tests/conftest.py — removed tempdir override
 - 14 core/*.py files — silent exception logging
 - 7 tools/*.py files — silent exception logging
+
+## Late Session Additions
+
+### Virtual Test Sweep (1485 pass, 0 fail)
+- **Commit:** `6742f3b` (pushed)
+- Fixed 13 failures from broken namespace packages (faiss-cpu, psutil, py7zr)
+- Added graceful degradation in index_engine.py, functional checks in 3 test files
+- Force-reinstalled broken packages in venv
+
+### Button-Smashing Stress Tests (29 pass)
+- **Commit:** `0bb7689` (pushed)
+- CLI stress (10), agent stress (10), config stress (5), tool safety (4)
+
+### python -m jcoder Entry Point
+- **Commit:** `2bc1979` (pushed)
+- Created jcoder/ package with __main__.py
+
+### All Repos Moved to C: Drive
+- JCoder: C:\Users\jerem\JCoder (fresh venv, 1485 tests)
+- TheBeast: C:\Users\jerem\TheBeast (55 tests, pushed to GitHub)
+- Ionogram Quality Tracker: C:\Users\jerem\Ionogram_Quality_Tracker (671 tests)
+- Career Moves: C:\Users\jerem\Career Moves (fresh clone, 30+ tests)
+- LimitlessAppV2: C:\Users\jerem\LimitlessApp_V2 (181 tests)
