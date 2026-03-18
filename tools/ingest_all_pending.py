@@ -162,8 +162,8 @@ def _read_markdown_dir(md_dir: Path, max_records=0):
                 if text.strip():
                     yield f"{md_dir.name}/{fp.name}", text
                     count += 1
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"  [WARN] Failed to read markdown: {exc}")
 
 
 # Dataset-specific configurations: (index_name, text_fields, format)

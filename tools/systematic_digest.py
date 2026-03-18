@@ -126,13 +126,13 @@ def pull_samples(db_path: str, n: int = 20, min_len: int = 150, max_len: int = 3
                 ).fetchone()
                 if row and min_len < len(row[0]) < max_len:
                     samples.append(row[0])
-            except Exception:
-                continue
+            except Exception as exc:
+                print(f"  [WARN] Sample query failed: {exc}"); continue
 
         conn.close()
         return samples
     except Exception as e:
-        return []
+        print(f"  [WARN] get_random_samples failed: {e}"); return []
 
 
 def get_index_count(db_path: str) -> int:
@@ -148,8 +148,8 @@ def get_index_count(db_path: str) -> int:
         count = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
         conn.close()
         return count
-    except Exception:
-        return 0
+    except Exception as exc:
+        print(f"  [WARN] get_index_count failed: {exc}"); return 0
 
 
 def save_knowledge(phase: str, topic: str, content: str, metadata: dict) -> Path:

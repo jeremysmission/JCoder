@@ -199,8 +199,8 @@ def crawl_directory(root_dir: str) -> List[Article]:
                     summary = _extract_summary(content)
                     keywords = _extract_keywords(content)
                     is_text = True
-                except Exception:
-                    content = ""
+                except Exception as exc:
+                    print(f"  [WARN] Could not read {filename}: {exc}"); content = ""
                     summary = "(could not read file)"
                     keywords = []
                     is_text = False

@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional
 from agent.llm_backend import ChatResponse, LLMBackend, ToolCall
 from agent.logger import AgentLogger
 from agent.session import SessionStore
-from agent.tools import ToolRegistry
+from agent.tools import ToolRegistry, ToolResult
 
 log = logging.getLogger(__name__)
 
@@ -268,7 +268,11 @@ class Agent:
                         tc.arguments, iteration,
                     )
 
-                result = self._tools.execute(tc.name, tc.arguments)
+                try:
+                    result = self._tools.execute(tc.name, tc.arguments)
+                except Exception as exc:
+                    log.error("Tool execution crashed for %s: %s", tc.name, exc, exc_info=True)
+                    result = ToolResult(success=False, output="", error=f"Tool crashed: {exc}")
                 tool_output = result.output or ""
 
                 # Compose result text for the LLM
@@ -478,7 +482,12 @@ class Agent:
                 self._history.append(assistant_msg)
 
                 for tc in response.tool_calls:
-                    result = self._tools.execute(tc.name, tc.arguments)
+                    try:
+                        result = self._tools.execute(tc.name, tc.arguments)
+                    except Exception as exc:
+                        log.error("Tool execution crashed for %s: %s", tc.name, exc, exc_info=True)
+                        from agent.tools import ToolResult
+                        result = ToolResult(success=False, output="", error=f"Tool crashed: {exc}")
                     tool_output = result.output or ""
                     result_text = (
                         tool_output if result.success

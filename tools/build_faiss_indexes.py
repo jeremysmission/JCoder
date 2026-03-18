@@ -233,8 +233,8 @@ def discover_targets(index_dir: str, max_chunks: int) -> List[tuple]:
                     sample = idx.reconstruct(0)
                     if any(v != 0.0 for v in sample):
                         needs_embed = False
-            except Exception:
-                pass
+            except Exception as exc:
+                print(f"  [WARN] FAISS probe failed for {name}: {exc}")
 
         if needs_embed:
             fts5_size = os.path.getsize(os.path.join(index_dir, f))

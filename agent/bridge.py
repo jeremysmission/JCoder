@@ -194,7 +194,7 @@ class AgentBridge:
                             log.debug("Skipping known topic: %s", query[:80])
                             continue
                     except Exception:
-                        pass  # memory unavailable, don't block suggestion
+                        log.debug("Memory search unavailable for study suggestion", exc_info=True)
                 return (f"Study topic (value={t.get('learning_value', 0):.2f}, "
                         f"uncertainty={t.get('uncertainty', 0):.2f}): {query}")
             return None  # all suggestions already known
@@ -512,7 +512,7 @@ class _FederatedRetrieverAdapter:
                 try:
                     query_vec = self._embedder.embed_query(query)
                 except Exception:
-                    pass
+                    log.debug("Embedding query failed for federated retrieval", exc_info=True)
             results = self._federated.search(
                 query, top_k=self._top_k, query_vec=query_vec,
             )

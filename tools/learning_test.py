@@ -174,8 +174,8 @@ def search_fts5(query: str, index_names: List[str], top_k: int = 8) -> List[str]
             for row in rows:
                 if row[0]:
                     chunks.append(row[0][:1600])
-        except Exception:
-            pass
+        except Exception as exc:
+            print(f"  [WARN] Failed to load chunks: {exc}")
     return chunks
 
 
