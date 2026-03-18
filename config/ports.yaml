@@ -1,5 +1,11 @@
 # Port assignments -- single source of truth.
 # Every service reads this file. No hardcoded ports anywhere.
-llm: 8000
-embedder: 8001
+#
+# Ollama mode: all services through Ollama's OpenAI-compatible API
+# vLLM mode: uncomment dedicated ports when vLLM stack is running
+#   llm: 8000
+#   embedder: 8001
+#   reranker: 8002
+llm: 11434
+embedder: 11434
 reranker: 8002

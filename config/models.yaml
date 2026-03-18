@@ -1,16 +1,22 @@
 # Model definitions -- names, dimensions, quantization.
+#
+# Ollama mode (current): uses Ollama model names via OpenAI-compatible API
+# vLLM mode: swap to HuggingFace IDs when vLLM stack is running
+#   llm.name: "Qwen/Qwen3-Coder-Next-80B"
+#   embedder.name: "nomic-ai/nomic-embed-code-v1"
+#   reranker.name: "Qwen/Qwen3-Reranker-4B"
 llm:
-  name: "Qwen/Qwen3-Coder-Next-80B"
-  quantization: "Q3_K_M"
-  tensor_parallel: 2
+  name: "phi4-mini"
+  quantization: ""
+  tensor_parallel: 1
   max_model_len: 32768
 
 embedder:
-  name: "nomic-ai/nomic-embed-code-v1"
+  name: "nomic-embed-text"
   dimension: 768
-  quantization: "Q4_K_M"
+  quantization: ""
 
 reranker:
   name: "Qwen/Qwen3-Reranker-4B"
   quantization: "Q4_K_M"
-  enabled: true
+  enabled: false
