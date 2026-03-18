@@ -217,6 +217,66 @@ def save_to_knowledge(content: str, question_id: str, category: str,
     return path
 
 
+def run_distillation(
+    eval_results: list,
+    eval_set_path: str = "",
+    index_dir: str = "",
+    model: str = "gpt-5",
+    top: int = 20,
+    budget_usd: float = 2.0,
+    resume: bool = True,
+) -> dict:
+    """Programmatic entry point for learning cycle Phase 4."""
+    if not eval_set_path:
+        eval_set_path = str(_ROOT / "evaluation" / "agent_eval_set_200.json")
+    if not index_dir:
+        index_dir = str(_ROOT / "data" / "indexes")
+
+    # Sort by score ascending, pick weakest
+    scored = [r for r in eval_results if isinstance(r.get("score"), (int, float))]
+    scored.sort(key=lambda r: r["score"])
+    weak = scored[:top]
+
+    if not weak:
+        return {"distilled": 0, "errors": 0, "total_cost": 0.0, "model": model}
+
+    distill_db = Path(index_dir) / "distilled.fts5.db"
+    distilled = 0
+    errors = 0
+    total_cost = 0.0
+
+    api_key = os.environ.get("OPENAI_API_KEY", "")
+    for item in weak:
+        if total_cost >= budget_usd:
+            break
+        q_text = item.get("question", "")
+        q_id = item.get("id", q_text[:40])
+        category = item.get("category", "general")
+        if not q_text:
+            continue
+        try:
+            context = retrieve_context(q_text, index_dir)
+            result = distill_question(
+                {"question": q_text, "id": q_id, "category": category},
+                context, model, api_key,
+            )
+            if result and result.get("content"):
+                save_to_fts5(result["content"], q_id, category, str(distill_db))
+                distilled += 1
+                total_cost += result.get("cost", 0.0)
+        except Exception:
+            errors += 1
+
+    return {
+        "distilled": distilled,
+        "skipped": len(weak) - distilled - errors,
+        "errors": errors,
+        "total_cost": total_cost,
+        "budget_reached": total_cost >= budget_usd,
+        "model": model,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------

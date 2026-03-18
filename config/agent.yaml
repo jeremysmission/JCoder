@@ -54,3 +54,11 @@ agent:
   # Cascade router and model orchestration (Sprint 12)
   cascade:
     cascade_enabled: true
+
+  # Distillation: send weak eval topics to strong model for expert explanations
+  distillation:
+    enabled: true
+    model: "gpt-5"
+    top: 20
+    budget_usd: 2.0
+    resume: true

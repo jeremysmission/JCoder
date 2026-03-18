@@ -368,6 +368,41 @@ def _log_study_event(db_path: str, qid: str, question: str, chunks: int) -> None
         pass
 
 
+def _load_distillation_config() -> dict:
+    """Load distillation settings from config/agent.yaml."""
+    cfg_path = _ROOT / "config" / "agent.yaml"
+    if not cfg_path.exists():
+        return {"enabled": False}
+    try:
+        import yaml
+        with open(cfg_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        return data.get("agent", {}).get("distillation", {"enabled": False})
+    except ImportError:
+        pass
+    # Fallback: regex parse
+    text = cfg_path.read_text(encoding="utf-8")
+    import re
+    section = re.search(r"distillation:\s*\n((?:\s+\w+:.*\n)+)", text)
+    if not section:
+        return {"enabled": False}
+    cfg: dict = {}
+    for line in section.group(1).splitlines():
+        m = re.match(r"\s+(\w+):\s*(.*)", line)
+        if m:
+            k, v = m.group(1), m.group(2).strip().strip('"').strip("'")
+            if v.lower() == "true":
+                cfg[k] = True
+            elif v.lower() == "false":
+                cfg[k] = False
+            else:
+                try:
+                    cfg[k] = float(v) if "." in v else int(v)
+                except ValueError:
+                    cfg[k] = v
+    return cfg
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -380,8 +415,8 @@ def main():
                         help="FTS5 index directory")
     parser.add_argument("--cycle-dir", default=None,
                         help="Output directory for this cycle (auto-generated if omitted)")
-    parser.add_argument("--phases", default="1,2,3,5,6",
-                        help="Comma-separated phase numbers to run (default: 1,2,3,5,6)")
+    parser.add_argument("--phases", default="1,2,3,4,5,6",
+                        help="Comma-separated phase numbers to run (default: 1,2,3,4,5,6)")
     parser.add_argument("--study-queries", type=int, default=50,
                         help="Number of study queries to generate")
     parser.add_argument("--report-only", action="store_true",
@@ -438,11 +473,34 @@ def main():
             json.dump(study_result, f, indent=2)
         print()
 
-    # Phase 4: Close feedback loop (uses existing distill_weak_topics.py)
+    # Phase 4: Close feedback loop via distillation
     if 4 in phases:
-        print("[Phase 4] Feedback loop closure (requires API key)")
-        print("  Run: python scripts/distill_weak_topics.py "
-              f"--results {baseline_path}")
+        print("[Phase 4] Distill weak topics via strong model")
+        distill_cfg = _load_distillation_config()
+        if not distill_cfg.get("enabled", False):
+            print("  Distillation disabled in config/agent.yaml — skipping")
+        elif baseline is None:
+            print("  No baseline results — skipping distillation")
+        else:
+            try:
+                from scripts.distill_weak_topics import run_distillation
+                distill_result = run_distillation(
+                    eval_results=baseline.get("results", []),
+                    eval_set_path=args.eval_set,
+                    index_dir=args.index_dir,
+                    model=distill_cfg.get("model", "gpt-5"),
+                    top=distill_cfg.get("top", 20),
+                    budget_usd=distill_cfg.get("budget_usd", 2.0),
+                    resume=distill_cfg.get("resume", True),
+                )
+                with open(Path(cycle_dir) / "distillation_result.json", "w", encoding="utf-8") as f:
+                    json.dump(distill_result, f, indent=2)
+                print(f"  Distilled {distill_result.get('distilled', 0)} topics, "
+                      f"cost: ${distill_result.get('total_cost', 0):.2f}")
+            except ImportError:
+                print("  distill_weak_topics.py not available — skipping")
+            except Exception as exc:
+                print(f"  Distillation error: {exc}")
         print()
 
     # Phase 5: Re-eval
