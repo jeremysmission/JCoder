@@ -33,10 +33,11 @@ import httpx
 
 from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_DATA_ROOT_ENV = os.environ.get("JCODER_DATA") or os.environ.get("JCODER_DATA_DIR")
+DATA_ROOT = Path(_DATA_ROOT_ENV) if _DATA_ROOT_ENV else _PROJECT_ROOT / "data"
 INDEX_DIR = DATA_ROOT / "indexes"
 DOWNLOAD_DIR = DATA_ROOT / "downloads"
-INDEX_DIR.mkdir(parents=True, exist_ok=True)
 
 BATCH_SIZE = 5000
 MAX_CHARS = 4000
@@ -103,7 +104,10 @@ def _get_parquet_urls(dataset_id: str, config: str = "default",
 
 
 def _read_parquet_table(path: Path):
-    import pyarrow.parquet as pq
+    try:
+        import pyarrow.parquet as pq
+    except ImportError as exc:
+        raise RuntimeError("pyarrow not installed. Run: pip install pyarrow") from exc
 
     return pq.read_table(str(path))
 
@@ -111,6 +115,7 @@ def _read_parquet_table(path: Path):
 class FTS5Builder:
     def __init__(self, db_path: Path):
         self.db_path = db_path
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(db_path))
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA synchronous=NORMAL")

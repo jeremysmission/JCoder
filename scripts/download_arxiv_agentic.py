@@ -24,11 +24,11 @@ from pathlib import Path
 
 from core.download_manager import DownloadManager
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_DATA_ROOT_ENV = os.environ.get("JCODER_DATA") or os.environ.get("JCODER_DATA_DIR")
+DATA_ROOT = Path(_DATA_ROOT_ENV) if _DATA_ROOT_ENV else _PROJECT_ROOT / "data"
 INDEX_DIR = DATA_ROOT / "indexes"
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "arxiv_agentic"
-INDEX_DIR.mkdir(parents=True, exist_ok=True)
-DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 BATCH_SIZE = 500
 MAX_CHARS = 4000
@@ -192,6 +192,7 @@ def fetch_arxiv_metadata(arxiv_id: str) -> dict | None:
         }
 
         # Cache
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
         cache_file.write_text(
             json.dumps(result, indent=2), encoding="utf-8"
         )
@@ -205,6 +206,7 @@ def fetch_arxiv_metadata(arxiv_id: str) -> dict | None:
 def build_agentic_index():
     """Download all papers and build FTS5 index."""
     db_path = INDEX_DIR / "arxiv_agentic_ai.fts5.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
     if db_path.exists() and db_path.stat().st_size > 100_000:
         print(f"  [OK] {db_path.name} exists "
@@ -268,6 +270,7 @@ def build_agentic_index():
 def build_broad_ml_search():
     """Also fetch broader ML/AI topics via arXiv search API."""
     db_path = INDEX_DIR / "arxiv_ml_broad.fts5.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
     if db_path.exists() and db_path.stat().st_size > 1_000_000:
         print(f"  [OK] {db_path.name} exists "

@@ -27,6 +27,7 @@ QUEUE_PATH = PROJECT_ROOT / "config" / "download_queue.json"
 LOG_DIR = PROJECT_ROOT / "logs" / "download_queue"
 STATUS_PATH = LOG_DIR / "queue_status.json"
 LOCK_PATH = LOG_DIR / "queue_service.lock"
+DEFAULT_DATA_ROOT = PROJECT_ROOT / "data"
 
 HEARTBEAT_STALE_S = 300.0
 
@@ -63,6 +64,19 @@ def default_service_flags() -> dict[str, bool]:
         "include_optional": _env_flag(ENV_INCLUDE_OPTIONAL, True),
         "include_giant": _env_flag(ENV_INCLUDE_GIANT, True),
     }
+
+
+def download_env(base_env: dict[str, str] | None = None) -> dict[str, str]:
+    env = dict(base_env or os.environ)
+    if not (env.get("JCODER_DATA") or env.get("JCODER_DATA_DIR")):
+        env["JCODER_DATA"] = str(DEFAULT_DATA_ROOT)
+    return env
+
+
+def continue_on_error_enabled(*, only: set[str] | None, requested: bool) -> bool:
+    if requested:
+        return True
+    return only is None or len(only) != 1
 
 
 def load_queue() -> list[dict]:
@@ -338,7 +352,7 @@ def launch_background_queue(
         include_optional=include_optional,
         include_giant=include_giant,
     )
-    env = os.environ.copy()
+    env = download_env(os.environ.copy())
     env[ENV_CHILD] = "1"
 
     if os.name == "nt":
@@ -514,6 +528,7 @@ def main() -> int:
         return 0
 
     wanted = set(args.only) if args.only else None
+    continue_on_error = continue_on_error_enabled(only=wanted, requested=args.continue_on_error)
     queue, skipped = filter_queue(
         load_queue(),
         only=wanted,
@@ -544,6 +559,7 @@ def main() -> int:
     acquired_lock = False
     status_payload: dict[str, Any] = {}
     failures: list[tuple[str, int]] = []
+    child_env = download_env()
 
     try:
         if not args.dry_run:
@@ -564,6 +580,7 @@ def main() -> int:
                 "completed_ids": [],
                 "failed_ids": [],
                 "active_entry_id": "",
+                "continue_on_error": continue_on_error,
                 "skip_reasons": {entry["id"]: reason for entry, reason in skipped},
                 "failures": [],
             }
@@ -587,12 +604,12 @@ def main() -> int:
             status_payload["heartbeat_epoch"] = time.time()
             write_status(status_payload)
 
-            result = subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=False)
+            result = subprocess.run(cmd, cwd=str(PROJECT_ROOT), check=False, env=child_env)
             if result.returncode != 0:
                 failures.append((entry["id"], result.returncode))
                 status_payload["failed_ids"].append(entry["id"])
                 print(f"  [FAIL] exit={result.returncode}")
-                if not args.continue_on_error:
+                if not continue_on_error:
                     break
             else:
                 status_payload["completed_ids"].append(entry["id"])

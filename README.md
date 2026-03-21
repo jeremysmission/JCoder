@@ -253,7 +253,13 @@ To run the current backlog through the shared downloader path:
 ```bash
 python scripts/run_download_queue.py --list
 python scripts/run_download_queue.py
+python scripts/run_download_queue.py --status
 ```
+
+When `JCODER_DATA` is unset, the queue defaults downloads and indexes to
+`C:\Users\jerem\JCoder\data`. Multi-job queue runs continue past individual
+item failures by default so one missing dependency does not stall the rest of
+the backlog; use `--only <job_id>` to rerun a specific item.
 
 Operator details are in `docs/INCLUSIVE_DOWNLOADER.md`.
 

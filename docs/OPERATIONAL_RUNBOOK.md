@@ -3,7 +3,7 @@
 ## Quick Start
 
 ```bash
-cd D:\JCoder
+cd C:\Users\jerem\JCoder
 
 # 1. Check environment
 python main.py doctor check
@@ -26,7 +26,7 @@ python main.py interactive
 ### Toaster (laptop, CPU-only)
 - Python 3.12+, no GPU, FTS5-only search
 - Ollama with phi4-mini for generation (optional)
-- All indexes in D:\JCoder_Data\indexes
+- All indexes in `%JCODER_DATA%\indexes` or `C:\Users\jerem\JCoder\data\indexes` when unset
 
 ### Workstation (12 GB GPU)
 - Ollama with phi4:14b-q4_K_M (primary), context_window=4096
@@ -68,17 +68,19 @@ python main.py eval --benchmark evaluation/agent_eval_set.json
 ```bash
 python scripts/run_download_queue.py --list
 python scripts/run_download_queue.py
+python scripts/run_download_queue.py --status
 python scripts/run_download_queue.py --only learn_rust
 ```
 
 Use the inclusive downloader for new acquisition work:
 - `core/download_manager.py`
 - `docs/INCLUSIVE_DOWNLOADER.md`
+- Multi-job queue runs continue past individual item failures by default so one missing dependency does not block the backlog.
 
 ### Benchmark Search Latency
 ```bash
 python main.py bench-search --queries 10 --top-k 10
-python main.py bench-search --index-dir D:\JCoder_Data\indexes
+python main.py bench-search --index-dir C:\Users\jerem\JCoder\data\indexes
 ```
 
 ### Agent Operations
@@ -102,7 +104,6 @@ python scripts/demo.py        # shows full inventory in step 2
 ```bash
 python scripts/build_se_indexes.py
 # Safe to interrupt and resume -- skips completed indexes
-# Archives: D:\Projects\KnowledgeBase\stackexchange_20251231
 ```
 
 ### Build Code Corpus Indexes
@@ -114,8 +115,8 @@ python scripts/download_code_corpora.py
 ### Index Locations
 | Path | Contents |
 |------|----------|
-| D:\JCoder\data\indexes | Local dev indexes (jcoder_demo, smoke tests) |
-| D:\JCoder_Data\indexes | Production indexes (SE, CSN, code corpora) |
+| C:\Users\jerem\JCoder\data\indexes | Default indexes when `JCODER_DATA` is unset |
+| %JCODER_DATA%\indexes | Optional override location when you point data outside the repo |
 
 ## Troubleshooting
 

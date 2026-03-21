@@ -94,6 +94,35 @@ def test_default_service_flags_enable_manual_auth_when_hf_token_present(monkeypa
     assert flags["include_manual_auth"] is True
 
 
+def test_download_env_defaults_jcoder_data_to_repo_data(monkeypatch):
+    monkeypatch.delenv("JCODER_DATA", raising=False)
+    monkeypatch.delenv("JCODER_DATA_DIR", raising=False)
+
+    env = run_download_queue.download_env({})
+
+    assert env["JCODER_DATA"] == str(run_download_queue.DEFAULT_DATA_ROOT)
+
+
+def test_download_env_preserves_existing_jcoder_data(monkeypatch):
+    monkeypatch.setenv("JCODER_DATA", "C:\\portable-data")
+
+    env = run_download_queue.download_env()
+
+    assert env["JCODER_DATA"] == "C:\\portable-data"
+
+
+def test_continue_on_error_enabled_defaults_for_multi_job_queue():
+    assert run_download_queue.continue_on_error_enabled(only=None, requested=False) is True
+    assert run_download_queue.continue_on_error_enabled(
+        only={"learn_rust", "python_docs"},
+        requested=False,
+    ) is True
+    assert run_download_queue.continue_on_error_enabled(
+        only={"learn_rust"},
+        requested=False,
+    ) is False
+
+
 def test_build_service_command_includes_all_requested_flags():
     assert run_download_queue.build_service_command(
         include_manual_auth=True,
