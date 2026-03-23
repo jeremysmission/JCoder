@@ -1,0 +1,182 @@
+[
+  {
+    "id": "py_001",
+    "question": "How do I recursively find all .py files in a directory using pathlib?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_002",
+    "question": "How do I count word frequencies in a text file using collections.Counter?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_003",
+    "question": "Show me how to flatten a list of lists using itertools.chain.from_iterable.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_004",
+    "question": "Write a simple async TCP echo server using asyncio that handles multiple clients concurrently.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_005",
+    "question": "How do I read and write JSON files in Python using the json module?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_006",
+    "question": "Write a decorator that logs the execution time of any function it wraps.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_007",
+    "question": "Write a context manager class that temporarily changes the working directory and restores it on exit.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_008",
+    "question": "Write a generator function that yields Fibonacci numbers indefinitely.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_009",
+    "question": "Implement the singleton pattern in Python using a metaclass.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_010",
+    "question": "I get 'TypeError: unhashable type: list' when using a list as a dictionary key. How do I fix this?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_011",
+    "question": "Explain this traceback and how to fix it: 'RecursionError: maximum recursion depth exceeded in comparison'",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_012",
+    "question": "Write a FastAPI endpoint that accepts a JSON body with 'name' and 'age' fields and returns a greeting.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_013",
+    "question": "Write a pytest test that uses parametrize to test a function with multiple input/output pairs.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_014",
+    "question": "How do I make an async HTTP GET request with httpx and handle timeouts?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_015",
+    "question": "Write a pytest fixture that creates a temporary SQLite database, yields the connection, and cleans up after the test.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_001",
+    "question": "Write an async function that fetches data from two URLs in parallel using Promise.all.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_002",
+    "question": "Explain the difference between Promise.all, Promise.allSettled, and Promise.race with code examples.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_003",
+    "question": "How do I implement retry logic for a fetch request with exponential backoff?",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_004",
+    "question": "Write code to create a debounced search input that only fires the search after the user stops typing for 300ms.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_005",
+    "question": "How do I use event delegation to handle click events on dynamically added list items?",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_006",
+    "question": "Write a Node.js script that reads a CSV file line by line using streams without loading the entire file into memory.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_007",
+    "question": "How do I set up a basic Express.js middleware that logs the request method, URL, and response time?",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_008",
+    "question": "Write a TypeScript generic function that takes an array and returns the unique elements while preserving the type.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_009",
+    "question": "Explain the difference between 'type' and 'interface' in TypeScript. When should you use each?",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "js_010",
+    "question": "Write a TypeScript discriminated union type for API responses that can be Success with data or Error with a message, and a type guard function.",
+    "category": "javascript",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "sys_001",
+    "question": "How do I find all files larger than 100MB modified in the last 7 days using the find command?",
+    "category": "systems",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "sys_002",
+    "question": "Write a bash script that monitors a log file in real time and sends an alert when it sees the word ERROR.",
+    "category": "systems",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "sys_003",
+    "question": "Explain the difference between hard links and soft links in Linux. How do you create each?",
+    "category": "systems",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "sys_004",
+    "question": "Write a Dockerfile for a Python FastAPI app that uses multi-stage builds to minimize the final image size.",
+    "category": "systems",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "sys_005",
+    "question": "How do I use docker-compose to run a Python app with a PostgreSQL database and a Redis cache?",
+    "category": "systems",
+    "baseline_score": 0.0
+  }
+]
