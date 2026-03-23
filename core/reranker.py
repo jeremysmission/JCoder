@@ -61,6 +61,11 @@ class Reranker:
         response.raise_for_status()
 
         scores = response.json()
+        if not isinstance(scores, dict) or "data" not in scores:
+            raise ValueError(
+                f"Reranker response missing 'data' key; got: "
+                f"{list(scores.keys()) if isinstance(scores, dict) else type(scores).__name__}"
+            )
         # vLLM /score returns list of {"index": i, "score": float}
         scored = [(item["index"], item["score"]) for item in scores["data"]]
         scored.sort(key=lambda x: x[1], reverse=True)

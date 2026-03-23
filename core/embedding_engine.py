@@ -58,7 +58,13 @@ class EmbeddingEngine:
         )
         response.raise_for_status()
 
-        data = response.json()["data"]
+        body = response.json()
+        if not isinstance(body, dict) or "data" not in body:
+            raise ValueError(
+                f"Embedding response missing 'data' key; got keys: "
+                f"{list(body.keys()) if isinstance(body, dict) else type(body).__name__}"
+            )
+        data = body["data"]
         vectors = [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
         result = np.array(vectors, dtype=np.float32)
 

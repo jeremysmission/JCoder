@@ -207,7 +207,7 @@ class TestToolRegistry:
             captured["shell"] = kwargs.get("shell")
             return subprocess.CompletedProcess(cmd, 0, stdout="ok", stderr="")
 
-        monkeypatch.setattr("agent.tools.subprocess.run", fake_run)
+        monkeypatch.setattr("agent.tools_shell_ops.subprocess.run", fake_run)
         reg = ToolRegistry(working_dir=str(tmp_path))
         result = reg.execute("run_command", {"command": 'python -c "print(1)"'})
 

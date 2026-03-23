@@ -28,7 +28,7 @@ MAGIC_7Z = bytes.fromhex("377abcaf271c")
 BASE_URL = "https://archive.org/download/stackexchange"
 _JCODER_DATA_DIR = Path(
     os.environ.get("JCODER_DATA")
-    or os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data")
+    or os.environ.get("JCODER_DATA_DIR", "data")
 )
 INTEGRITY_LOG = _JCODER_DATA_DIR / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
 _DOWNLOADERS: dict[Path, DownloadManager] = {}

@@ -43,11 +43,11 @@ class TestLanguageMapConsistency:
         assert LANGUAGE_MAP[".json"] is None
 
     def test_repo_loader_uses_language_map(self):
-        """RepoLoader.supported_extensions must come from LANGUAGE_MAP.keys()."""
+        """RepoLoader.supported_extensions must include LANGUAGE_MAP.keys()."""
         loader = RepoLoader(chunker=None)
-        expected_exts = set(LANGUAGE_MAP.keys())
-        # RepoLoader sets supported_extensions from LANGUAGE_MAP in __init__
-        assert loader.supported_extensions == expected_exts
+        language_exts = set(LANGUAGE_MAP.keys())
+        # RepoLoader includes LANGUAGE_MAP + DOCUMENT_EXTENSIONS
+        assert language_exts.issubset(loader.supported_extensions)
 
     def test_code_extensions_derived_from_language_map(self):
         """_CODE_EXTENSIONS (in corpus_pipeline) must be subset of LANGUAGE_MAP."""

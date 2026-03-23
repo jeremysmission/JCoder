@@ -355,10 +355,10 @@ class ResearchStore:
             """)
             rows = cur.fetchall()
 
-            total = conn.execute("SELECT COUNT(*) FROM papers").fetchone()[0]
-            unprocessed = conn.execute(
+            total = (conn.execute("SELECT COUNT(*) FROM papers").fetchone() or (0,))[0]
+            unprocessed = (conn.execute(
                 "SELECT COUNT(*) FROM papers WHERE processed = 0"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
 
         return {
             "total_papers": total,

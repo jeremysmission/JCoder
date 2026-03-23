@@ -112,7 +112,7 @@ def run_eval(
     """Run full retrieval eval. Returns summary dict."""
     golden = load_golden_set(golden_path)
     if not index_dir:
-        index_dir = os.environ.get("JCODER_DATA", r"D:\JCoder_Data")
+        index_dir = os.environ.get("JCODER_DATA", "data")
 
     # Try to load repo index (the one that indexes JCoder's own code)
     config = StorageConfig(index_dir=os.path.join(index_dir, "indexes"))

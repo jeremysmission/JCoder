@@ -38,7 +38,7 @@ RFC_URLS = [
     "https://raw.githubusercontent.com/nicktimko/rfc-archive/master/rfc{number}.txt",
 ]
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "rfc"
 OUTPUT_DIR = DATA_ROOT / "clean_source" / "rfc"
 

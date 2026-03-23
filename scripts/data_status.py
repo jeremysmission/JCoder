@@ -18,9 +18,9 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 INDEX_DIR_DATA = DATA_ROOT / "indexes"
-INDEX_DIR_PROJ = Path(r"D:\JCoder\data\indexes")
+INDEX_DIR_PROJ = Path("data") / "indexes"
 RAW_DIR = DATA_ROOT / "raw_downloads"
 CLEAN_DIR = DATA_ROOT / "clean_source"
 PROGRESS_DIR = DATA_ROOT / "prep_stage" / "github_code"
@@ -70,12 +70,13 @@ def _read_counter(path: Path) -> int:
 
 def main():
     import shutil
-    usage = shutil.disk_usage("D:\\")
+    data_drive = os.environ.get("JCODER_DATA_DRIVE", "C:\\")
+    usage = shutil.disk_usage(data_drive)
     free_gb = usage.free / 1e9
 
     print("=" * 70)
     print("JCoder Data Status")
-    print(f"D: drive -- {free_gb:.0f} GB free / {usage.total / 1e9:.0f} GB total")
+    print(f"{data_drive} -- {free_gb:.0f} GB free / {usage.total / 1e9:.0f} GB total")
     print("=" * 70)
 
     # Raw downloads

@@ -52,9 +52,9 @@ from ingestion.pii_scanner import PIIScanner
 # Constants
 # ---------------------------------------------------------------------------
 _CLEAN_SOURCE = Path(os.environ.get(
-    "JCODER_CLEAN_SOURCE", r"D:\JCoder_Data\clean_source"
+    "JCODER_CLEAN_SOURCE", r"data\clean_source"
 ))
-_DATA_ROOT = Path(os.environ.get("JCODER_DATA_DIR", r"D:\JCoder_Data"))
+_DATA_ROOT = Path(os.environ.get("JCODER_DATA_DIR", "data"))
 _INDEX_DIR = _DATA_ROOT / "indexes"
 _MANIFEST_PATH = _DATA_ROOT / "staging_manifest.json"
 

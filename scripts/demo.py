@@ -97,7 +97,7 @@ def demo_federated_discovery() -> int:
     # Check known index locations
     index_dirs = [
         Path("data/indexes"),
-        Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data")) / "indexes",
+        Path(os.environ.get("JCODER_DATA", "data")) / "indexes",
     ]
 
     total_indexes = 0
@@ -133,7 +133,7 @@ def demo_federated_search(mock: bool = True) -> None:
     """Run sample queries across federated indexes."""
     _step(3, "Federated Search (RRF across all indexes)")
 
-    data_dir = Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data"))
+    data_dir = Path(os.environ.get("JCODER_DATA", "data"))
     idx_dir = data_dir / "indexes"
 
     if not idx_dir.exists() or not list(idx_dir.glob("*.fts5.db")):
@@ -232,7 +232,7 @@ def demo_bench_search() -> None:
     """Run a quick search benchmark."""
     _step(5, "Search Latency Benchmark")
 
-    data_dir = Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data"))
+    data_dir = Path(os.environ.get("JCODER_DATA", "data"))
     idx_dir = data_dir / "indexes"
 
     if not idx_dir.exists() or not list(idx_dir.glob("*.fts5.db")):

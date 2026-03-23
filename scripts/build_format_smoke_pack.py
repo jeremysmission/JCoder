@@ -119,7 +119,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--out",
-        default=r"D:\JCoder\data\format_smoke_pack",
+        default=os.path.join("data", "format_smoke_pack"),
         help="Output folder for synthetic smoke pack",
     )
     args = parser.parse_args()

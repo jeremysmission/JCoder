@@ -42,7 +42,7 @@ BATCH_SIZE = 5000
 IO_WORKERS = 16
 EMBED_BATCH = 64
 DEFAULT_SOURCE = (
-    Path(os.environ.get("JCODER_DATA_DIR", r"D:\JCoder_Data"))
+    Path(os.environ.get("JCODER_DATA_DIR", "data"))
     / "clean_source" / "_ingest_runs" / "parallel_20260303_213210"
 )
 

@@ -287,13 +287,13 @@ class ResearchLedger:
 
     def stats(self) -> Dict[str, Any]:
         conn = self._conn
-        gaps = conn.execute("SELECT COUNT(*) FROM research_gaps").fetchone()[0]
-        hyps = conn.execute("SELECT COUNT(*) FROM hypotheses").fetchone()[0]
-        protos = conn.execute("SELECT COUNT(*) FROM prototypes").fetchone()[0]
-        discoveries = conn.execute(
+        gaps = (conn.execute("SELECT COUNT(*) FROM research_gaps").fetchone() or (0,))[0]
+        hyps = (conn.execute("SELECT COUNT(*) FROM hypotheses").fetchone() or (0,))[0]
+        protos = (conn.execute("SELECT COUNT(*) FROM prototypes").fetchone() or (0,))[0]
+        discoveries = (conn.execute(
             "SELECT COUNT(*) FROM prototypes WHERE passed_gate=1"
-        ).fetchone()[0]
-        cycles = conn.execute("SELECT COUNT(*) FROM research_cycles").fetchone()[0]
+        ).fetchone() or (0,))[0]
+        cycles = (conn.execute("SELECT COUNT(*) FROM research_cycles").fetchone() or (0,))[0]
 
         return {
             "total_gaps": gaps,

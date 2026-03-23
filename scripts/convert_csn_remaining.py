@@ -3,7 +3,7 @@ Convert remaining CodeSearchNet JSONL files to markdown.
 
 The overnight_download.py already converted Python (292K files).
 This script converts the other 5 languages from the raw .jsonl
-files at D:/JCoder_Data/raw_downloads/codesearchnet/{lang}.jsonl
+files at data/raw_downloads/codesearchnet/{lang}.jsonl
 
 Usage:
     cd D:\JCoder
@@ -26,7 +26,7 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 LANGUAGES = ["javascript", "java", "go", "php", "ruby"]
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 RAW_DIR = DATA_ROOT / "raw_downloads" / "codesearchnet"
 OUTPUT_DIR = DATA_ROOT / "clean_source" / "codesearchnet"
 ENTRIES_PER_FILE = 50

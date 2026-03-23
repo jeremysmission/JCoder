@@ -40,7 +40,7 @@ LANGUAGES = ["python", "javascript", "java", "go", "php", "ruby"]
 
 BASE_URL = "https://s3.amazonaws.com/code-search-net/CodeSearchNet/v2/{language}.zip"
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "codesearchnet"
 OUTPUT_DIR = DATA_ROOT / "clean_source" / "codesearchnet"
 

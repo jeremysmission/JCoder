@@ -16,7 +16,7 @@ from pathlib import Path
 
 MAGIC_7Z = bytes.fromhex("377abcaf271c")
 DEFAULT_SE_ROOT = Path(os.environ.get("JCODER_SE_ROOT", r"D:\Projects\KnowledgeBase\stackexchange_20251231"))
-INTEGRITY_LOG = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data")) / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
+INTEGRITY_LOG = Path(os.environ.get("JCODER_DATA", "data")) / "clean_source" / "_logs" / "stackexchange_archive_integrity_20260301.json"
 
 
 def check_7z(path: Path) -> dict:

@@ -41,7 +41,7 @@ if sys.platform == "win32":
 
 import httpx
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 INDEX_DIR = DATA_ROOT / "indexes"
 INDEX_DIR.mkdir(parents=True, exist_ok=True)
 

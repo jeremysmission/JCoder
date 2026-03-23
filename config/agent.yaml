@@ -1,6 +1,6 @@
 agent:
   backend: openai
-  model: "gpt-5.4"
+  model: "devstral-small-2:24b"
   endpoint: "https://api.openai.com/v1"
   max_iterations: 50
   max_tokens_budget: 500000
@@ -63,7 +63,7 @@ agent:
   # Distillation: send weak eval topics to strong model for expert explanations
   distillation:
     enabled: true
-    model: "gpt-5"
+    model: "devstral-small-2:24b"
     top: 20
     budget_usd: 2.0
     resume: true

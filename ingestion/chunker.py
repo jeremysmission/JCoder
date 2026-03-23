@@ -44,6 +44,20 @@ LANGUAGE_MAP = {
     ".md": None,
     ".txt": None,
     ".json": None,
+    # Document formats -- parsed by ingestion.parser_registry, char-fallback here
+    ".rst": None,
+    ".csv": None,
+    ".tsv": None,
+    ".svg": None,
+    ".drawio": None,
+    ".dia": None,
+    ".log": None,
+    ".html": None,
+    ".htm": None,
+    ".xml": None,
+    ".ini": None,
+    ".cfg": None,
+    ".conf": None,
 }
 
 # AST node types that represent logical chunk boundaries per language.
@@ -209,3 +223,119 @@ class Chunker:
 
         # No grammar available or AST parse returned nothing -- character fallback
         return self._chunk_by_chars(content, file_path)
+
+
+class DocumentChunker:
+    """HybridRAG-compatible document chunker.
+
+    Splits parsed document text using the same algorithm as HybridRAG3:
+      - 1200-char chunks with 200-char overlap
+      - Smart boundary detection: paragraph > sentence > newline > hard cut
+      - Section heading prepend for context preservation
+
+    Use this when producing indexes that must be queryable by HybridRAG3.
+    """
+
+    def __init__(self, chunk_size: int = 1200, overlap: int = 200,
+                 max_heading_len: int = 160, heading_lookback: int = 2000):
+        self.chunk_size = chunk_size
+        self.overlap = overlap
+        self.max_heading_len = max_heading_len
+        self.heading_lookback = heading_lookback
+
+    @staticmethod
+    def _is_heading(line: str, max_len: int) -> bool:
+        """Detect if a line is a section heading."""
+        stripped = line.strip()
+        if not stripped or len(stripped) > max_len:
+            return False
+        import re
+        # ALL CAPS lines (>3 chars)
+        if len(stripped) > 3 and stripped == stripped.upper() and stripped[0].isalpha():
+            return True
+        # Numbered sections: 1.2.3 Title
+        if re.match(r"^\d+(\.\d+)*\s+", stripped):
+            return True
+        # Lines ending with colon
+        if stripped.endswith(":"):
+            return True
+        return False
+
+    def _find_nearest_heading(self, text: str, pos: int) -> str:
+        """Search backwards from pos to find the nearest heading."""
+        search_start = max(0, pos - self.heading_lookback)
+        region = text[search_start:pos]
+        lines = region.split("\n")
+        for line in reversed(lines):
+            if self._is_heading(line, self.max_heading_len):
+                return line.strip()
+        return ""
+
+    def _find_break_point(self, text: str, start: int, end: int) -> int:
+        """Find best break point using priority: paragraph > sentence > newline > hard."""
+        if end >= len(text):
+            return end
+        # Paragraph break (double newline)
+        para_pos = text.rfind("\n\n", start, end)
+        if para_pos > start:
+            return para_pos + 2
+        # Sentence end
+        sent_pos = text.rfind(". ", start, end)
+        if sent_pos > start:
+            return sent_pos + 2
+        # Single newline
+        nl_pos = text.rfind("\n", start, end)
+        if nl_pos > start:
+            return nl_pos + 1
+        # Hard cut
+        return end
+
+    def chunk_text(self, text: str, file_path: str) -> List[Dict]:
+        """Split document text into overlapping chunks with heading context."""
+        if not text or not text.strip():
+            return []
+
+        chunks = []
+        start = 0
+        chunker = Chunker(max_chars=self.chunk_size)
+
+        while start < len(text):
+            end = min(start + self.chunk_size, len(text))
+            end = self._find_break_point(text, start, end)
+
+            chunk_text = text[start:end].strip()
+            if chunk_text:
+                # Prepend section heading for context
+                heading = self._find_nearest_heading(text, start)
+                if heading:
+                    chunk_text = f"[SECTION] {heading}\n{chunk_text}"
+
+                chunk = chunker._make_chunk(chunk_text, file_path)
+                chunk["chunk_strategy"] = "hybridrag_document"
+                chunks.append(chunk)
+
+            # Advance with overlap
+            new_start = max(end - self.overlap, start + 1)
+            start = new_start
+
+        return chunks
+
+    def chunk_file(self, file_path: str) -> List[Dict]:
+        """Parse and chunk a document file using the parser registry."""
+        from ingestion.parser_registry import get_parser, DOCUMENT_EXTENSIONS
+        ext = os.path.splitext(file_path)[1].lower()
+
+        if ext in DOCUMENT_EXTENSIONS:
+            parser = get_parser(ext)
+            if parser:
+                text, details = parser.parse_with_details(file_path)
+                if text.strip():
+                    return self.chunk_text(text, file_path)
+
+        # Fallback: read as text
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+            return self.chunk_text(content, file_path)
+        except Exception:
+            return []

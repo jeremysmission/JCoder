@@ -201,14 +201,14 @@ class TournamentLedger:
     def stats(self) -> Dict[str, Any]:
         """Aggregate tournament statistics."""
         conn = self._conn
-        total = conn.execute("SELECT COUNT(*) FROM tournaments").fetchone()[0]
-        accepted = conn.execute(
+        total = (conn.execute("SELECT COUNT(*) FROM tournaments").fetchone() or (0,))[0]
+        accepted = (conn.execute(
             "SELECT COUNT(*) FROM tournaments WHERE decision='accepted'"
-        ).fetchone()[0]
+        ).fetchone() or (0,))[0]
 
-        avg_clones = conn.execute(
+        avg_clones = (conn.execute(
             "SELECT AVG(num_clones) FROM tournaments"
-        ).fetchone()[0]
+        ).fetchone() or (0,))[0]
 
         return {
             "total_tournaments": total,

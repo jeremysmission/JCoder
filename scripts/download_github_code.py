@@ -32,7 +32,7 @@ if sys.platform == "win32":
 
 from core.download_manager import DownloadManager, fetch_huggingface_parquet_urls
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 INDEX_DIR = DATA_ROOT / "indexes"
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "stack_smol_xl"
 INDEX_DIR.mkdir(parents=True, exist_ok=True)

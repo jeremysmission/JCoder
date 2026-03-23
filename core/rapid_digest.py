@@ -594,17 +594,17 @@ class RapidDigester:
 
     def stats(self) -> Dict[str, Any]:
         with self._connect() as conn:
-            total = conn.execute(
+            total = (conn.execute(
                 "SELECT COUNT(*) FROM digests"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
             by_cat = conn.execute(
                 "SELECT category, COUNT(*), AVG(relevance), AVG(total_seconds) "
                 "FROM digests GROUP BY category"
             ).fetchall()
-            with_code = conn.execute(
+            with_code = (conn.execute(
                 "SELECT COUNT(*) FROM digests WHERE prototype_code IS NOT NULL "
                 "AND prototype_code != ''"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
 
         return {
             "total_digested": total,

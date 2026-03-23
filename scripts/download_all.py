@@ -34,7 +34,7 @@ if sys.platform == "win32":
 # Constants
 # ---------------------------------------------------------------------------
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 MIN_FREE_GB = 30  # Minimum free disk space required
 
 

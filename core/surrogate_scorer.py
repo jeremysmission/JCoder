@@ -437,12 +437,12 @@ class SurrogateEvalStore:
     def stats(self) -> Dict[str, Any]:
         """Get store statistics."""
         conn = self._conn()
-        total = conn.execute(
+        total = (conn.execute(
             "SELECT COUNT(*) FROM eval_history"
-        ).fetchone()[0]
-        avg_score = conn.execute(
+        ).fetchone() or (0,))[0]
+        avg_score = (conn.execute(
             "SELECT AVG(true_score) FROM eval_history"
-        ).fetchone()[0]
+        ).fetchone() or (0,))[0]
 
         return {
             "total_evaluations": total,

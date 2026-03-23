@@ -179,16 +179,16 @@ class EvolutionLedger:
     def stats(self) -> Dict[str, Any]:
         """Aggregate evolution statistics."""
         conn = self._conn
-        total = conn.execute("SELECT COUNT(*) FROM evolution_cycles").fetchone()[0]
-        accepted = conn.execute(
+        total = (conn.execute("SELECT COUNT(*) FROM evolution_cycles").fetchone() or (0,))[0]
+        accepted = (conn.execute(
             "SELECT COUNT(*) FROM evolution_cycles WHERE decision='accepted'"
-        ).fetchone()[0]
-        rejected = conn.execute(
+        ).fetchone() or (0,))[0]
+        rejected = (conn.execute(
             "SELECT COUNT(*) FROM evolution_cycles WHERE decision='rejected'"
-        ).fetchone()[0]
-        errors = conn.execute(
+        ).fetchone() or (0,))[0]
+        errors = (conn.execute(
             "SELECT COUNT(*) FROM evolution_cycles WHERE decision='error'"
-        ).fetchone()[0]
+        ).fetchone() or (0,))[0]
 
         return {
             "total_cycles": total,
@@ -196,9 +196,9 @@ class EvolutionLedger:
             "rejected": rejected,
             "errors": errors,
             "acceptance_rate": round(accepted / max(total, 1), 3),
-            "baselines_archived": conn.execute(
+            "baselines_archived": (conn.execute(
                 "SELECT COUNT(*) FROM baselines"
-            ).fetchone()[0],
+            ).fetchone() or (0,))[0],
         }
 
     def close(self) -> None:

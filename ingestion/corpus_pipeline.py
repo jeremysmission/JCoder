@@ -16,9 +16,18 @@ import numpy as np
 from core.config import StorageConfig
 from core.embedding_engine import EmbeddingEngine
 from core.index_engine import IndexEngine
-from ingestion.chunker import Chunker, LANGUAGE_MAP
+from ingestion.chunker import Chunker, DocumentChunker, LANGUAGE_MAP
 from ingestion.dedup import MinHashDedup
 from ingestion.pii_scanner import PIIScanner, sanitize_for_ingest
+
+try:
+    from ingestion.parser_registry import (
+        DOCUMENT_EXTENSIONS, get_parser, parse_file,
+    )
+    _HAS_PARSER_REGISTRY = True
+except ImportError:
+    _HAS_PARSER_REGISTRY = False
+    DOCUMENT_EXTENSIONS = frozenset()
 
 
 @dataclass
@@ -155,6 +164,56 @@ class CorpusPipeline:
             source_dir, index_name, {".md"}, max_files, resume,
             self._chunks_from_doc_md, source_kind="docs",
         )
+
+    def ingest_documents(
+        self, source_dir: str, index_name: str = "documents",
+        max_files: int = 0, resume: bool = True,
+        hybridrag_compat: bool = True,
+    ) -> IngestStats:
+        """Ingest document files (.xls, .ppt, .odt, .ods, .odp, .epub, .rst, etc.)
+        using the parser registry and HybridRAG-compatible chunking.
+
+        When hybridrag_compat=True, uses 1200-char chunks with 200-char overlap
+        matching HybridRAG3's indexing spec for shared index production.
+        """
+        if not _HAS_PARSER_REGISTRY:
+            return IngestStats(source=index_name,
+                               errors=["parser_registry not available"])
+        exts = DOCUMENT_EXTENSIONS
+        return self._ingest_loop(
+            source_dir, index_name, exts, max_files, resume,
+            self._chunks_from_document, source_kind="document",
+            hybridrag_compat=hybridrag_compat,
+        )
+
+    def _chunks_from_document(
+        self, fpath: str, _raw: str, *,
+        source_kind: str = "document",
+        hybridrag_compat: bool = True,
+        **_kw,
+    ) -> List[Dict]:
+        """Parse document via registry, chunk with DocumentChunker."""
+        text, details = parse_file(fpath)
+        if not text.strip():
+            return []
+
+        if hybridrag_compat:
+            doc_chunker = DocumentChunker(
+                chunk_size=1200, overlap=200,
+                max_heading_len=160, heading_lookback=2000,
+            )
+            chunks = doc_chunker.chunk_text(text, fpath)
+        else:
+            chunks = self._chunker.chunk_file(fpath)
+
+        for c in chunks:
+            c["source_kind"] = source_kind
+            c["parser"] = details.get("parser", "unknown")
+            if self._pii and c.get("content"):
+                scan_result = self._pii.scan(c["content"])
+                if scan_result.findings:
+                    c["content"] = scan_result.clean_text
+        return chunks
 
     def ingest_code_files(
         self, source_dir: str, index_name: str = "code",

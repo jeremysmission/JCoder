@@ -13,7 +13,20 @@ to the chunker for splitting.
 import os
 from typing import Dict, List, Set
 
-from .chunker import Chunker, LANGUAGE_MAP
+from .chunker import Chunker, DocumentChunker, LANGUAGE_MAP
+
+try:
+    from .parser_registry import DOCUMENT_EXTENSIONS, parse_file
+    _HAS_PARSER_REGISTRY = True
+except ImportError:
+    _HAS_PARSER_REGISTRY = False
+    DOCUMENT_EXTENSIONS = frozenset()
+
+# ZIP-based document formats that start with PK signature but are NOT binary
+_ZIP_DOCUMENT_EXTS = {".epub", ".odt", ".ods", ".odp", ".docx", ".pptx", ".xlsx"}
+
+# OLE2-based document formats that start with 0xD0CF signature
+_OLE2_DOCUMENT_EXTS = {".xls", ".ppt", ".doc"}
 
 # Directories that should never be scanned
 SKIP_DIRS: Set[str] = {
@@ -57,7 +70,11 @@ class FileValidator:
             self._count("empty")
             return False
 
-        # Binary check
+        # Binary check -- skip for known document formats that have binary headers
+        ext = os.path.splitext(path)[1].lower()
+        if ext in _ZIP_DOCUMENT_EXTS or ext in _OLE2_DOCUMENT_EXTS:
+            return True  # Document parsers handle these formats
+
         try:
             with open(path, "rb") as f:
                 header = f.read(8)
@@ -87,10 +104,14 @@ class RepoLoader:
     Recursively scans a directory tree and chunks all supported source files.
     """
 
-    def __init__(self, chunker: Chunker, max_file_kb: int = DEFAULT_MAX_FILE_KB):
+    def __init__(self, chunker: Chunker, max_file_kb: int = DEFAULT_MAX_FILE_KB,
+                 include_documents: bool = True):
         self.chunker = chunker
         self.supported_extensions = set(LANGUAGE_MAP.keys())
+        if include_documents and _HAS_PARSER_REGISTRY:
+            self.supported_extensions |= set(DOCUMENT_EXTENSIONS)
         self.validator = FileValidator(max_file_kb)
+        self._doc_chunker = DocumentChunker() if include_documents else None
 
     @staticmethod
     def _should_skip_dir(dirname: str) -> bool:
@@ -123,7 +144,12 @@ class RepoLoader:
                     continue
 
                 try:
-                    chunks = self.chunker.chunk_file(full_path)
+                    # Use document parser for non-code formats
+                    if (ext in DOCUMENT_EXTENSIONS and _HAS_PARSER_REGISTRY
+                            and self._doc_chunker is not None):
+                        chunks = self._doc_chunker.chunk_file(full_path)
+                    else:
+                        chunks = self.chunker.chunk_file(full_path)
                     all_chunks.extend(chunks)
                     files_processed += 1
                 except Exception as e:

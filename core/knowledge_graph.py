@@ -502,15 +502,15 @@ class CodeKnowledgeGraph:
 
     def stats(self) -> Dict[str, Any]:
         with self._connect() as conn:
-            entities = conn.execute(
+            entities = (conn.execute(
                 "SELECT COUNT(*) FROM entities"
-            ).fetchone()[0]
-            relations = conn.execute(
+            ).fetchone() or (0,))[0]
+            relations = (conn.execute(
                 "SELECT COUNT(*) FROM relations"
-            ).fetchone()[0]
-            communities = conn.execute(
+            ).fetchone() or (0,))[0]
+            communities = (conn.execute(
                 "SELECT COUNT(DISTINCT community_id) FROM communities"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
             by_type = conn.execute(
                 "SELECT entity_type, COUNT(*) FROM entities "
                 "GROUP BY entity_type"

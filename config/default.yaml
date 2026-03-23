@@ -11,6 +11,20 @@ chunking:
   max_chars: 4000
   strategy: "tree_sitter"
 
+# HybridRAG-compatible chunking for shared index production.
+# Use this profile when building indexes that must be queryable by HybridRAG3.
+chunking_hybridrag:
+  max_chars: 1200
+  overlap: 200
+  strategy: "document"
+  heading_search_lookback: 2000
+  max_heading_len: 160
+
+# GPU assignment for embedding. Pin to CUDA:1 to avoid contention
+# with HybridRAG3 on CUDA:0 during concurrent indexing.
+gpu:
+  embedding_device: "cuda:1"
+
 storage:
   data_dir: "data"
   index_dir: "data/indexes"

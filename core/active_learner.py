@@ -303,15 +303,15 @@ class ActiveLearner:
 
     def stats(self) -> Dict[str, Any]:
         with self._connect() as conn:
-            total = conn.execute(
+            total = (conn.execute(
                 "SELECT COUNT(*) FROM candidates"
-            ).fetchone()[0]
-            unresolved = conn.execute(
+            ).fetchone() or (0,))[0]
+            unresolved = (conn.execute(
                 "SELECT COUNT(*) FROM candidates WHERE is_resolved = 0"
-            ).fetchone()[0]
-            avg_value = conn.execute(
+            ).fetchone() or (0,))[0]
+            avg_value = (conn.execute(
                 "SELECT AVG(learning_value) FROM candidates"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
         return {
             "total_scored": total,
             "unresolved": unresolved,

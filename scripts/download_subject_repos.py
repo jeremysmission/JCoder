@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DOWNLOAD_ROOT = Path(os.environ.get("JCODER_DOWNLOAD_DIR", r"D:\JCoder_Data\downloads")) / "subject_repos"
+DOWNLOAD_ROOT = Path(os.environ.get("JCODER_DOWNLOAD_DIR", r"data\downloads")) / "subject_repos"
 
 
 @dataclass(frozen=True)

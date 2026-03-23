@@ -259,12 +259,12 @@ class StigmergicBooster:
                 for r in cur.fetchall()
             ]
 
-            total = conn.execute(
+            total = (conn.execute(
                 "SELECT COUNT(*) FROM pheromones"
-            ).fetchone()[0]
-            log_count = conn.execute(
+            ).fetchone() or (0,))[0]
+            log_count = (conn.execute(
                 "SELECT COUNT(*) FROM trail_log"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
 
         return {
             "total_trails": total,

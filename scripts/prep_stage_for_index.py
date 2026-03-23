@@ -190,7 +190,7 @@ def main() -> int:
         latest_logs.clear()
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    _jcoder_data = Path(os.environ.get("JCODER_DATA_DIR", r"D:\JCoder_Data"))
+    _jcoder_data = Path(os.environ.get("JCODER_DATA_DIR", "data"))
     prep_root = _jcoder_data / "prep_stage" / f"prep_{ts}"
     prep_root.mkdir(parents=True, exist_ok=True)
     report_json = prep_root / "prep_report.json"

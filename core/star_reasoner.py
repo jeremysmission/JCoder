@@ -417,15 +417,15 @@ class STaRReasoner:
 
     def stats(self) -> Dict[str, Any]:
         with self._connect() as conn:
-            total = conn.execute(
+            total = (conn.execute(
                 "SELECT COUNT(*) FROM traces"
-            ).fetchone()[0]
-            correct = conn.execute(
+            ).fetchone() or (0,))[0]
+            correct = (conn.execute(
                 "SELECT COUNT(*) FROM traces WHERE correct = 1"
-            ).fetchone()[0]
-            avg_diff = conn.execute(
+            ).fetchone() or (0,))[0]
+            avg_diff = (conn.execute(
                 "SELECT AVG(difficulty) FROM traces WHERE correct = 1"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
         return {
             "total_traces": total,
             "correct_traces": correct,

@@ -77,12 +77,12 @@ class TestFileDiscovery:
         chunker = _mock_chunker()
         loader = RepoLoader(chunker)
         chunks = loader.load(str(tmp_path))
-        chunked_files = {c["file"] for c in chunks}
+        chunked_files = {c.get("file") or c.get("source_path", "") for c in chunks}
         # .py, .js, .md, .txt are in LANGUAGE_MAP
         assert any("main.py" in f for f in chunked_files)
         assert any("app.js" in f for f in chunked_files)
-        # .svg is not supported
-        assert not any("logo.svg" in f for f in chunked_files)
+        # .svg is now supported (added to LANGUAGE_MAP for document parsing)
+        assert any("logo.svg" in f for f in chunked_files)
 
     def test_skip_dirs_pruned(self, tmp_path):
         _make_tree(tmp_path, {
@@ -97,7 +97,7 @@ class TestFileDiscovery:
         chunker = _mock_chunker()
         loader = RepoLoader(chunker)
         chunks = loader.load(str(tmp_path))
-        chunked_files = {c["file"] for c in chunks}
+        chunked_files = {c.get("file") or c.get("source_path", "") for c in chunks}
         assert any("core.py" in f for f in chunked_files)
         for skip in ("node_modules", "__pycache__", ".git", "data", "logs", ".tmp_pytest_case"):
             assert not any(skip in f for f in chunked_files)

@@ -327,15 +327,15 @@ class ContinualLearner:
         baselines = self.get_baselines()
 
         with self._connect() as conn:
-            total_checks = conn.execute(
+            total_checks = (conn.execute(
                 "SELECT COUNT(*) FROM regression_checks"
-            ).fetchone()[0]
-            failed_checks = conn.execute(
+            ).fetchone() or (0,))[0]
+            failed_checks = (conn.execute(
                 "SELECT COUNT(*) FROM regression_checks WHERE passed = 0"
-            ).fetchone()[0]
-            snapshots = conn.execute(
+            ).fetchone() or (0,))[0]
+            snapshots = (conn.execute(
                 "SELECT COUNT(*) FROM config_snapshots"
-            ).fetchone()[0]
+            ).fetchone() or (0,))[0]
 
         return {
             "capabilities_tracked": len(baselines),

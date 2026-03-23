@@ -40,8 +40,7 @@ INDEX_DIR = DATA_ROOT / "indexes"
 # Archive locations searched in order
 ARCHIVE_DIRS = [
     DATA_ROOT,
-    Path(r"D:\Projects\KnowledgeBase\stackexchange_20251231"),
-    Path(r"D:\RAG Source Data\stackexchange_20251231"),
+    DATA_ROOT / "raw_downloads" / "stackexchange",
 ]
 
 # Programming-relevant SE sites (skip meta sites)

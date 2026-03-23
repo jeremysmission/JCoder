@@ -316,19 +316,19 @@ class BurstLedger:
     def stats(self) -> Dict[str, Any]:
         """Aggregate burst statistics."""
         conn = self._conn
-        total = conn.execute("SELECT COUNT(*) FROM burst_runs").fetchone()[0]
-        completed = conn.execute(
+        total = (conn.execute("SELECT COUNT(*) FROM burst_runs").fetchone() or (0,))[0]
+        completed = (conn.execute(
             "SELECT COUNT(*) FROM burst_runs WHERE status='completed'"
-        ).fetchone()[0]
-        total_cost = conn.execute(
+        ).fetchone() or (0,))[0]
+        total_cost = (conn.execute(
             "SELECT COALESCE(SUM(total_cost_usd), 0) FROM burst_runs"
-        ).fetchone()[0]
-        total_evolutions = conn.execute(
+        ).fetchone() or (0,))[0]
+        total_evolutions = (conn.execute(
             "SELECT COALESCE(SUM(total_evolutions), 0) FROM burst_runs"
-        ).fetchone()[0]
-        total_accepted = conn.execute(
+        ).fetchone() or (0,))[0]
+        total_accepted = (conn.execute(
             "SELECT COALESCE(SUM(accepted), 0) FROM burst_runs"
-        ).fetchone()[0]
+        ).fetchone() or (0,))[0]
 
         return {
             "total_bursts": total,

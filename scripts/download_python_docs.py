@@ -37,7 +37,7 @@ if sys.platform == "win32":
 
 DOCS_URL = "https://www.python.org/ftp/python/doc/3.13.3/python-3.13.3-docs-text.tar.bz2"
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 DOWNLOAD_DIR = DATA_ROOT / "downloads" / "python_docs"
 OUTPUT_DIR = DATA_ROOT / "clean_source" / "python_docs"
 

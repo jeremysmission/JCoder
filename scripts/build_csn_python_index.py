@@ -25,7 +25,7 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", "data"))
 JSONL_DIR = DATA_ROOT / "raw_downloads" / "codesearchnet"
 INDEX_DIR = DATA_ROOT / "indexes"
 INDEX_DIR.mkdir(parents=True, exist_ok=True)
