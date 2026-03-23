@@ -291,7 +291,9 @@ class IndexEngine:
                 results.append((idx, -float(rank)))
         return results
 
-    def search_fts5_direct(self, query: str, k: int) -> List[Tuple[float, Dict]]:
+    def search_fts5_direct(
+        self, query: str, k: int, min_quality: int = 0,
+    ) -> List[Tuple[float, Dict]]:
         """Search FTS5 and return content directly without metadata array.
 
         Returns list of (score, {id, content, source_path}) -- same shape
@@ -300,6 +302,9 @@ class IndexEngine:
 
         Use this for standalone FTS5 indexes where loading all rows into
         RAM is impractical (e.g. 500 MB+ corpus indexes).
+
+        *min_quality* filters chunks below this quality_score (0 = no filter).
+        Gracefully ignores the filter if the index lacks a quality_score column.
         """
         or_query = self._sanitize_fts5_query(query)
         if or_query == '""':
@@ -310,24 +315,56 @@ class IndexEngine:
 
         try:
             spec = self._resolve_fts5_query_spec()
+            # Try quality-filtered query first when min_quality > 0
+            has_quality = min_quality > 0 and self._has_quality_column(conn)
+            quality_clause = ""
+            if has_quality:
+                quality_clause = f" AND CAST(quality_score AS INTEGER) >= {int(min_quality)}"
+
             cursor = conn.execute(
                 f"SELECT {spec['id_expr']} AS hit_id, "
                 f"{spec['content_col']} AS hit_content, "
                 f"{spec['source_expr']} AS hit_source, rank "
                 "FROM chunks "
-                f"WHERE {spec['match_col']} MATCH ? "
+                f"WHERE {spec['match_col']} MATCH ?{quality_clause} "
                 "ORDER BY rank LIMIT ?",
                 (or_query, k),
             )
-            return [
+            results = [
                 (-float(rank), {"id": cid, "content": content, "source_path": src})
                 for cid, content, src, rank in cursor.fetchall()
             ]
+            # If quality filter yielded too few results, fall back unfiltered
+            if has_quality and len(results) < min(3, k):
+                cursor = conn.execute(
+                    f"SELECT {spec['id_expr']} AS hit_id, "
+                    f"{spec['content_col']} AS hit_content, "
+                    f"{spec['source_expr']} AS hit_source, rank "
+                    "FROM chunks "
+                    f"WHERE {spec['match_col']} MATCH ? "
+                    "ORDER BY rank LIMIT ?",
+                    (or_query, k),
+                )
+                results = [
+                    (-float(rank), {"id": cid, "content": content, "source_path": src})
+                    for cid, content, src, rank in cursor.fetchall()
+                ]
+            return results
         except sqlite3.OperationalError as e:
             if not self._fts5_error_logged:
                 log.warning("FTS5 direct query error (logged once): %s", e)
                 self._fts5_error_logged = True
             return []
+
+    def _has_quality_column(self, conn: sqlite3.Connection) -> bool:
+        """Check if the chunks FTS5 table has a quality_score column."""
+        if not hasattr(self, "_quality_col_cache"):
+            try:
+                conn.execute("SELECT quality_score FROM chunks LIMIT 0")
+                self._quality_col_cache = True
+            except sqlite3.OperationalError:
+                self._quality_col_cache = False
+        return self._quality_col_cache
 
     # Intent token sets for path-prior boosting
     _INTENT_CONFIG = {"config", "yaml", "yml", "policy", "policies", "ports",

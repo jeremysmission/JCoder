@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.nist.gov/artificial-intelligence/ai-research-security-and-resilience",
+  "id": "governance_nist_ai_security_resilience",
+  "lane": "lane_02",
+  "notes": "AI security and resilience governance framing.",
+  "saved_at_utc": "2026-03-21T07:54:29.876430+00:00",
+  "saved_relpath": "lane_02/market_demand_governance/governance_nist_ai_security_resilience.html",
+  "sha256": "9b90bb77ab3c87ef90afc9ada2e2e4de9ebea580ba439cafad5f23e492292f5a",
+  "size_bytes": 85432,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.nist.gov/artificial-intelligence/ai-research-security-and-resilience"
+}

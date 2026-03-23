@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "deduped_to": "lane_02/market_demand_governance/governance_ftc_cybersecurity_small_business.html",
+  "final_url": "https://www.ftc.gov/business-guidance/small-businesses/cybersecurity",
+  "id": "governance_ftc_cybersecurity_small_business",
+  "lane": "lane_03",
+  "saved_at_utc": "2026-03-21T07:54:29.982491+00:00",
+  "saved_relpath": "lane_02/market_demand_governance/governance_ftc_cybersecurity_small_business.html",
+  "sha256": "c21ab8b11321701011e5132678eb4e5255cf09a6a9202554aafed9c6a90f9777",
+  "size_bytes": 1031196,
+  "status": "deduplicated",
+  "status_code": 200,
+  "url": "https://www.ftc.gov/business-guidance/small-businesses/cybersecurity"
+}

@@ -22,6 +22,7 @@ SKIP_DIRS: Set[str] = {
     "__pycache__", ".mypy_cache", ".pytest_cache",
     "dist", "build", ".tox", ".eggs",
     ".idea", ".vscode",
+    "data", "logs",
     "evaluation",
 }
 
@@ -91,6 +92,11 @@ class RepoLoader:
         self.supported_extensions = set(LANGUAGE_MAP.keys())
         self.validator = FileValidator(max_file_kb)
 
+    @staticmethod
+    def _should_skip_dir(dirname: str) -> bool:
+        """Skip generated/runtime folders that should not be self-ingested."""
+        return dirname in SKIP_DIRS or dirname.startswith(".tmp_pytest")
+
     def load(self, root_path: str) -> List[dict]:
         """
         Walk the directory tree, chunk every supported file.
@@ -104,7 +110,7 @@ class RepoLoader:
 
         for dirpath, dirnames, filenames in os.walk(root_path):
             # Prune skipped directories in-place (prevents os.walk from descending)
-            dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+            dirnames[:] = [d for d in dirnames if not self._should_skip_dir(d)]
 
             for filename in filenames:
                 ext = os.path.splitext(filename)[1].lower()

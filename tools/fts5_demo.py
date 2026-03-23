@@ -21,12 +21,23 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
-# File types to index
-INDEX_EXTENSIONS = {
-    ".py", ".md", ".txt", ".yaml", ".yml", ".json", ".toml",
+# Import central extension registry from core
+try:
+    from ingestion.chunker import LANGUAGE_MAP
+    _HAS_LANGUAGE_MAP = True
+except ImportError:
+    _HAS_LANGUAGE_MAP = False
+    LANGUAGE_MAP = {}
+
+# File types to index: base set + all code extensions from LANGUAGE_MAP
+_BASE_INDEX_EXTENSIONS = {
+    ".md", ".txt", ".yaml", ".yml", ".json", ".toml",
     ".ps1", ".sh", ".bat", ".cmd", ".html", ".htm", ".css",
-    ".js", ".ts", ".cfg", ".ini", ".rst", ".xml", ".csv",
+    ".cfg", ".ini", ".xml", ".csv",
 }
+INDEX_EXTENSIONS = _BASE_INDEX_EXTENSIONS.copy()
+if _HAS_LANGUAGE_MAP:
+    INDEX_EXTENSIONS.update(LANGUAGE_MAP.keys())
 
 SKIP_DIRS = {
     "__pycache__", ".git", ".venv", "node_modules", ".pytest_cache",

@@ -29,10 +29,13 @@ if sys.platform == "win32" and __name__ == "__main__":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 from ingestion.chunker import Chunker, LANGUAGE_MAP
+from ingestion.dedup import MinHashDedup
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+_PROJECT_ROOT = Path(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", str(_PROJECT_ROOT / "data")))
 CLEAN_DIR = DATA_ROOT / "clean_source"
 INDEX_DIR = DATA_ROOT / "indexes"
+DEDUP_DIR = DATA_ROOT / "dedup_state"
 
 # Extensions that should use AST-aware chunking
 AST_EXTENSIONS = {ext for ext, lang in LANGUAGE_MAP.items() if lang is not None}
@@ -142,7 +145,33 @@ def _chunk_code_file(fpath: Path, max_chars: int = 4000) -> list:
     return results
 
 
-def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict:
+def _estimate_quality(content: str, source_path: str) -> int:
+    """Estimate an educational quality score (0-5) for a chunk.
+
+    Heuristics (no model needed):
+    - Has docstring/comments? +1
+    - Has function/class definition? +1
+    - Reasonable length (50-2000 chars)? +1
+    - From a curated source (python_docs, rfc)? +1
+    - Contains imports/type hints? +1
+    """
+    score = 0
+    if re.search(r'""".*?"""|\'\'\'.*?\'\'\'|^\s*#\s+\S', content, re.DOTALL):
+        score += 1
+    if re.search(r'\bdef\s+\w+|class\s+\w+', content):
+        score += 1
+    if 50 <= len(content) <= 2000:
+        score += 1
+    curated = ("python_docs", "rfc", "csn_")
+    if any(c in source_path.lower() for c in curated):
+        score += 1
+    if re.search(r'\bimport\s+\w+|:\s*(int|str|float|bool|list|dict|Optional)', content):
+        score += 1
+    return min(score, 5)
+
+
+def build_fts5_index(source_name: str, config: dict, max_files: int = 0,
+                     dedup: MinHashDedup | None = None) -> dict:
     """Build one FTS5 index for a data source. Returns stats dict."""
     source_dir = CLEAN_DIR / source_name
     if not source_dir.exists():
@@ -209,11 +238,12 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
 
     # Build in batches to SQLite
     conn = sqlite3.connect(str(db_path))
+    dedup_hits = 0
     try:
         conn.execute("DROP TABLE IF EXISTS chunks")
         conn.execute(
             "CREATE VIRTUAL TABLE chunks "
-            "USING fts5(search_content, source_path, chunk_id, title)"
+            "USING fts5(search_content, source_path, chunk_id, title, quality_score)"
         )
 
         batch = []
@@ -223,19 +253,26 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
             try:
                 chunks = chunk_fn(fpath)
                 for c in chunks:
+                    content = c["content"]
+                    # Skip near-duplicates when dedup is active
+                    if dedup and dedup.is_duplicate(content, doc_id=f"{index_name}_{chunk_id+1}"):
+                        dedup_hits += 1
+                        continue
                     chunk_id += 1
+                    quality = _estimate_quality(content, c.get("source", ""))
                     batch.append((
-                        _normalize(c["content"]),
+                        _normalize(content),
                         c["source"],
                         f"{index_name}_{chunk_id:08d}",
                         c.get("title", ""),
+                        str(quality),
                     ))
                     stats["chunks"] += 1
 
                     if len(batch) >= 5000:
                         conn.executemany(
-                            "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
-                            "VALUES (?, ?, ?, ?)", batch
+                            "INSERT INTO chunks(search_content, source_path, chunk_id, title, quality_score) "
+                            "VALUES (?, ?, ?, ?, ?)", batch
                         )
                         conn.commit()
                         batch.clear()
@@ -256,12 +293,13 @@ def build_fts5_index(source_name: str, config: dict, max_files: int = 0) -> dict
         # Flush remaining
         if batch:
             conn.executemany(
-                "INSERT INTO chunks(search_content, source_path, chunk_id, title) "
-                "VALUES (?, ?, ?, ?)", batch
+                "INSERT INTO chunks(search_content, source_path, chunk_id, title, quality_score) "
+                "VALUES (?, ?, ?, ?, ?)", batch
             )
             conn.commit()
     finally:
         conn.close()
+    stats["dedup_hits"] = dedup_hits
 
     # Write error log if any errors occurred
     if error_lines:
@@ -281,10 +319,19 @@ def main():
     parser = argparse.ArgumentParser(description="Build FTS5 indexes for JCoder")
     parser.add_argument("--source", default="", help="Process only this source")
     parser.add_argument("--max-files", type=int, default=0, help="Limit files per source")
+    parser.add_argument("--no-dedup", action="store_true", help="Disable cross-index deduplication")
     args = parser.parse_args()
 
     print("\nJCoder FTS5 Index Builder")
     print("=" * 50)
+
+    # Cross-index dedup with persistent state (R12.3)
+    dedup = None
+    if not args.no_dedup:
+        DEDUP_DIR.mkdir(parents=True, exist_ok=True)
+        persist = str(DEDUP_DIR / "build_dedup.json")
+        dedup = MinHashDedup(num_perm=128, threshold=0.8, persist_path=persist)
+        print(f"[OK] Cross-index dedup enabled (threshold=0.8, state={persist})")
 
     all_stats = []
     t_total = time.monotonic()
@@ -292,19 +339,29 @@ def main():
     for source_name, config in SOURCE_CONFIG.items():
         if args.source and args.source not in source_name:
             continue
-        stats = build_fts5_index(source_name, config, max_files=args.max_files)
+        stats = build_fts5_index(source_name, config, max_files=args.max_files, dedup=dedup)
         all_stats.append(stats)
+
+    # Save dedup state for incremental builds
+    if dedup:
+        dedup.save()
+        ds = dedup.stats()
+        print(f"[OK] Dedup: {ds.unique} unique, {ds.exact_dupes} exact dupes, "
+              f"{ds.near_dupes} near dupes eliminated")
 
     elapsed = time.monotonic() - t_total
     total_chunks = sum(s["chunks"] for s in all_stats)
     total_size = sum(s.get("size_mb", 0) for s in all_stats)
+    total_dedup = sum(s.get("dedup_hits", 0) for s in all_stats)
 
     print("=" * 50)
-    print(f"[OK] Total: {total_chunks:,} chunks, {total_size:.1f} MB, {elapsed:.1f}s")
+    print(f"[OK] Total: {total_chunks:,} chunks, {total_size:.1f} MB, {elapsed:.1f}s"
+          + (f", {total_dedup:,} dupes removed" if total_dedup else ""))
     for s in all_stats:
         status = "SKIP" if s.get("skipped") else "OK"
         print(f"  [{status}] {s['name']}: {s['chunks']:,} chunks"
-              + (f", {s.get('size_mb', 0):.1f} MB" if s.get("size_mb") else ""))
+              + (f", {s.get('size_mb', 0):.1f} MB" if s.get("size_mb") else "")
+              + (f", {s.get('dedup_hits', 0)} dupes" if s.get("dedup_hits") else ""))
 
 
 if __name__ == "__main__":

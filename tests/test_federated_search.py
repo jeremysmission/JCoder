@@ -78,7 +78,7 @@ def _make_mock_index(name: str, results: list):
     idx.metadata = []
     idx.search_keywords = MagicMock(return_value=[])
 
-    idx.search_fts5_direct = MagicMock(side_effect=lambda q, k: results[:k])
+    idx.search_fts5_direct = MagicMock(side_effect=lambda q, k, **kw: results[:k])
     return idx
 
 

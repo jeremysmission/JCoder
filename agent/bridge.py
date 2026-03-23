@@ -7,8 +7,7 @@ Every self-learning module is optional -- degrades gracefully.
 from __future__ import annotations
 import hashlib, logging, time
 from typing import Any, Callable, Dict, List, Optional, Tuple
-from agent.core import Agent, AgentResult, AgentStep
-from agent.tools import ToolRegistry
+from agent.core import Agent, AgentResult
 
 log = logging.getLogger(__name__)
 

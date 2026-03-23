@@ -34,17 +34,23 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # Paths
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", str(PROJECT_ROOT / "data")))
 RAW_ROOT = DATA_ROOT / "raw_downloads"
 CLEAN_ROOT = DATA_ROOT / "clean_source"
 INDEX_DIR = PROJECT_ROOT / "data" / "indexes"
 LOG_DIR = DATA_ROOT / "logs"
 
-for d in [RAW_ROOT, CLEAN_ROOT, INDEX_DIR, LOG_DIR]:
-    d.mkdir(parents=True, exist_ok=True)
 
-# Log setup
-LOG_FILE = LOG_DIR / f"overnight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+# Log setup -- deferred until _ensure_dirs() creates LOG_DIR
+LOG_FILE: Path = Path("overnight.log")  # placeholder, set in _ensure_dirs
+
+
+def _ensure_dirs():
+    """Create data directories on first use (not at import time)."""
+    global LOG_FILE
+    for d in [RAW_ROOT, CLEAN_ROOT, INDEX_DIR, LOG_DIR]:
+        d.mkdir(parents=True, exist_ok=True)
+    LOG_FILE = LOG_DIR / f"overnight_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
 
 def log(msg: str):
@@ -448,11 +454,12 @@ def build_fts5_for_dir(source_dir: Path, index_name: str):
 # -----------------------------------------------------------------------
 
 def main():
+    _ensure_dirs()
     log("=" * 60)
     log("JCoder Overnight Download + Preprocessing Pipeline")
     log(f"Start: {datetime.now().isoformat()}")
     log(f"Log: {LOG_FILE}")
-    log(f"Disk free: {shutil.disk_usage('D:\\').free / 1e9:.0f} GB")
+    log(f"Disk free: {shutil.disk_usage(str(DATA_ROOT)).free / 1e9:.0f} GB")
     log("=" * 60)
 
     t0 = time.time()

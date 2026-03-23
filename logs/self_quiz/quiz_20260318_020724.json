@@ -1,0 +1,31 @@
+{
+  "timestamp": "2026-03-18T08:07:24.046203+00:00",
+  "count": 3,
+  "avg_latency_s": 8.6,
+  "results": [
+    {
+      "question": "What is the capital of the country of Africa?",
+      "index": "default",
+      "answer": "The question \"What is the capital of the country of Africa?\" contains a \nmisunderstanding. Africa is not a single country; it is a continent composed of\n54 recognized sovereign countries, each with its own capital city. Therefore, \nthere isn't one capital for the entire continent of Africa.\n\nIf you are interested in learning about some major cities or capitals within \nAfrica, here are a few examples:\n\n- **Cairo** - Capital of Egypt\n- **Nairobi** - Capital of Kenya\n- **Addis Ababa** - Capital of Ethiopia\n- **Johannesburg** - A major city in South Africa (Note: Pretoria is the \nadministrative capital)\n- **Lagos** - Largest city and economic hub of Nigeria\n\nIf you have a specific country within Africa in mind, I can provide more \ninformation about its capital.\n\n             Sources",
+      "elapsed_s": 6.5,
+      "exit_code": 0,
+      "stderr_snippet": "FAISS GPU skipped: VRAM query failed \u2014 using CPU\n"
+    },
+    {
+      "question": "How does the meta-cognitive controller select learning strategies?",
+      "index": "default",
+      "answer": "The meta-cognitive controller selects learning strategies using Thompson \nSampling, which is a Bayesian approach for balancing exploration and \nexploitation. Here\u2019s how it works in this context:\n\n1. **Beta Distributions**: For each combination of strategy and query type \n(e.g., \"debug\" queries with \"corrective\" retrieval), the controller maintains a\nBeta distribution characterized by two parameters: alpha (successes + prior) \nand beta (failures + prior). These distributions model the effectiveness of \nstrategies for different types of queries.\n\n2. **Sampling**: When deciding which strategy to use for a given query, the \ncontroller samples from these Beta distributions using Thompson Sampling. This \ninvolves drawing a random value from each distribution, where higher values \nindicate more promising strategies based on past performance and exploration \nbonuses.\n\n3. **Exploration Bonus**: An exploration bonus is added to encourage trying \nless-explored strategies. This helps in discovering potentially better \nstrategies that haven't been tried as often.\n\n4. **Strategy Selection**: The strategy with the highest sampled score for a \ngiven query type is selected. Over time, this process allows the controller to \nlearn which strategies work best for different types of queries by updating the\nBeta distributions based on observed outcomes (success or failure).\n\n5. **Updating Distributions**: After executing a strategy, the outcome (reward)\nis used to update the corresponding Beta distribution:\n   - If the strategy was successful, the alpha parameter is incremented.\n   - If it failed, the beta parameter is incremented.\n\nThis adaptive mechanism enables the meta-cognitive controller to dynamically \nadjust its strategy selection process based on historical performance data, \nimproving over time as more queries are processed.\n\n             Sources",
+      "elapsed_s": 8.5,
+      "exit_code": 0,
+      "stderr_snippet": "FAISS GPU skipped: VRAM query failed \u2014 using CPU\n"
+    },
+    {
+      "question": "How does experience replay store and retrieve trajectories?",
+      "index": "default",
+      "answer": "Based on the provided context, here's how experience replay stores and \nretrieves trajectories:\n\n### Storage\n\n1. **Criteria for Storing Experiences:**\n   - The system only stores experiences that meet certain quality criteria:\n     - Confidence above a specified threshold (`min_confidence`).\n     - Explicitly positive feedback.\n     - Answer contains code (not just \"I don't know\").\n\n2. **Data Structure:**\n   - Each experience is stored as an instance of the `Experience` dataclass, \nwhich includes fields like `exp_id`, `query`, `answer`, `source_files`, \n`confidence`, `timestamp`, and others.\n\n3. **Database Storage:**\n   - Experiences are stored in a SQLite database.\n   - The table schema includes columns for each field of the `Experience` \nclass, such as `exp_id`, `query`, `answer`, etc.\n   - An index is created on the `confidence` column to facilitate efficient \nretrieval.\n\n4. **Storage Process:**\n   - When storing an experience, it checks if the confidence level meets the \nminimum threshold and whether the answer contains code-like content using a \nregex pattern.\n   - Keywords are extracted from the query for indexing purposes.\n   - The experience is inserted into the database with its associated metadata.\n\n### Retrieval\n\n1. **Retrieval Criteria:**\n   - Experiences are retrieved based on their relevance to a given query, \nprimarily using keyword overlap scoring.\n\n2. **Keyword Overlap Scoring:**\n   - Keywords are extracted from both the stored experiences and the new query.\n   - The system calculates a Jaccard similarity score between the keywords of \nthe query and those in the stored experiences.\n   - This score is combined with the confidence level to rank the relevance of \neach experience.\n\n3. **Retrieval Process:**\n   - A specified number (`top_k`) of most relevant past experiences are \nretrieved based on their scores.\n   - The retrieval process involves querying the SQLite database for \nexperiences, calculating keyword overlap, and sorting them by relevance.\n\n4. **Use Count Update:**\n   - When experiences are retrieved, their use counts are incremented to track \nhow often they have been used in future queries.\n\n### Summary\n\nExperience replay leverages a combination of confidence thresholds, keyword \nextraction, and Jaccard similarity scoring to store and retrieve relevant \nquery-answer trajectories efficiently. This mechanism allows the system to \nimprove its responses by using past successful interactions as few-shot \nexamples for similar future queries.\n\n             Sources",
+      "elapsed_s": 10.9,
+      "exit_code": 0,
+      "stderr_snippet": "FAISS GPU skipped: VRAM query failed \u2014 using CPU\n"
+    }
+  ]
+}

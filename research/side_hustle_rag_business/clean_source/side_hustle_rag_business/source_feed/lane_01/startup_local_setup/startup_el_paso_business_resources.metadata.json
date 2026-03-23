@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://admin.elpasoco.com/economic-development/business-incentives/business-resources/",
+  "id": "startup_el_paso_business_resources",
+  "lane": "lane_01",
+  "notes": "County-level business support resources.",
+  "saved_at_utc": "2026-03-21T07:54:29.637482+00:00",
+  "saved_relpath": "lane_01/startup_local_setup/startup_el_paso_business_resources.html",
+  "sha256": "60410d893d7c50f996a3b1807bcbaa0d0161d6b3f6f48b93275fb2191a3e1d23",
+  "size_bytes": 203748,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://admin.elpasoco.com/economic-development/business-incentives/business-resources/"
+}

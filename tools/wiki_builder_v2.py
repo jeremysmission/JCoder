@@ -30,12 +30,24 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
-TEXT_EXTENSIONS = {
-    ".md", ".txt", ".py", ".js", ".ts", ".html", ".htm", ".css",
+# Import central extension registry from core
+try:
+    from ingestion.chunker import LANGUAGE_MAP
+    _HAS_LANGUAGE_MAP = True
+except ImportError:
+    _HAS_LANGUAGE_MAP = False
+    LANGUAGE_MAP = {}
+
+# Text extensions: base set + all code extensions from LANGUAGE_MAP
+_BASE_TEXT_EXTENSIONS = {
+    ".md", ".txt", ".html", ".htm", ".css",
     ".json", ".yaml", ".yml", ".toml", ".cfg", ".ini", ".conf",
     ".sh", ".bash", ".ps1", ".bat", ".cmd", ".xml", ".csv",
-    ".rst", ".log", ".dockerfile", ".sql", ".r", ".go", ".rs",
+    ".rst", ".log", ".dockerfile", ".sql", ".r",
 }
+TEXT_EXTENSIONS = _BASE_TEXT_EXTENSIONS.copy()
+if _HAS_LANGUAGE_MAP:
+    TEXT_EXTENSIONS.update(LANGUAGE_MAP.keys())
 
 BINARY_LABELS = {
     ".docx": "Word Document", ".xlsx": "Excel Spreadsheet",

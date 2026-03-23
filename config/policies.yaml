@@ -4,9 +4,11 @@
 concurrency:
   max_parallel_requests: 4
 
+# Bumped from 8192/800 to 16384/4096 for devstral-24b (2026-03-18)
+# Previous limits caused token cutoffs on long code generation
 context:
-  max_context_tokens: 8192
-  max_generation_tokens: 800
+  max_context_tokens: 16384
+  max_generation_tokens: 4096
   max_chunks_retrieved: 30
   max_rerank_n: 50
 
@@ -19,7 +21,7 @@ gpu:
   memory_utilization: 0.85
 
 timeouts_ms:
-  embed: 30000
+  embed: 120000
   retrieve: 10000
   rerank: 30000
   generate: 120000

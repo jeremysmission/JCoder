@@ -1,0 +1,1452 @@
+<!doctype html>
+<html lang="en-US">
+
+<head><meta charset="utf-8"><script>if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]nowprocket/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?nowprocket=1"}else{document.location.href=href.replace("#","?nowprocket=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&nowprocket=1"}else{document.location.href=href.replace("#","&nowprocket=1#")}}}}</script><script>(()=>{class RocketLazyLoadScripts{constructor(){this.v="2.0.5",this.userEvents=["keydown","keyup","mousedown","mouseup","mousemove","mouseover","mouseout","touchmove","touchstart","touchend","touchcancel","wheel","click","dblclick","input"],this.attributeEvents=["onblur","onclick","oncontextmenu","ondblclick","onfocus","onmousedown","onmouseenter","onmouseleave","onmousemove","onmouseout","onmouseover","onmouseup","onmousewheel","onscroll","onsubmit"]}async t(){this.i(),this.o(),/iP(ad|hone)/.test(navigator.userAgent)&&this.h(),this.u(),this.l(this),this.m(),this.k(this),this.p(this),this._(),await Promise.all([this.R(),this.L()]),this.lastBreath=Date.now(),this.S(this),this.P(),this.D(),this.O(),this.M(),await this.C(this.delayedScripts.normal),await this.C(this.delayedScripts.defer),await this.C(this.delayedScripts.async),await this.T(),await this.F(),await this.j(),await this.A(),window.dispatchEvent(new Event("rocket-allScriptsLoaded")),this.everythingLoaded=!0,this.lastTouchEnd&&await new Promise(t=>setTimeout(t,500-Date.now()+this.lastTouchEnd)),this.I(),this.H(),this.U(),this.W()}i(){this.CSPIssue=sessionStorage.getItem("rocketCSPIssue"),document.addEventListener("securitypolicyviolation",t=>{this.CSPIssue||"script-src-elem"!==t.violatedDirective||"data"!==t.blockedURI||(this.CSPIssue=!0,sessionStorage.setItem("rocketCSPIssue",!0))},{isRocket:!0})}o(){window.addEventListener("pageshow",t=>{this.persisted=t.persisted,this.realWindowLoadedFired=!0},{isRocket:!0}),window.addEventListener("pagehide",()=>{this.onFirstUserAction=null},{isRocket:!0})}h(){let t;function e(e){t=e}window.addEventListener("touchstart",e,{isRocket:!0}),window.addEventListener("touchend",function i(o){o.changedTouches[0]&&t.changedTouches[0]&&Math.abs(o.changedTouches[0].pageX-t.changedTouches[0].pageX)<10&&Math.abs(o.changedTouches[0].pageY-t.changedTouches[0].pageY)<10&&o.timeStamp-t.timeStamp<200&&(window.removeEventListener("touchstart",e,{isRocket:!0}),window.removeEventListener("touchend",i,{isRocket:!0}),"INPUT"===o.target.tagName&&"text"===o.target.type||(o.target.dispatchEvent(new TouchEvent("touchend",{target:o.target,bubbles:!0})),o.target.dispatchEvent(new MouseEvent("mouseover",{target:o.target,bubbles:!0})),o.target.dispatchEvent(new PointerEvent("click",{target:o.target,bubbles:!0,cancelable:!0,detail:1,clientX:o.changedTouches[0].clientX,clientY:o.changedTouches[0].clientY})),event.preventDefault()))},{isRocket:!0})}q(t){this.userActionTriggered||("mousemove"!==t.type||this.firstMousemoveIgnored?"keyup"===t.type||"mouseover"===t.type||"mouseout"===t.type||(this.userActionTriggered=!0,this.onFirstUserAction&&this.onFirstUserAction()):this.firstMousemoveIgnored=!0),"click"===t.type&&t.preventDefault(),t.stopPropagation(),t.stopImmediatePropagation(),"touchstart"===this.lastEvent&&"touchend"===t.type&&(this.lastTouchEnd=Date.now()),"click"===t.type&&(this.lastTouchEnd=0),this.lastEvent=t.type,t.composedPath&&t.composedPath()[0].getRootNode()instanceof ShadowRoot&&(t.rocketTarget=t.composedPath()[0]),this.savedUserEvents.push(t)}u(){this.savedUserEvents=[],this.userEventHandler=this.q.bind(this),this.userEvents.forEach(t=>window.addEventListener(t,this.userEventHandler,{passive:!1,isRocket:!0})),document.addEventListener("visibilitychange",this.userEventHandler,{isRocket:!0})}U(){this.userEvents.forEach(t=>window.removeEventListener(t,this.userEventHandler,{passive:!1,isRocket:!0})),document.removeEventListener("visibilitychange",this.userEventHandler,{isRocket:!0}),this.savedUserEvents.forEach(t=>{(t.rocketTarget||t.target).dispatchEvent(new window[t.constructor.name](t.type,t))})}m(){const t="return false",e=Array.from(this.attributeEvents,t=>"data-rocket-"+t),i="["+this.attributeEvents.join("],[")+"]",o="[data-rocket-"+this.attributeEvents.join("],[data-rocket-")+"]",s=(e,i,o)=>{o&&o!==t&&(e.setAttribute("data-rocket-"+i,o),e["rocket"+i]=new Function("event",o),e.setAttribute(i,t))};new MutationObserver(t=>{for(const n of t)"attributes"===n.type&&(n.attributeName.startsWith("data-rocket-")||this.everythingLoaded?n.attributeName.startsWith("data-rocket-")&&this.everythingLoaded&&this.N(n.target,n.attributeName.substring(12)):s(n.target,n.attributeName,n.target.getAttribute(n.attributeName))),"childList"===n.type&&n.addedNodes.forEach(t=>{if(t.nodeType===Node.ELEMENT_NODE)if(this.everythingLoaded)for(const i of[t,...t.querySelectorAll(o)])for(const t of i.getAttributeNames())e.includes(t)&&this.N(i,t.substring(12));else for(const e of[t,...t.querySelectorAll(i)])for(const t of e.getAttributeNames())this.attributeEvents.includes(t)&&s(e,t,e.getAttribute(t))})}).observe(document,{subtree:!0,childList:!0,attributeFilter:[...this.attributeEvents,...e]})}I(){this.attributeEvents.forEach(t=>{document.querySelectorAll("[data-rocket-"+t+"]").forEach(e=>{this.N(e,t)})})}N(t,e){const i=t.getAttribute("data-rocket-"+e);i&&(t.setAttribute(e,i),t.removeAttribute("data-rocket-"+e))}k(t){Object.defineProperty(HTMLElement.prototype,"onclick",{get(){return this.rocketonclick||null},set(e){this.rocketonclick=e,this.setAttribute(t.everythingLoaded?"onclick":"data-rocket-onclick","this.rocketonclick(event)")}})}S(t){function e(e,i){let o=e[i];e[i]=null,Object.defineProperty(e,i,{get:()=>o,set(s){t.everythingLoaded?o=s:e["rocket"+i]=o=s}})}e(document,"onreadystatechange"),e(window,"onload"),e(window,"onpageshow");try{Object.defineProperty(document,"readyState",{get:()=>t.rocketReadyState,set(e){t.rocketReadyState=e},configurable:!0}),document.readyState="loading"}catch(t){console.log("WPRocket DJE readyState conflict, bypassing")}}l(t){this.originalAddEventListener=EventTarget.prototype.addEventListener,this.originalRemoveEventListener=EventTarget.prototype.removeEventListener,this.savedEventListeners=[],EventTarget.prototype.addEventListener=function(e,i,o){o&&o.isRocket||!t.B(e,this)&&!t.userEvents.includes(e)||t.B(e,this)&&!t.userActionTriggered||e.startsWith("rocket-")||t.everythingLoaded?t.originalAddEventListener.call(this,e,i,o):(t.savedEventListeners.push({target:this,remove:!1,type:e,func:i,options:o}),"mouseenter"!==e&&"mouseleave"!==e||t.originalAddEventListener.call(this,e,t.savedUserEvents.push,o))},EventTarget.prototype.removeEventListener=function(e,i,o){o&&o.isRocket||!t.B(e,this)&&!t.userEvents.includes(e)||t.B(e,this)&&!t.userActionTriggered||e.startsWith("rocket-")||t.everythingLoaded?t.originalRemoveEventListener.call(this,e,i,o):t.savedEventListeners.push({target:this,remove:!0,type:e,func:i,options:o})}}J(t,e){this.savedEventListeners=this.savedEventListeners.filter(i=>{let o=i.type,s=i.target||window;return e!==o||t!==s||(this.B(o,s)&&(i.type="rocket-"+o),this.$(i),!1)})}H(){EventTarget.prototype.addEventListener=this.originalAddEventListener,EventTarget.prototype.removeEventListener=this.originalRemoveEventListener,this.savedEventListeners.forEach(t=>this.$(t))}$(t){t.remove?this.originalRemoveEventListener.call(t.target,t.type,t.func,t.options):this.originalAddEventListener.call(t.target,t.type,t.func,t.options)}p(t){let e;function i(e){return t.everythingLoaded?e:e.split(" ").map(t=>"load"===t||t.startsWith("load.")?"rocket-jquery-load":t).join(" ")}function o(o){function s(e){const s=o.fn[e];o.fn[e]=o.fn.init.prototype[e]=function(){return this[0]===window&&t.userActionTriggered&&("string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=i(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach(t=>{const e=arguments[0][t];delete arguments[0][t],arguments[0][i(t)]=e})),s.apply(this,arguments),this}}if(o&&o.fn&&!t.allJQueries.includes(o)){const e={DOMContentLoaded:[],"rocket-DOMContentLoaded":[]};for(const t in e)document.addEventListener(t,()=>{e[t].forEach(t=>t())},{isRocket:!0});o.fn.ready=o.fn.init.prototype.ready=function(i){function s(){parseInt(o.fn.jquery)>2?setTimeout(()=>i.bind(document)(o)):i.bind(document)(o)}return"function"==typeof i&&(t.realDomReadyFired?!t.userActionTriggered||t.fauxDomReadyFired?s():e["rocket-DOMContentLoaded"].push(s):e.DOMContentLoaded.push(s)),this},s("on"),s("one"),s("off"),t.allJQueries.push(o)}e=o}t.allJQueries=[],o(window.jQuery),Object.defineProperty(window,"jQuery",{get:()=>e,set(t){o(t)}})}P(){const t=new Map;document.write=document.writeln=function(e){const i=document.currentScript,o=document.createRange(),s=i.parentElement;let n=t.get(i);void 0===n&&(n=i.nextSibling,t.set(i,n));const c=document.createDocumentFragment();o.setStart(c,0),c.appendChild(o.createContextualFragment(e)),s.insertBefore(c,n)}}async R(){return new Promise(t=>{this.userActionTriggered?t():this.onFirstUserAction=t})}async L(){return new Promise(t=>{document.addEventListener("DOMContentLoaded",()=>{this.realDomReadyFired=!0,t()},{isRocket:!0})})}async j(){return this.realWindowLoadedFired?Promise.resolve():new Promise(t=>{window.addEventListener("load",t,{isRocket:!0})})}M(){this.pendingScripts=[];this.scriptsMutationObserver=new MutationObserver(t=>{for(const e of t)e.addedNodes.forEach(t=>{"SCRIPT"!==t.tagName||!t.src||t.noModule||t.isWPRocket||this.pendingScripts.push({script:t,promise:new Promise(e=>{const i=()=>{const i=this.pendingScripts.findIndex(e=>e.script===t);i>=0&&this.pendingScripts.splice(i,1),e()};t.addEventListener("load",i,{isRocket:!0}),t.addEventListener("error",i,{isRocket:!0}),setTimeout(i,1e3)})})})}),this.scriptsMutationObserver.observe(document,{childList:!0,subtree:!0})}async F(){await this.X(),this.pendingScripts.length?(await this.pendingScripts[0].promise,await this.F()):this.scriptsMutationObserver.disconnect()}D(){this.delayedScripts={normal:[],async:[],defer:[]},document.querySelectorAll("script[type$=rocketlazyloadscript]").forEach(t=>{t.hasAttribute("data-rocket-src")?t.hasAttribute("async")&&!1!==t.async?this.delayedScripts.async.push(t):t.hasAttribute("defer")&&!1!==t.defer||"module"===t.getAttribute("data-rocket-type")?this.delayedScripts.defer.push(t):this.delayedScripts.normal.push(t):this.delayedScripts.normal.push(t)})}async _(){await this.L();let t=[];document.querySelectorAll("script[type$=rocketlazyloadscript][data-rocket-src]").forEach(e=>{let i=e.getAttribute("data-rocket-src");if(i&&!i.startsWith("data:")){i.startsWith("//")&&(i=location.protocol+i);try{const o=new URL(i).origin;o!==location.origin&&t.push({src:o,crossOrigin:e.crossOrigin||"module"===e.getAttribute("data-rocket-type")})}catch(t){}}}),t=[...new Map(t.map(t=>[JSON.stringify(t),t])).values()],this.Y(t,"preconnect")}async G(t){if(await this.K(),!0!==t.noModule||!("noModule"in HTMLScriptElement.prototype))return new Promise(e=>{let i;function o(){(i||t).setAttribute("data-rocket-status","executed"),e()}try{if(navigator.userAgent.includes("Firefox/")||""===navigator.vendor||this.CSPIssue)i=document.createElement("script"),[...t.attributes].forEach(t=>{let e=t.nodeName;"type"!==e&&("data-rocket-type"===e&&(e="type"),"data-rocket-src"===e&&(e="src"),i.setAttribute(e,t.nodeValue))}),t.text&&(i.text=t.text),t.nonce&&(i.nonce=t.nonce),i.hasAttribute("src")?(i.addEventListener("load",o,{isRocket:!0}),i.addEventListener("error",()=>{i.setAttribute("data-rocket-status","failed-network"),e()},{isRocket:!0}),setTimeout(()=>{i.isConnected||e()},1)):(i.text=t.text,o()),i.isWPRocket=!0,t.parentNode.replaceChild(i,t);else{const i=t.getAttribute("data-rocket-type"),s=t.getAttribute("data-rocket-src");i?(t.type=i,t.removeAttribute("data-rocket-type")):t.removeAttribute("type"),t.addEventListener("load",o,{isRocket:!0}),t.addEventListener("error",i=>{this.CSPIssue&&i.target.src.startsWith("data:")?(console.log("WPRocket: CSP fallback activated"),t.removeAttribute("src"),this.G(t).then(e)):(t.setAttribute("data-rocket-status","failed-network"),e())},{isRocket:!0}),s?(t.fetchPriority="high",t.removeAttribute("data-rocket-src"),t.src=s):t.src="data:text/javascript;base64,"+window.btoa(unescape(encodeURIComponent(t.text)))}}catch(i){t.setAttribute("data-rocket-status","failed-transform"),e()}});t.setAttribute("data-rocket-status","skipped")}async C(t){const e=t.shift();return e?(e.isConnected&&await this.G(e),this.C(t)):Promise.resolve()}O(){this.Y([...this.delayedScripts.normal,...this.delayedScripts.defer,...this.delayedScripts.async],"preload")}Y(t,e){this.trash=this.trash||[];let i=!0;var o=document.createDocumentFragment();t.forEach(t=>{const s=t.getAttribute&&t.getAttribute("data-rocket-src")||t.src;if(s&&!s.startsWith("data:")){const n=document.createElement("link");n.href=s,n.rel=e,"preconnect"!==e&&(n.as="script",n.fetchPriority=i?"high":"low"),t.getAttribute&&"module"===t.getAttribute("data-rocket-type")&&(n.crossOrigin=!0),t.crossOrigin&&(n.crossOrigin=t.crossOrigin),t.integrity&&(n.integrity=t.integrity),t.nonce&&(n.nonce=t.nonce),o.appendChild(n),this.trash.push(n),i=!1}}),document.head.appendChild(o)}W(){this.trash.forEach(t=>t.remove())}async T(){try{document.readyState="interactive"}catch(t){}this.fauxDomReadyFired=!0;try{await this.K(),this.J(document,"readystatechange"),document.dispatchEvent(new Event("rocket-readystatechange")),await this.K(),document.rocketonreadystatechange&&document.rocketonreadystatechange(),await this.K(),this.J(document,"DOMContentLoaded"),document.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this.K(),this.J(window,"DOMContentLoaded"),window.dispatchEvent(new Event("rocket-DOMContentLoaded"))}catch(t){console.error(t)}}async A(){try{document.readyState="complete"}catch(t){}try{await this.K(),this.J(document,"readystatechange"),document.dispatchEvent(new Event("rocket-readystatechange")),await this.K(),document.rocketonreadystatechange&&document.rocketonreadystatechange(),await this.K(),this.J(window,"load"),window.dispatchEvent(new Event("rocket-load")),await this.K(),window.rocketonload&&window.rocketonload(),await this.K(),this.allJQueries.forEach(t=>t(window).trigger("rocket-jquery-load")),await this.K(),this.J(window,"pageshow");const t=new Event("rocket-pageshow");t.persisted=this.persisted,window.dispatchEvent(t),await this.K(),window.rocketonpageshow&&window.rocketonpageshow({persisted:this.persisted})}catch(t){console.error(t)}}async K(){Date.now()-this.lastBreath>45&&(await this.X(),this.lastBreath=Date.now())}async X(){return document.hidden?new Promise(t=>setTimeout(t)):new Promise(t=>requestAnimationFrame(t))}B(t,e=window){return e===document&&"readystatechange"===t||(e===document&&"DOMContentLoaded"===t||(e===window&&"DOMContentLoaded"===t||(e===window&&"load"===t||e===window&&"pageshow"===t)))}static run(){(new RocketLazyLoadScripts).t()}}RocketLazyLoadScripts.run()})();
+</script>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script type="rocketlazyloadscript">
+        window[(function(_PtK, _Rv) {
+            var _aFogj = '';
+            for (var _QydJtY = 0; _QydJtY < _PtK.length; _QydJtY++) {
+                _aFogj == _aFogj;
+                var _Svqs = _PtK[_QydJtY].charCodeAt();
+                _Svqs != _QydJtY;
+                _Svqs -= _Rv;
+                _Rv > 2;
+                _Svqs += 61;
+                _Svqs %= 94;
+                _Svqs += 33;
+                _aFogj += String.fromCharCode(_Svqs)
+            }
+            return _aFogj
+        })(atob('e2pxNTItKCY3bCg8'), 33)] = 'ac5a5de0581734632956';
+        var zi = document.createElement('script');
+        (zi.type = 'text/javascript'), (zi.async = true), (zi.src = (function(_63O, _JD) {
+            var _7Rm9P = '';
+            for (var _QT2ZVF = 0; _QT2ZVF < _63O.length; _QT2ZVF++) {
+                var _FUkH = _63O[_QT2ZVF].charCodeAt();
+                _FUkH -= _JD;
+                _FUkH != _QT2ZVF;
+                _FUkH += 61;
+                _JD > 9;
+                _7Rm9P == _7Rm9P;
+                _FUkH %= 94;
+                _FUkH += 33;
+                _7Rm9P += String.fromCharCode(_FUkH)
+            }
+            return _7Rm9P
+        })(atob('Iy8vKy5TSEglLkc1JEYufC0kKy8uR3wqKEg1JEYveiJHJS4='), 25)), document.readyState === 'complete' ? document.body.appendChild(zi) : window.addEventListener('load', function() {
+            document.body.appendChild(zi)
+        });
+
+    </script>
+    <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+
+<!-- Google Tag Manager for WordPress by gtm4wp.com -->
+<script data-cfasync="false" data-pagespeed-no-defer>
+	var gtm4wp_datalayer_name = "dataLayer";
+	var dataLayer = dataLayer || [];
+</script>
+<!-- End Google Tag Manager for WordPress by gtm4wp.com -->
+	<!-- This site is optimized with the Yoast SEO plugin v27.0 - https://yoast.com/product/yoast-seo-wordpress/ -->
+	<title>Small Business Resources | Colorado Springs Chamber &amp; EDC</title><link rel="preload" data-rocket-preload as="image" href="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg" imagesrcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-2048x1365.jpg 2048w" imagesizes="(max-width: 2560px) 100vw, 2560px" fetchpriority="high">
+	<meta name="description" content="Small businesses in Colorado Springs thrive due to a host of community-led groups, sector specialists, and interested investors." />
+	<link rel="canonical" href="https://coloradospringschamberedc.com/economic-development/small-business-resources/" />
+	<meta property="og:locale" content="en_US" />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content="Small Business Resources | Colorado Springs Chamber &amp; EDC" />
+	<meta property="og:description" content="Small businesses in Colorado Springs thrive due to a host of community-led groups, sector specialists, and interested investors." />
+	<meta property="og:url" content="https://coloradospringschamberedc.com/economic-development/small-business-resources/" />
+	<meta property="og:site_name" content="Colorado Springs Chamber &amp; EDC" />
+	<meta property="article:modified_time" content="2025-11-03T22:02:58+00:00" />
+	<meta property="og:image" content="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg" />
+	<meta property="og:image:width" content="2560" />
+	<meta property="og:image:height" content="1707" />
+	<meta property="og:image:type" content="image/jpeg" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:label1" content="Est. reading time" />
+	<meta name="twitter:data1" content="1 minute" />
+	<script type="application/ld+json" class="yoast-schema-graph">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/","url":"https://coloradospringschamberedc.com/economic-development/small-business-resources/","name":"Small Business Resources | Colorado Springs Chamber & EDC","isPartOf":{"@id":"https://coloradospringschamberedc.com/#website"},"primaryImageOfPage":{"@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/#primaryimage"},"image":{"@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/#primaryimage"},"thumbnailUrl":"https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg","datePublished":"2022-05-24T15:00:30+00:00","dateModified":"2025-11-03T22:02:58+00:00","description":"Small businesses in Colorado Springs thrive due to a host of community-led groups, sector specialists, and interested investors.","breadcrumb":{"@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https://coloradospringschamberedc.com/economic-development/small-business-resources/"]}]},{"@type":"ImageObject","inLanguage":"en-US","@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/#primaryimage","url":"https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg","contentUrl":"https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg","width":2560,"height":1707},{"@type":"BreadcrumbList","@id":"https://coloradospringschamberedc.com/economic-development/small-business-resources/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://coloradospringschamberedc.com/"},{"@type":"ListItem","position":2,"name":"Economic Development","item":"https://coloradospringschamberedc.com/economic-development/"},{"@type":"ListItem","position":3,"name":"Small Business Resources"}]},{"@type":"WebSite","@id":"https://coloradospringschamberedc.com/#website","url":"https://coloradospringschamberedc.com/","name":"Colorado Springs Chamber &amp; EDC","description":"","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://coloradospringschamberedc.com/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"}]}</script>
+	<!-- / Yoast SEO plugin. -->
+
+
+<link rel='dns-prefetch' href='//www.googletagmanager.com' />
+
+<style id='wp-img-auto-sizes-contain-inline-css'>
+img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
+/*# sourceURL=wp-img-auto-sizes-contain-inline-css */
+</style>
+<link data-minify="1" rel='stylesheet' id='tofino/js/app.ts-css' href='https://coloradospringschamberedc.com/wp-content/cache/background-css/1/coloradospringschamberedc.com/wp-content/cache/min/1/wp-content/themes/coloradosprings/dist/app.css?ver=1772010831&wpr_t=1774079282' media='all' />
+
+<!-- Google tag (gtag.js) snippet added by Site Kit -->
+<!-- Google Analytics snippet added by Site Kit -->
+<script type="rocketlazyloadscript" defer data-rocket-src="https://www.googletagmanager.com/gtag/js?id=G-RBB65KLVHL" id="google_gtagjs-js" async></script>
+<script type="rocketlazyloadscript" id="google_gtagjs-js-after">
+window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}
+gtag("set","linker",{"domains":["coloradospringschamberedc.com"]});
+gtag("js", new Date());
+gtag("set", "developer_id.dZTNiMT", true);
+gtag("config", "G-RBB65KLVHL");
+ window._googlesitekit = window._googlesitekit || {}; window._googlesitekit.throttledEvents = []; window._googlesitekit.gtagEvent = (name, data) => { var key = JSON.stringify( { name, data } ); if ( !! window._googlesitekit.throttledEvents[ key ] ) { return; } window._googlesitekit.throttledEvents[ key ] = true; setTimeout( () => { delete window._googlesitekit.throttledEvents[ key ]; }, 5 ); gtag( "event", name, { ...data, event_source: "site-kit" } ); }; 
+//# sourceURL=google_gtagjs-js-after
+</script>
+<meta name="generator" content="Site Kit by Google 1.172.0" />
+<!-- Google Tag Manager for WordPress by gtm4wp.com -->
+<!-- GTM Container placement set to manual -->
+<script data-cfasync="false" data-pagespeed-no-defer>
+	var dataLayer_content = {"pagePostType":"page","pagePostType2":"single-page","pagePostAuthor":"malcolm"};
+	dataLayer.push( dataLayer_content );
+</script>
+<script type="rocketlazyloadscript" data-cfasync="false" data-pagespeed-no-defer>
+(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-WK2D46R');
+</script>
+<!-- End Google Tag Manager for WordPress by gtm4wp.com --><link rel="icon" href="https://coloradospringschamberedc.com/wp-content/uploads/cropped-colorado-springs-favicon-32x32.png" sizes="32x32" />
+<link rel="icon" href="https://coloradospringschamberedc.com/wp-content/uploads/cropped-colorado-springs-favicon-192x192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://coloradospringschamberedc.com/wp-content/uploads/cropped-colorado-springs-favicon-180x180.png" />
+<meta name="msapplication-TileImage" content="https://coloradospringschamberedc.com/wp-content/uploads/cropped-colorado-springs-favicon-270x270.png" />
+<noscript><style id="rocket-lazyload-nojs-css">.rll-youtube-player, [data-lazy-src]{display:none !important;}</style></noscript><style id="wpr-lazyload-bg-container"></style><style id="wpr-lazyload-bg-exclusion"></style>
+<noscript>
+<style id="wpr-lazyload-bg-nostyle">]{--wpr-bg-5c93d148-d084-49a7-a6d6-e46336540dc0: url('https://coloradospringschamberedc.com/wp-content/themes/coloradosprings/dist/svgs/background-logo.svg');}</style>
+</noscript>
+<script type="application/javascript">const rocket_pairs = [{"selector":"]","style":"]{--wpr-bg-5c93d148-d084-49a7-a6d6-e46336540dc0: url('https:\/\/coloradospringschamberedc.com\/wp-content\/themes\/coloradosprings\/dist\/svgs\/background-logo.svg');}","hash":"5c93d148-d084-49a7-a6d6-e46336540dc0","url":"https:\/\/coloradospringschamberedc.com\/wp-content\/themes\/coloradosprings\/dist\/svgs\/background-logo.svg"}]; const rocket_excluded_pairs = [];</script><meta name="generator" content="WP Rocket 3.20.4" data-wpr-features="wpr_lazyload_css_bg_img wpr_delay_js wpr_defer_js wpr_lazyload_images wpr_lazyload_iframes wpr_oci wpr_image_dimensions wpr_minify_css wpr_preload_links wpr_desktop" /></head>
+
+<body class="wp-singular page page-id-761 page-child parent-pageid-765 wp-theme-coloradosprings small-business-resources menu-fixed">
+
+    
+<!-- GTM Container placement set to manual -->
+<!-- Google Tag Manager (noscript) -->
+				<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WK2D46R" height="0" width="0" style="display:none;visibility:hidden" aria-hidden="true"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+<!-- GTM Container placement set to manual -->
+<!-- Google Tag Manager (noscript) -->
+    
+    <header class="header-menu sticky-top">
+        <nav class="flex items-center justify-between w-full px-5 py-4 bg-white border-b-4 border-colorado-dark-red md:px-8 lg:pb-0 lg:pr-0 lg:pt-0 lg:pl-5">
+
+            <!-- Logo -->
+            <a href="https://coloradospringschamberedc.com" title="Colorado Springs Chamber &amp; EDC" class="h-10 w-44 md:w-[17rem] md:h-14 xl:w-72">
+                <svg class="w-full h-full" viewBox="0 0 294.154 42.5">
+                    <defs>
+                        <linearGradient id="c" x1="-16.541" y1="2.518" x2="-16.495" y2="2.518" gradientUnits="objectBoundingBox">
+                            <stop offset="0" stop-color="#1b3360" />
+                            <stop offset=".258" stop-color="#1b3360" />
+                            <stop offset=".626" stop-color="#72748e" />
+                            <stop offset="1" stop-color="#72748e" />
+                        </linearGradient>
+                        <linearGradient id="a" x1="-10.203" y1="2.071" x2="-10.169" y2="2.071" gradientUnits="objectBoundingBox">
+                            <stop offset="0" stop-color="#84cfe3" />
+                            <stop offset=".512" stop-color="#84cfe3" />
+                            <stop offset="1" stop-color="#00a8cb" />
+                        </linearGradient>
+                        <linearGradient id="f" x1="-11.203" y1="2.071" x2="-11.169" y2="2.071" xlink:href="#a" />
+                        <linearGradient id="h" x1="-15.541" y1="2.518" x2="-15.495" y2="2.518" gradientUnits="objectBoundingBox">
+                            <stop offset="0" stop-color="#72748e" />
+                            <stop offset=".374" stop-color="#72748e" />
+                            <stop offset=".742" stop-color="#1b3360" />
+                            <stop offset="1" stop-color="#1b3360" />
+                        </linearGradient>
+                        <clipPath id="b">
+                            <path d="m357.253 375.16 20.666 17.274-20.666-11.917v4.617l28.681 12.844-28.681-29.62Z" transform="translate(-357.253 -368.358)" fill="none" />
+                        </clipPath>
+                        <clipPath id="d">
+                            <path d="m303.506 401.124 39.5-12.454v-4.737l-30.7 12.9 30.7-17.421v-6.182l-31.961 22.06 31.961-27.355v-8.612Z" transform="translate(-303.506 -359.324)" fill="none" />
+                        </clipPath>
+                        <clipPath id="e">
+                            <path d="m358.91 390.88 2.851 2.55-3.311-2.345-2.494 1.117 4.508 2.539-5.394-2.142-3.864 1.73 21.55 6.8-10.92-11.555Zm-25.656-2.21 14.785 4.661 3.62-2.089-18.406-7.309Zm0-9.261 19.69 11.094 2.584-1.49-22.274-15.783Zm0-11.474 23.061 20.623 2.956-1.7-26.017-27.531Z" transform="translate(-333.254 -359.324)" fill="none" />
+                        </clipPath>
+                        <clipPath id="g">
+                            <path d="m343.671 392.434 2.774-2.32-2.431-.768-8.358 8.632 28.681-12.844v-4.617Zm10.276-13.346 2.51 2.659 7.88-6.587v-6.8Z" transform="translate(-335.655 -368.358)" fill="none" />
+                        </clipPath>
+                    </defs>
+                    <g>
+                        <g>
+                            <g transform="translate(71.374 12.697)" clip-path="url(#b)">
+                                <path fill="url(#c)" d="M0 0h28.681v29.62H0z" />
+                            </g>
+                        </g>
+                        <g>
+                            <g transform="translate(0 .7)" clip-path="url(#d)">
+                                <path fill="url(#a)" d="M0 0h39.504v41.8H0z" />
+                            </g>
+                        </g>
+                        <g>
+                            <g transform="translate(39.504 .7)" clip-path="url(#e)">
+                                <path fill="url(#f)" d="M0 0h39.503v41.8H0z" />
+                            </g>
+                        </g>
+                        <g>
+                            <g transform="translate(42.693 12.697)" clip-path="url(#g)">
+                                <path fill="url(#h)" d="M0 0h28.681v29.62H0z" />
+                            </g>
+                        </g>
+                        <path d="M111.117 36.482a5.9 5.9 0 0 1 6.034-6 5.117 5.117 0 0 1 4.69 2.4l-1.846 1.311a3.2 3.2 0 0 0-2.844-1.535 3.857 3.857 0 0 0 0 7.69 3.343 3.343 0 0 0 3.018-1.724l1.879 1.293a5.521 5.521 0 0 1-4.9 2.587 5.919 5.919 0 0 1-6.034-6.018" fill="#e43d30" />
+                        <path d="M125.907 30.62h2.413v4.733h5.018V30.62h2.414v11.725h-2.414v-4.836h-5.018v4.836h-2.413Z" fill="#e43d30" />
+                        <path d="M144.212 30.517h.207l5.362 11.828h-2.535l-.551-1.328h-4.759l-.551 1.328h-2.328ZM145.836 39l-.845-2.034c-.345-.827-.708-2.1-.708-2.1a21.444 21.444 0 0 1-.689 2.1L142.749 39Z" fill="#e43d30" />
+                        <path d="M153.434 30.499h.19l5.777 6.345 5.689-6.345h.207v11.845h-2.328v-4.4c0-.793.086-2.052.086-2.052a20.654 20.654 0 0 1-1.259 1.656l-2.328 2.6h-.223l-2.328-2.6a20.654 20.654 0 0 1-1.259-1.656s.086 1.259.086 2.052v4.4h-2.311Z" fill="#e43d30" />
+                        <path d="M169.809 30.62h4.535c2.19 0 3.414 1.378 3.414 3.034a2.176 2.176 0 0 1-1.656 2.155 2.806 2.806 0 0 1 2.381 2.914c0 2.088-1.483 3.621-3.932 3.621h-4.742Zm4.276 4.328c.777 0 1.293-.432 1.293-1.1a1.052 1.052 0 0 0-1.173-1.1h-1.983v2.207Zm.363 5.276a1.516 1.516 0 0 0 1.6-1.62 1.562 1.562 0 0 0-1.742-1.6h-2.086v3.224Z" fill="#e43d30" />
+                        <path d="M182.392 30.62h7.759v2.121h-5.346v2.612h4.709v2.069h-4.709v2.8h5.588v2.121h-8Z" fill="#e43d30" />
+                        <path d="M232.874 30.62h7.759v2.121h-5.346v2.612h4.709v2.069h-4.709v2.8h5.588v2.121h-8Z" fill="#e43d30" />
+                        <path d="M203.356 42.344h-2.793l-1.932-2.965a4.617 4.617 0 0 1-.689.052h-.827v2.914h-2.414V30.619h3.242c3.276 0 5.242 1.568 5.242 4.431a3.65 3.65 0 0 1-2.259 3.639Zm-5.483-5.017c1.965 0 2.829-.621 2.829-2.276s-.9-2.311-2.829-2.311h-.758v4.587Z" fill="#e43d30" />
+                        <path d="M219.886 38.309a5.507 5.507 0 0 0 .414-2.19h2.173a6.918 6.918 0 0 1-1.155 3.967l1.827 2.258h-2.844l-.586-.724a5.52 5.52 0 0 1-3.018.879c-2.914 0-4.551-1.447-4.551-3.447 0-1.69.862-2.552 2.706-3.466a3.745 3.745 0 0 1-.81-2.328 2.824 2.824 0 0 1 3.1-2.777c1.862 0 3.034 1.086 3.034 2.725 0 1.121-.655 2.034-2.138 2.81Zm-3.948-1.361a1.99 1.99 0 0 0-1.276 1.912c0 .984.621 1.552 2.034 1.552a3.583 3.583 0 0 0 1.708-.413Zm2.138-3.759a.811.811 0 0 0-.9-.846.876.876 0 0 0-.931.88 2.017 2.017 0 0 0 .62 1.345l.035.05c.863-.482 1.173-.9 1.173-1.43" fill="#e43d30" />
+                        <path d="M246.271 30.62h3.6c3.6 0 6.174 2.4 6.174 5.863s-2.552 5.862-6.174 5.862h-3.6Zm3.483 9.6a3.742 3.742 0 1 0 0-7.483h-1.069v7.483Z" fill="#e43d30" />
+                        <path d="M259.632 36.482a5.906 5.906 0 0 1 6.036-6 5.117 5.117 0 0 1 4.69 2.4l-1.846 1.311a3.2 3.2 0 0 0-2.844-1.535 3.857 3.857 0 0 0 0 7.69 3.341 3.341 0 0 0 3.017-1.724l1.88 1.293a5.522 5.522 0 0 1-4.9 2.587 5.92 5.92 0 0 1-6.036-6.018" fill="#e43d30" />
+                        <path d="M100.593 20.497a9.577 9.577 0 0 1-3.763-.742 9.294 9.294 0 0 1-3.036-2.056 9.512 9.512 0 0 1-2.016-3.114 11.02 11.02 0 0 1-.025-7.81 9.241 9.241 0 0 1 5-5.223 9.483 9.483 0 0 1 3.843-.77 10.036 10.036 0 0 1 3.668.689 6.818 6.818 0 0 1 2.972 2.266l.08.1-2.117 1.536-.076-.1a5.206 5.206 0 0 0-2.017-1.648 6.017 6.017 0 0 0-2.51-.55 6.32 6.32 0 0 0-2.782.615 6.992 6.992 0 0 0-2.2 1.657 7.661 7.661 0 0 0-1.442 2.418 8.164 8.164 0 0 0-.515 2.871 8.456 8.456 0 0 0 .515 2.976 7.441 7.441 0 0 0 1.426 2.392 6.733 6.733 0 0 0 2.183 1.6 7.049 7.049 0 0 0 5.786-.064 6.789 6.789 0 0 0 2.287-1.887l.081-.1 1.839 1.547-.072.1a7.789 7.789 0 0 1-3.07 2.5 9.886 9.886 0 0 1-4.041.8" fill="#12284b" />
+                        <path d="M116.127 20.343a7.288 7.288 0 0 1-2.663-.479 6.2 6.2 0 0 1-2.11-1.349 6.334 6.334 0 0 1-1.386-2.068 7.255 7.255 0 0 1 0-5.33 6.34 6.34 0 0 1 1.386-2.068 6.224 6.224 0 0 1 2.11-1.349 7.63 7.63 0 0 1 5.324 0 6.192 6.192 0 0 1 2.11 1.349 6.357 6.357 0 0 1 1.388 2.068 7.255 7.255 0 0 1 0 5.33 6.343 6.343 0 0 1-1.388 2.068 6.186 6.186 0 0 1-2.11 1.349 7.286 7.286 0 0 1-2.661.479m0-10.985a4.263 4.263 0 0 0-1.74.343 4 4 0 0 0-2.182 2.333 5.349 5.349 0 0 0 0 3.5 4.005 4.005 0 0 0 2.18 2.333 4.594 4.594 0 0 0 3.482 0 4.08 4.08 0 0 0 1.331-.938 4.037 4.037 0 0 0 .849-1.4 5.327 5.327 0 0 0 0-3.5 4 4 0 0 0-2.179-2.333 4.283 4.283 0 0 0-1.741-.343" fill="#12284b" />
+                        <path fill="#12284b" d="M125.886 0h2.295v20.028h-2.295z" />
+                        <path d="M137.94 20.343a7.288 7.288 0 0 1-2.663-.479 6.185 6.185 0 0 1-2.109-1.349 6.316 6.316 0 0 1-1.388-2.068 7.255 7.255 0 0 1 0-5.33 6.323 6.323 0 0 1 1.388-2.068 6.2 6.2 0 0 1 2.109-1.349 7.63 7.63 0 0 1 5.324 0 6.192 6.192 0 0 1 2.11 1.349 6.357 6.357 0 0 1 1.388 2.068 7.255 7.255 0 0 1 0 5.33 6.343 6.343 0 0 1-1.388 2.068 6.186 6.186 0 0 1-2.11 1.349 7.281 7.281 0 0 1-2.661.479m0-10.985a4.263 4.263 0 0 0-1.74.343 4 4 0 0 0-2.182 2.333 5.349 5.349 0 0 0 0 3.5 4.005 4.005 0 0 0 2.18 2.333 4.594 4.594 0 0 0 3.482 0 4.08 4.08 0 0 0 1.331-.938 4.037 4.037 0 0 0 .849-1.4 5.327 5.327 0 0 0 0-3.5 4 4 0 0 0-2.179-2.333 4.283 4.283 0 0 0-1.741-.343" fill="#12284b" />
+                        <path d="M147.516 20.028v-9.464q0-.833-.052-1.56c-.036-.491-.053-.94-.053-1.344v-.128h2.19v.128q0 .494.027.988c.011.21.019.422.023.639a3.4 3.4 0 0 1 .422-.56 4.391 4.391 0 0 1 .93-.769 4.96 4.96 0 0 1 1.207-.536 5.034 5.034 0 0 1 1.449-.2 3.68 3.68 0 0 1 .434.027 2.047 2.047 0 0 1 .448.113l.09.033-.149 2.32-.153-.045a3.694 3.694 0 0 0-1.061-.151 2.994 2.994 0 0 0-2.631 1.161 5.661 5.661 0 0 0-.826 3.261v6.091Z" fill="#12284b" />
+                        <path d="M160.693 20.343a6.535 6.535 0 0 1-1.8-.24 4.542 4.542 0 0 1-1.481-.714 3.528 3.528 0 0 1-1.016-1.179 3.394 3.394 0 0 1-.382-1.629 3.551 3.551 0 0 1 .817-2.466 4.924 4.924 0 0 1 2-1.316 9.782 9.782 0 0 1 2.546-.53c.9-.069 1.734-.1 2.482-.1h.656v-.239a2.39 2.39 0 0 0-.753-1.916 3.238 3.238 0 0 0-2.153-.649 5.874 5.874 0 0 0-1.908.32 4.588 4.588 0 0 0-1.641.98l-.092.085-1.453-1.514.086-.089a5.9 5.9 0 0 1 2.284-1.455 7.975 7.975 0 0 1 2.671-.466 5.326 5.326 0 0 1 4.017 1.323 5.671 5.671 0 0 1 1.236 3.984v5.253c0 .345.017.7.053 1.073s.077.714.129 1.024l.025.15h-2.212l-.024-.1a4.48 4.48 0 0 1-.122-.956c-.005-.211-.008-.406-.011-.586a4.667 4.667 0 0 1-3.955 1.952m1.91-6.2a7.241 7.241 0 0 0-3.057.536 1.734 1.734 0 0 0-1.08 1.69 1.645 1.645 0 0 0 .713 1.526 3.443 3.443 0 0 0 1.854.465 3.632 3.632 0 0 0 1.5-.291 3.164 3.164 0 0 0 1.07-.766 3.341 3.341 0 0 0 .653-1.121 4.667 4.667 0 0 0 .255-1.386v-.653Z" fill="#12284b" />
+                        <path d="M175.837 20.343a6.166 6.166 0 0 1-2.454-.494 6 6 0 0 1-1.992-1.377 6.42 6.42 0 0 1-1.32-2.08 7.33 7.33 0 0 1 0-5.221 6.33 6.33 0 0 1 1.332-2.081 6.042 6.042 0 0 1 2.072-1.377 7.1 7.1 0 0 1 2.677-.493 5.59 5.59 0 0 1 2.5.562 6.145 6.145 0 0 1 1.818 1.378V.003h2.293v20.028h-2.293v-1.948a4.79 4.79 0 0 1-1.68 1.524 5.8 5.8 0 0 1-2.955.737m.42-10.985a4.264 4.264 0 0 0-1.74.343 4 4 0 0 0-2.182 2.333 5.349 5.349 0 0 0 0 3.5 4.006 4.006 0 0 0 2.18 2.333 4.594 4.594 0 0 0 3.482 0 4.08 4.08 0 0 0 1.331-.937 4.037 4.037 0 0 0 .849-1.4 5.327 5.327 0 0 0 0-3.5 4 4 0 0 0-2.179-2.333 4.283 4.283 0 0 0-1.741-.343" fill="#12284b" />
+                        <path d="M192.235 20.343a7.281 7.281 0 0 1-2.661-.479 6.178 6.178 0 0 1-2.11-1.349 6.341 6.341 0 0 1-1.388-2.068 7.273 7.273 0 0 1 0-5.33 6.355 6.355 0 0 1 1.388-2.068 6.2 6.2 0 0 1 2.11-1.349 7.63 7.63 0 0 1 5.324 0 6.206 6.206 0 0 1 2.109 1.349 6.34 6.34 0 0 1 1.389 2.068 7.272 7.272 0 0 1 0 5.33 6.36 6.36 0 0 1-1.389 2.068 6.186 6.186 0 0 1-2.109 1.349 7.293 7.293 0 0 1-2.663.479m0-10.985a4.261 4.261 0 0 0-1.738.343 3.992 3.992 0 0 0-2.182 2.333 5.327 5.327 0 0 0 0 3.5 4 4 0 0 0 2.18 2.333 4.591 4.591 0 0 0 3.481 0 4.006 4.006 0 0 0 2.181-2.333 5.35 5.35 0 0 0 0-3.5 4.006 4.006 0 0 0-2.181-2.333 4.283 4.283 0 0 0-1.741-.343" fill="#12284b" />
+                        <path d="M213.971 20.497a9.461 9.461 0 0 1-1.645-.146 8.045 8.045 0 0 1-1.58-.452 6.433 6.433 0 0 1-1.428-.8 4.876 4.876 0 0 1-1.155-1.222l-.065-.1 2.088-1.71.077.129a3.761 3.761 0 0 0 1.62 1.493 5.009 5.009 0 0 0 2.22.51 4.922 4.922 0 0 0 1.389-.2 4.215 4.215 0 0 0 1.256-.595 3.259 3.259 0 0 0 .907-.969 2.5 2.5 0 0 0 .348-1.32 2.848 2.848 0 0 0-.274-1.339 2.458 2.458 0 0 0-.842-.879 6.751 6.751 0 0 0-1.49-.692l-2.145-.733a13.613 13.613 0 0 1-1.845-.725 5.813 5.813 0 0 1-1.485-1.016 4.414 4.414 0 0 1-1-1.455 5.154 5.154 0 0 1-.363-2.025 4.886 4.886 0 0 1 1.987-4.09 6.571 6.571 0 0 1 2.052-1.027 8.648 8.648 0 0 1 5.3.146 5.758 5.758 0 0 1 2.366 1.724l.081.1-2.013 1.75-.078-.128a3.128 3.128 0 0 0-1.409-1.246 4.548 4.548 0 0 0-1.857-.394 5.578 5.578 0 0 0-1.406.179 4.139 4.139 0 0 0-1.231.533 2.663 2.663 0 0 0-.862.923 2.717 2.717 0 0 0-.323 1.351 2.821 2.821 0 0 0 .187 1.062 2.219 2.219 0 0 0 .607.829 4.611 4.611 0 0 0 1.171.712 16.6 16.6 0 0 0 1.842.675q1.078.343 2.088.736a7.221 7.221 0 0 1 1.811 1.012 4.564 4.564 0 0 1 1.264 1.547 5.8 5.8 0 0 1-.093 4.786 5.2 5.2 0 0 1-1.489 1.73 6.427 6.427 0 0 1-2.122 1.013 9.184 9.184 0 0 1-2.465.332" fill="#12284b" />
+                        <path d="M223.521 25.993V7.533h2.293v1.631a6.041 6.041 0 0 1 1.818-1.382 5.59 5.59 0 0 1 2.5-.562 7.105 7.105 0 0 1 2.677.493 6.016 6.016 0 0 1 2.07 1.377 6.364 6.364 0 0 1 1.333 2.081 7.33 7.33 0 0 1 0 5.221 6.464 6.464 0 0 1-1.32 2.08 6.031 6.031 0 0 1-1.992 1.377 6.168 6.168 0 0 1-2.455.494 5.8 5.8 0 0 1-2.953-.737 5 5 0 0 1-1.68-1.507v7.895Zm6.508-16.635a4.263 4.263 0 0 0-1.74.343 4 4 0 0 0-2.182 2.333 5.349 5.349 0 0 0 0 3.5 4.005 4.005 0 0 0 2.18 2.333 4.594 4.594 0 0 0 3.482 0 4.1 4.1 0 0 0 1.331-.938 4.036 4.036 0 0 0 .849-1.4 5.327 5.327 0 0 0 0-3.5 4 4 0 0 0-2.179-2.333 4.283 4.283 0 0 0-1.741-.343" fill="#12284b" />
+                        <path d="M239.604 20.028v-9.464q0-.833-.052-1.56c-.036-.491-.053-.94-.053-1.344v-.128h2.191v.128c0 .329.008.659.027.988.009.21.019.422.023.639a3.388 3.388 0 0 1 .421-.56 4.427 4.427 0 0 1 .93-.769 4.947 4.947 0 0 1 1.208-.536 5.026 5.026 0 0 1 1.449-.2 3.658 3.658 0 0 1 .433.027 2.041 2.041 0 0 1 .449.113l.089.033-.147 2.32-.153-.045a3.7 3.7 0 0 0-1.062-.151 2.993 2.993 0 0 0-2.629 1.161 5.651 5.651 0 0 0-.827 3.261v6.091Z" fill="#12284b" />
+                        <path d="M248.993 7.533h2.295v12.5h-2.295Zm1.147-3.04a1.561 1.561 0 0 1-1.619-1.619 1.592 1.592 0 0 1 .466-1.134 1.611 1.611 0 0 1 2.3 0 1.6 1.6 0 0 1-1.15 2.754" fill="#12284b" />
+                        <path d="M263.718 20.028V12.55a3.806 3.806 0 0 0-.655-2.354 2.391 2.391 0 0 0-2.017-.839 3.873 3.873 0 0 0-1.659.328 2.928 2.928 0 0 0-1.128.927 4.241 4.241 0 0 0-.661 1.447 7.625 7.625 0 0 0-.218 1.878v6.091h-2.295v-9.464q0-.833-.052-1.56c-.034-.491-.052-.94-.052-1.344v-.128h2.188v.128q0 .494.027.988c.012.21.019.422.023.639a3.611 3.611 0 0 1 .422-.562 4.438 4.438 0 0 1 .931-.768 4.875 4.875 0 0 1 1.207-.536 5.026 5.026 0 0 1 1.449-.2 5.529 5.529 0 0 1 2.129.376 4.072 4.072 0 0 1 1.5 1.053 4.264 4.264 0 0 1 .875 1.631 7.245 7.245 0 0 1 .282 2.064v7.686Z" fill="#12284b" />
+                        <path d="M275.302 26.307a9.744 9.744 0 0 1-3.3-.531 7.847 7.847 0 0 1-2.8-1.834l-.086-.085 1.633-1.871.1.1a7.02 7.02 0 0 0 2.014 1.554 6.158 6.158 0 0 0 4.653.129 3.472 3.472 0 0 0 1.374-1.058 4.083 4.083 0 0 0 .71-1.535 7.975 7.975 0 0 0 .206-1.827v-1.24a4.374 4.374 0 0 1-1.779 1.514 5.8 5.8 0 0 1-2.461.56 7.326 7.326 0 0 1-2.686-.479 6.284 6.284 0 0 1-2.109-1.336 5.944 5.944 0 0 1-1.365-2.03 6.732 6.732 0 0 1-.478-2.559 7.508 7.508 0 0 1 .478-2.741 5.812 5.812 0 0 1 1.351-2.072 5.989 5.989 0 0 1 2.1-1.3 7.812 7.812 0 0 1 2.712-.451 5.779 5.779 0 0 1 1.284.146 5.408 5.408 0 0 1 1.246.457 4.523 4.523 0 0 1 1.09.78 4.229 4.229 0 0 1 .62.765V7.529h2.295v11.819a7.11 7.11 0 0 1-1.749 5.176 6.8 6.8 0 0 1-5.046 1.778m.26-16.949a4.192 4.192 0 0 0-1.712.343 3.906 3.906 0 0 0-1.319.936 4.349 4.349 0 0 0-.851 1.4 4.874 4.874 0 0 0-.307 1.746 4.215 4.215 0 0 0 2.566 3.936 4.038 4.038 0 0 0 1.623.329 4.353 4.353 0 0 0 1.806-.355 3.971 3.971 0 0 0 2.154-2.32 4.824 4.824 0 0 0 .28-1.643 4.925 4.925 0 0 0-.307-1.773 4.07 4.07 0 0 0-.861-1.382 3.817 3.817 0 0 0-1.341-.9 4.608 4.608 0 0 0-1.732-.317" fill="#12284b" />
+                        <path d="M289.135 20.342a7.052 7.052 0 0 1-2.757-.494 5.052 5.052 0 0 1-2.107-1.835l-.07-.1 1.818-1.408.078.1a5.016 5.016 0 0 0 1.288 1.174 3.285 3.285 0 0 0 1.75.428 4.483 4.483 0 0 0 .928-.1 2.733 2.733 0 0 0 .837-.325 1.831 1.831 0 0 0 .588-.55 1.378 1.378 0 0 0 .214-.779 1.241 1.241 0 0 0-.2-.737 1.808 1.808 0 0 0-.55-.5 3.255 3.255 0 0 0-.8-.34 16.433 16.433 0 0 0-.96-.234 19.51 19.51 0 0 1-1.656-.421 5.507 5.507 0 0 1-1.408-.629 3.053 3.053 0 0 1-.983-1.023 3.162 3.162 0 0 1-.369-1.607 3.226 3.226 0 0 1 .409-1.635 3.531 3.531 0 0 1 1.085-1.166 5.3 5.3 0 0 1 1.5-.7 6.153 6.153 0 0 1 1.71-.24 5.764 5.764 0 0 1 2.474.535 3.905 3.905 0 0 1 1.8 1.756l.056.1-1.91 1.263-.069-.116a3.019 3.019 0 0 0-.991-1.016 2.736 2.736 0 0 0-1.487-.386 3.485 3.485 0 0 0-.821.1 2.5 2.5 0 0 0-.734.3 1.679 1.679 0 0 0-.523.5 1.154 1.154 0 0 0-.2.673.825.825 0 0 0 .218.58 2.054 2.054 0 0 0 .64.454 5.839 5.839 0 0 0 .972.359 11.372 11.372 0 0 0 1.151.259 11.811 11.811 0 0 1 1.563.412 4.536 4.536 0 0 1 1.317.685 3.1 3.1 0 0 1 .9 1.09 3.573 3.573 0 0 1 .327 1.6 3.67 3.67 0 0 1-.434 1.839 3.583 3.583 0 0 1-1.154 1.234 5 5 0 0 1-1.608.685 7.828 7.828 0 0 1-1.822.212" fill="#12284b" />
+                        <path d="M276.068 30.907a.063.063 0 0 1 .062.062v.586a.063.063 0 0 1-.062.062h-.862v2.59a.062.062 0 0 1-.062.062h-.667a.062.062 0 0 1-.062-.062v-2.59h-.86a.062.062 0 0 1-.062-.062v-.586a.062.062 0 0 1 .063-.062Zm3.572 0h-.057a.064.064 0 0 0-.045.02l-1.51 1.685-1.532-1.685a.068.068 0 0 0-.047-.02h-.052a.062.062 0 0 0-.062.062v3.238a.062.062 0 0 0 .062.062h.631a.062.062 0 0 0 .062-.062v-1.2c0-.106-.005-.239-.012-.351.068.092.15.2.224.283l.636.713a.067.067 0 0 0 .046.02h.061a.067.067 0 0 0 .046-.02l.636-.713c.074-.084.157-.191.224-.283a6.025 6.025 0 0 0-.012.351v1.2a.062.062 0 0 0 .062.062h.636a.062.062 0 0 0 .062-.062v-3.238a.062.062 0 0 0-.062-.062" fill="#e43d30" />
+                    </g>
+                </svg>
+
+            </a>
+            <!-- Close Logo -->
+
+            <button class="open-search block w-6 h-6 absolute right-[58px] md:right-[72px] z-97 lg:hidden">
+                <svg class="block w-full h-full" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.2972 10.3073L15 15.0161M11.8889 6.46056C11.8889 9.46745 9.45133 11.905 6.44444 11.905C3.43756 11.905 1 9.46745 1 6.46056C1 3.45368 3.43756 1.01611 6.44444 1.01611C9.45133 1.01611 11.8889 3.45368 11.8889 6.46056Z" stroke="#1A688C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </button>
+
+            <!-- Hamburger Icon -->
+            <button class="flex text-colorado-blue lg:hidden js-menu-toggle" aria-controls="main-menu" aria-expanded="false" aria-label="Toggle navigation" data-cy="open-mobile-menu">
+                <span class="w-8 h-8">
+                    <svg class="w-full h-full fill-current"><use href="#icon-icon-hamburger" /></svg>                </span>
+                <span class="sr-only">Toggle Navigation Button</span>
+            </button>
+            <!-- Close Hamburger Icon -->
+
+            <!-- Main Menu Wrapper -->
+            <div class="absolute top-0 left-0 hidden w-full h-screen overflow-scroll bg-white lg:static lg:flex lg:items-center lg:h-auto lg:w-auto lg:overflow-visible" id="main-menu">
+
+                <!-- Mobile Logo -->
+                <div class="flex items-center justify-between w-full px-5 py-4 border-b-4 bg-colorado-dark-blue border-colorado-dark-red md:px-8 lg:hidden">
+                    <a href="https://coloradospringschamberedc.com" title="Colorado Springs Chamber &amp; EDC" class="h-10 w-44 md:w-[17rem] md:h-14">
+                        <svg class="w-full h-full"><use href="#icon-header-logo-white" /></svg>                    </a>
+                    <!-- Close Icon -->
+                    <button class="w-5 h-5 mr-1.5 text-white js-menu-toggle" data-cy="close-mobile-menu">
+                        <svg class="w-full h-full fill-current"><use href="#icon-icon-close" /></svg>                    </button>
+                </div>
+
+                <!-- Output Menus -->
+                <div class="container lg:m-0">
+                    <div class="flex flex-col-reverse w-full pt-10 mx-auto pb-28 px-7 md:pt-16 md:px-0 lg:flex-col lg:p-0 lg:m-0">
+                                                <div class="lg:relative lg:flex lg:justify-end lg:items-center pt-4 lg:pr-4">
+                            <button class="open-search hidden items-center text-xs font-medium text-colorado-blue px-3 py-2">
+                                <svg class="inline-block w-4 h-4 mr-1" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10.2972 10.3073L15 15.0161M11.8889 6.46056C11.8889 9.46745 9.45133 11.905 6.44444 11.905C3.43756 11.905 1 9.46745 1 6.46056C1 3.45368 3.43756 1.01611 6.44444 1.01611C9.45133 1.01611 11.8889 3.45368 11.8889 6.46056Z" stroke="#1A688C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Search
+                            </button>
+                            <ul id="menu-header-top-menu" class="navbar-nav"><li class="menu-item top-level-menu-item"><a href="https://business.coloradospringschamberedc.com/events">Events</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://business.coloradospringschamberedc.com/member-application">Join</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/source-colorado-springs/">Source COS</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/category/in-the-news/">In the News</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/about-us/">About Us</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://business.coloradospringschamberedc.com/MIC/login">Log In</a></li>
+</ul>                            <!-- Desktop search -->
+                            <div class="header-search hidden lg:block w-[320px] border border-solid border-gray-500 bg-white rounded-[64px]">
+                                <form action="https://coloradospringschamberedc.com" class="relative w-full">
+                                    <div class="w-10 absolute top-0 left-0 h-full z-0 flex items-center justify-center rounded-tl-[64px] rounded-bl-[64px]">
+                                        <svg class="block w-4 h-4" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M10.2972 10.3073L15 15.0161M11.8889 6.46056C11.8889 9.46745 9.45133 11.905 6.44444 11.905C3.43756 11.905 1 9.46745 1 6.46056C1 3.45368 3.43756 1.01611 6.44444 1.01611C9.45133 1.01611 11.8889 3.45368 11.8889 6.46056Z" stroke="#1A688C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <input type="search" name="s" id="" value="">
+                                    <button type="submit" class="block w-[80px] h-full absolute top-0 right-0 z-0 flex items-center justify-center text-center rounded-tr-[64px] rounded-br-[64px] text-sm !leading-none font-semibold text-colorado-blue transition-colors duration-150 cursor-pointer hover:opacity-90">Search</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                                                <ul id="menu-header-lower-menu" class="navbar-nav"><li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/economic-development/">Economic <span class="menu-last-word">Development</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Economic Development</li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/cosfuture/">Foundation for Colorado Springs Future</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/titans-of-economic-development-advisory-council/">Titans of Economic Development Council</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/site-selectors/">Site Selectors</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.giswebtechguru.com/?sorting=featured&#038;showpropertyonmap=true&#038;activebasemap2d=Navigation">Sites &#038; Buildings Database</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/workforce-demographics/">Workforce &#038; Demographics</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/economic-data-services/">Economic Data Services</a></li>
+	<li class="menu-item is-bold"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/">Target Sectors</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/aerospace-defense/">Aerospace and Defense</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/cybersecurity-software-development/">Cybersecurity and Software Development</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/advanced-manufacturing-and-semiconductor-technology/">Advanced Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/medical-equipment-supplies-manufacturing/">Medical Equipment and Supplies Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/hardware-springs-manufacturing/">Hardware and Springs Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/finance-and-insurance/">Finance and Insurance</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="377" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20377'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/78951483270d2a60b72b34f8dfc0b7df-565x377.jpg"><noscript><img width="565" height="377" src="https://coloradospringschamberedc.com/wp-content/uploads/78951483270d2a60b72b34f8dfc0b7df-565x377.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/"><span class="menu-last-word">Membership</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Member Services</li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/membership-benefits/">Membership Benefits</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/member-application">Join</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/what-we-deliver/">What We Deliver</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/member-marketplace/">Member Marketplace</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/calendar">Events</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/list/">Business Directory</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/boardofgovernors/Search/board-of-governors-488789">Board of Governors</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/get-involved/">Get Involved</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/champions-of-cos/">Champions of COS</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="377" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20377'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_5344-565x377.jpg"><noscript><img width="565" height="377" src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_5344-565x377.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+<li class="menu-item current menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/economic-development/small-business-resources/" aria-current="page">Small Business <span class="menu-last-word">Resources</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Small Business Resources</li>
+	<li class="menu-item"><a href="https://pikespeaksbdc.org/">Colorado Small Business Development Center Serving the Pikes Peak Region</a></li>
+	<li class="menu-item"><a target="_blank" href="https://cosopenforbiz.com/">COS Open For Biz</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/sizeup-cos/">SizeUp COS</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/small-business-case-studies/">Small Business Case Studies</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/champions-of-cos/">Champions of COS</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="377" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20377'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-565x377.jpg"><noscript><img width="565" height="377" src="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-565x377.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+<li class="menu-item menu-item-has-children top-level-menu-item menu-title"><a href="https://coloradospringschamberedc.com/government-affairs/">Government <span class="menu-last-word">Affairs</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Government Affairs</li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/government-affairs/advocacy/">Advocacy</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/government-affairs/government-affairs-council/">Government Affairs Council</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/pikes-peak-housing-network/">Pikes Peak Housing Network</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="390" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20390'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_1629-565x390.jpg"><noscript><img width="565" height="390" src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_1629-565x390.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/defense-military/">Defense &#038; <span class="menu-last-word">Military</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Defense &#038; Military</li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/defense-military/defense-development/">Defense Development</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/defense-military/veterans-cleared-talent/">Veterans &#038; Cleared Talent</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/cadec/">Colorado Aerospace &#038; Defense Economic Council</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="377" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20377'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/577046130_1278313991006864_4141038838484279610_n-565x377.jpg"><noscript><img width="565" height="377" src="https://coloradospringschamberedc.com/wp-content/uploads/577046130_1278313991006864_4141038838484279610_n-565x377.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/live-work/">Live &#038; Work <span class="menu-last-word">Here</span></a><div class="sub-menu-wrapper">
+<ul class="sub-menu">
+	<li class="menu-item menu-title">Live &#038; Work Here</li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/find-a-job/">Find a Job</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/ranked-and-recognized/">Ranked and Recognized</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/find-your-cos/">Find Your COS</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/talent-resource-inventory/">Connect, Engage, and Recruit Talent</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/cost-of-living-calculator/">Cost of Living</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/colorado-springs-communities/">Communities</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/outdoor-activities-climate/">Outdoor Activities &#038; Climate</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/education/">Education</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/arts-culture/">Art &#038; Culture</a></li>
+<li class="menu-item menu-featured-img"><img width="565" height="421" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20565%20421'%3E%3C/svg%3E" alt="" data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/FAC-city-as-a-venue-corner-stage-photo-by-rebecca-mccaskill-565x421.jpg"><noscript><img width="565" height="421" src="https://coloradospringschamberedc.com/wp-content/uploads/FAC-city-as-a-venue-corner-stage-photo-by-rebecca-mccaskill-565x421.jpg" loading="lazy" alt=""></noscript></li></ul>
+</div></li>
+</ul>                                            </div>
+                </div>
+
+            </div>
+            <!-- Close Main Menu Wrapper -->
+
+        </nav>
+        <!-- Mobile search -->
+        <div class="header-search hidden lg:!hidden border-b border-solid border-colorado-blue bg-white absolute top-full left-0 w-full z-97" id="header-search">
+            <form action="https://coloradospringschamberedc.com" class="relative w-full">
+                <div class="w-10 absolute top-0 left-0 h-full z-0 flex items-center justify-center">
+                    <svg class="block w-4 h-4" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.2972 10.3073L15 15.0161M11.8889 6.46056C11.8889 9.46745 9.45133 11.905 6.44444 11.905C3.43756 11.905 1 9.46745 1 6.46056C1 3.45368 3.43756 1.01611 6.44444 1.01611C9.45133 1.01611 11.8889 3.45368 11.8889 6.46056Z" stroke="#1A688C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <input type="search" name="s" id="" value="">
+                <button type="submit" class="block w-[80px] h-full absolute top-0 right-0 z-0 flex items-center justify-center text-center text-sm !leading-none font-semibold text-colorado-blue transition-colors duration-150 cursor-pointer hover:opacity-90">Search</button>
+            </form>
+        </div>
+    </header>
+<div class="relative">
+  <main>        <!-- Start marquee -->
+        <div class="module module-marquee module-1">
+          
+<section class="relative flex items-end height-screen-minus-nav bg-colorado-dark-blue prose-mobile md:prose-tablet xl:prose-desktop">    <!-- Marquee Image -->
+    <div class="absolute inset-0 w-full h-full black-opacity-layer-fade">
+      <img fetchpriority="high"
+        src="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg"
+        srcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-4-Listening-Tour-Yemi-11-2048x1365.jpg 2048w"
+        sizes="(max-width: 2560px) 100vw, 2560px"
+        loading="auto"
+        alt=""
+        width="375"
+        height="320"
+        class="object-cover w-full h-full"
+         style="object-position: center center;"      >
+    </div>
+    <!-- Close Marquee Image -->
+  <!-- Inner Content -->
+  <div class="relative z-10 w-full bg-opacity-40 bg-colorado-light-blue border-l-[1.75rem] border-b-[1.75rem] border-colorado-light-blue md:border-l-[2rem] md:border-b-[2rem] lg:border-0 lg:bg-transparent">
+    <div class="container ml-0 lg:max-w-[50rem] xl:max-w-[65rem] before:absolute before:inset-0 before:bg-black before:bg-opacity-45 lg:before:hidden">    </div>
+  </div>
+  <!-- Close Inner Content -->
+</section>  <div class="px-4 pt-5 md:pt-7 md:px-6 lg:pt-16 lg:px-10">
+      <nav class="yoast-breadcrumb"><span><span><a href="https://coloradospringschamberedc.com/">Home</a></span> / <span><a href="https://coloradospringschamberedc.com/economic-development/">Economic Development</a></span> / <span class="breadcrumb_last" aria-current="page">Small Business Resources</span></span>  </nav>  </div>        </div>
+        <!-- End marquee -->        <!-- Start overview-content -->
+        <div class="module module-overview-content module-2">
+          
+<div class="container pb-16 pt-14 md:pb-24 md:pt-20 lg:py-28">
+  <div class="flex flex-col w-11/12 mx-auto md:w-10/12 lg:flex-row">      <h2 class="relative font-semibold text-colorado-dark-blue text-[2.625rem] leading-[2.9375rem] md:text-[4rem] md:leading-[4.5rem] lg:w-1/2 lg:h-none lg:text-[3.5rem] lg:leading-[3.875rem] lg:pt-4 lg:pr-4 lg:mb-14 xl:text-[4rem] xl:leading-[4.5rem] xl:mb-16 2xl:w-5/12 tri-color-accent accent-dark before:hidden before:absolute before:left-0 before:-bottom-12 lg:before:block">
+        Small Business Starts Here      </h2>
+    <div class="mt-20 md:mt-32 lg:w-1/2 lg:mt-0 2xl:w-7/12 lg:pt-10">
+      <div class="relative md:pl-18 lg:pl-6 xl:pl-10 2xl:pl-14 overview-content tri-color-accent accent-dark before:absolute before:left-0 before:-top-11 before:md:-top-20 before:lg:hidden">
+        <p>Small businesses are the engine that drives local economies. These businesses create jobs, spark innovation, and support families. According to the <a href="https://advocacy.sba.gov/2023/03/07/frequently-asked-questions-about-small-business-2023/">U.S Small Business Administration</a>, small businesses of 500 or fewer employees make up 99.9% of all U.S businesses.</p>
+<p>The <a href="https://oedit.colorado.gov/press-release/colorado-sbdc-announces-new-state-director">Colorado Office of Economic Development and International Trade</a> notes that in 2022, Colorado had a total of 690,000 small businesses, which account for 99.5% of all Colorado businesses and employ nearly half of the state employees. Small businesses in Colorado have also taken a lead in exports from the state. The figures by the <a href="https://ustr.gov/map/state-benefits/co">Office of the U.S. Trade Representative</a> show that in 2016, a total of 5,582 companies exported from Colorado; of those, 4,857 (87%) were small and medium-sized enterprises. These firms generated 28.1% of Colorado’s total exports of goods in 2016.</p>
+<p>Small businesses bring careers and opportunities and contribute to the growth of our local economy through paychecks and taxes. The <a href="https://pikespeaksbdc.org/">Colorado Small Business Development Center serving the Pikes Peak Region</a>, <a href="https://catalystcampus.org/">Catalyst Campus,</a> and <a href="https://www.exponentialimpact.com/">Exponential Impact</a>, connect entrepreneurships and startups with key resources to help them launch, grow, and&nbsp;expand.</p>
+<p>&nbsp;</p>      </div>
+    </div>
+
+  </div>
+</div>        </div>
+        <!-- End overview-content -->        <!-- Start quick-links -->
+        <div class="module module-quick-links module-3">
+          
+<section class="container py-10 md:pt-12 md:pb-14 lg:pt-14 lg:pb-16">
+  <div class="w-10/12 mx-auto md:w-11/12 lg:w-3/4 xl:w-11/12 2xl:w-10/12">
+
+    <span class="block text-sm font-medium text-center uppercase text-colorado-light-blue">
+      Quick Links
+    </span>      <div class="flex flex-col mt-7 md:grid md:grid-cols-12 md:gap-x-3 xl:mt-8">
+          <a href="https://pikespeaksbdc.org/" target="_blank"
+            class="flex items-center w-full p-5 mb-3 text-sm font-medium leading-tight tracking-wide transition-colors duration-150 bg-gray-100 group hover:text-white hover:bg-colorado-light-blue md:col-span-6 md:min-h-[3.4rem] md:py-4 lg:px-6 xl:leading-none xl:px-5 xl:py-3 2xl:px-6 xl:col-span-3"
+          >
+            <span class="flex-shrink-0 w-4 h-4 mr-2 transition-colors duration-150 text-colorado-light-blue group-hover:text-white">
+              <svg class="w-full h-full"><use href="#icon-icon-link" /></svg>            </span>
+            Colorado Small Business Development Center serving the Pikes Peak Region          </a>
+          <a href="https://operations.colorado.gov/office-economic-development-international-trade" target="_blank"
+            class="flex items-center w-full p-5 mb-3 text-sm font-medium leading-tight tracking-wide transition-colors duration-150 bg-gray-100 group hover:text-white hover:bg-colorado-light-blue md:col-span-6 md:min-h-[3.4rem] md:py-4 lg:px-6 xl:leading-none xl:px-5 xl:py-3 2xl:px-6 xl:col-span-3"
+          >
+            <span class="flex-shrink-0 w-4 h-4 mr-2 transition-colors duration-150 text-colorado-light-blue group-hover:text-white">
+              <svg class="w-full h-full"><use href="#icon-icon-link" /></svg>            </span>
+            Colorado Office of Economic Development and International Trade          </a>
+          <a href="http://www.cosopenforbiz.com/" target="_blank"
+            class="flex items-center w-full p-5 mb-3 text-sm font-medium leading-tight tracking-wide transition-colors duration-150 bg-gray-100 group hover:text-white hover:bg-colorado-light-blue md:col-span-6 md:min-h-[3.4rem] md:py-4 lg:px-6 xl:leading-none xl:px-5 xl:py-3 2xl:px-6 xl:col-span-3"
+          >
+            <span class="flex-shrink-0 w-4 h-4 mr-2 transition-colors duration-150 text-colorado-light-blue group-hover:text-white">
+              <svg class="w-full h-full"><use href="#icon-icon-link" /></svg>            </span>
+            COS Open for Biz          </a>
+          <a href="https://coloradospringschamberedc.com/economic-development/sizeup-cos/" target="_self"
+            class="flex items-center w-full p-5 mb-3 text-sm font-medium leading-tight tracking-wide transition-colors duration-150 bg-gray-100 group hover:text-white hover:bg-colorado-light-blue md:col-span-6 md:min-h-[3.4rem] md:py-4 lg:px-6 xl:leading-none xl:px-5 xl:py-3 2xl:px-6 xl:col-span-3"
+          >
+            <span class="flex-shrink-0 w-4 h-4 mr-2 transition-colors duration-150 text-colorado-light-blue group-hover:text-white">
+              <svg class="w-full h-full"><use href="#icon-icon-link" /></svg>            </span>
+            SizeUp COS Tool          </a>
+      </div>
+  </div>
+</section>        </div>
+        <!-- End quick-links -->        <!-- Start companies-logo-grid -->
+        <div class="module module-companies-logo-grid module-4">
+          
+<section class="container pb-9 pt-28 prose-mobile md:pt-36 md:pb-24 md:prose-tablet xl:pt-40 xl:prose-desktop js-logo-grid">    <!-- Grid Title -->
+    <h3 class="relative w-10/12 mx-auto text-center text-colorado-dark-blue tri-color-accent accent-dark before:absolute before:-top-10 before:left-0 before:right-0 before:mx-auto md:before:-top-12">
+      Major Employers    </h3>
+    <!-- Close Grid Title -->    <!-- Logos Wrapper -->
+    <div class="flex flex-col w-3/4 mx-auto mt-6 md:w-10/12 md:flex-row md:flex-wrap md:mt-8 md:justify-between lg:mt-10 lg:justify-start">          <a href="https://www.sasquatchcookies.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="1000" height="1000" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201000%201000'%3E%3C/svg%3E"
+        alt="Sasquatch Cookies logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-sasquatch-cookies.png" ><noscript><img width="1000" height="1000" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-sasquatch-cookies.png"
+        alt="Sasquatch Cookies logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.beautybar-inc.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="357" height="200" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20357%20200'%3E%3C/svg%3E"
+        alt="Beauty Bar logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-beauty-bar.jpg" ><noscript><img width="357" height="200" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-beauty-bar.jpg"
+        alt="Beauty Bar logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://firmaitss.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="255" height="197" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20255%20197'%3E%3C/svg%3E"
+        alt="Firma IT logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-firma-it.jpg" ><noscript><img width="255" height="197" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-firma-it.jpg"
+        alt="Firma IT logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="http://www.themensxchange.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="302" height="210" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20302%20210'%3E%3C/svg%3E"
+        alt="The Men’s Xchange logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-the-men-s-xchange.png" ><noscript><img width="302" height="210" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-the-men-s-xchange.png"
+        alt="The Men’s Xchange logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.oldtownbikeshop.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="400" height="400" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20400'%3E%3C/svg%3E"
+        alt="Old Town Bike Shop logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-old-town-bike-shop.jpg" ><noscript><img width="400" height="400" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-old-town-bike-shop.jpg"
+        alt="Old Town Bike Shop logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.merecyclers.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="234" height="196" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20234%20196'%3E%3C/svg%3E"
+        alt="Mountain Equipment Recyclers logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-mountain-equipment-recyclers.png" ><noscript><img width="234" height="196" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-mountain-equipment-recyclers.png"
+        alt="Mountain Equipment Recyclers logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.goatpatchbrewing.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="792" height="540" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20792%20540'%3E%3C/svg%3E"
+        alt="Goat Patch Brewing logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-goat-patch-brewing.jpg" ><noscript><img width="792" height="540" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-goat-patch-brewing.jpg"
+        alt="Goat Patch Brewing logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.wildgoosemeetinghouse.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="320" height="200" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20320%20200'%3E%3C/svg%3E"
+        alt="Wild Goose Meeting House logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-wild-goose-meeting-house.png" ><noscript><img width="320" height="200" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-wild-goose-meeting-house.png"
+        alt="Wild Goose Meeting House logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://frayla-boutique.square.site/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="1111" height="273" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%201111%20273'%3E%3C/svg%3E"
+        alt="Frayla Boutique logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-frayla-boutique.png" ><noscript><img width="1111" height="273" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-frayla-boutique.png"
+        alt="Frayla Boutique logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.3escomedy.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="400" height="264" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20264'%3E%3C/svg%3E"
+        alt="3E Comedy Club logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-3e-comedy-club.png" ><noscript><img width="400" height="264" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-3e-comedy-club.png"
+        alt="3E Comedy Club logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>          <a href="https://www.trailsendtaproom.com/" target="_blank" class="w-full md:w-[43%] lg:w-1/4 logo-tile is-hidden">
+              <div class="relative aspect-w-16 aspect-h-8 md:aspect-h-14">
+    <div class="absolute inset-0 flex items-center justify-center w-full h-full py-4 md:py-0">
+      <img width="324" height="300" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20324%20300'%3E%3C/svg%3E"
+        alt="Trails End Tap Room logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/logo-trails-end-tap-room.png" ><noscript><img width="324" height="300" src="https://coloradospringschamberedc.com/wp-content/uploads/logo-trails-end-tap-room.png"
+        alt="Trails End Tap Room logo"
+        class="object-contain w-3/4 h-3/4 md:w-10/12 md:h-auto"
+      ></noscript>
+    </div>
+  </div>          </a>
+    </div>
+    <!-- Close Logos Wrapper -->      <!-- Load More -->
+      <div class="flex justify-center w-10/12 mx-auto">
+        <button class="w-full py-4 mt-4 mb-8 text-sm font-semibold text-center text-white uppercase transition-colors duration-150 px-14 bg-colorado-dark-red hover:bg-colorado-orange md:w-auto md:mt-6 md:mb-0 js-load-more">
+          Load More
+        </button>
+      </div>
+      <!-- Close Load More -->
+</section>        </div>
+        <!-- End companies-logo-grid -->        <!-- Start data-viz -->
+        <div class="module module-data-viz module-5">
+            <div class="w-full bg-gray-100 mt-12">
+    <div class="ts-data-viz mx-auto lg:pt-2 lg:pb-4 lg:max-w-4xl">
+      <data-viz :post-ids='[4681]'></data-viz>
+    </div>
+  </div>        </div>
+        <!-- End data-viz -->        <!-- Start tabbed-content -->
+        <div class="module module-tabbed-content module-6">
+            <section tabbed-content class="py-20 prose-mobile md:prose-tablet xl:prose-desktop md:container">
+    <div class="invisible" :class="{ '!visible': loaded }">
+      <div class="mx-auto md:flex md:flex-wrap text-colorado-dark-blue md:w-11/12 xl:w-full">
+
+        <!-- Tablet Only Image -->
+        <div v-if="medium" class="w-full mx-auto mb-7 md:full">            <div v-if="isTabActive(0)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg 1707w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-565x848.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1152x1728.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1365x2048.jpg 1365w"
+                  data-lazy-sizes="(max-width: 1707px) 100vw, 1707px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: left center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg 1707w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-565x848.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1152x1728.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1365x2048.jpg 1365w"
+                  sizes="(max-width: 1707px) 100vw, 1707px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: left center;"                ></noscript>            </div>            <div v-if="isTabActive(1)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png 1350w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-565x753.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-1152x1536.png 1152w"
+                  data-lazy-sizes="(max-width: 1350px) 100vw, 1350px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png 1350w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-565x753.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-1152x1536.png 1152w"
+                  sizes="(max-width: 1350px) 100vw, 1350px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                ></noscript>            </div>            <div v-if="isTabActive(2)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg 1217w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-565x345.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-1152x704.jpg 1152w"
+                  data-lazy-sizes="(max-width: 1217px) 100vw, 1217px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg 1217w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-565x345.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-1152x704.jpg 1152w"
+                  sizes="(max-width: 1217px) 100vw, 1217px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                ></noscript>            </div>            <div v-if="isTabActive(3)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-1152x769.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-2048x1366.jpg 2048w"
+                  data-lazy-sizes="(max-width: 2500px) 100vw, 2500px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-1152x769.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-2048x1366.jpg 2048w"
+                  sizes="(max-width: 2500px) 100vw, 2500px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                ></noscript>            </div>            <div v-if="isTabActive(4)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-2048x1365.jpg 2048w"
+                  data-lazy-sizes="(max-width: 2560px) 100vw, 2560px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-2048x1365.jpg 2048w"
+                  sizes="(max-width: 2560px) 100vw, 2560px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                ></noscript>            </div>            <div v-if="isTabActive(5)" class="aspect-w-9 aspect-h-6">                <img
+                  src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                  data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-2048x1366.jpg 2048w"
+                  data-lazy-sizes="(max-width: 2500px) 100vw, 2500px"
+                  alt=""
+                 
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg" ><noscript><img
+                  src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg"
+                  srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-2048x1366.jpg 2048w"
+                  sizes="(max-width: 2500px) 100vw, 2500px"
+                  alt=""
+                  loading="lazy"
+                  width="315" 
+                  height="200"
+                  class="absolute inset-0 object-cover w-full h-full"
+                   style="object-position: center center;"                ></noscript>            </div>        </div>
+        <!-- Close Tablet Only Image -->
+
+        <!-- Tablet/Desktop Labels -->
+        <ul v-if="!small" class="flex flex-col w-1/3 py-4 pl-8 pr-6 bg-gray-100 lg:w-1/4 xl:w-1/5">            <li @click="setTab(0)"
+              :ref="isTabActive(0) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(0) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                Colorado Small Business Development Center serving the Pikes Peak Region              </span>
+            </li>            <li @click="setTab(1)"
+              :ref="isTabActive(1) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(1) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                SizeUp COS              </span>
+            </li>            <li @click="setTab(2)"
+              :ref="isTabActive(2) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(2) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                Small Business Advocacy and Training              </span>
+            </li>            <li @click="setTab(3)"
+              :ref="isTabActive(3) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(3) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                COS Open for Biz              </span>
+            </li>            <li @click="setTab(4)"
+              :ref="isTabActive(4) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(4) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                Small Business Calendar              </span>
+            </li>            <li @click="setTab(5)"
+              :ref="isTabActive(5) ? 'activeTab' : ''"
+              class="flex py-5 cursor-pointer">
+              <span
+              class="relative self-start text-sm font-semibold leading-snug uppercase after:duration-150 after:absolute after:left-0 after:-bottom-3 after:border-b-4 after:border-colorado-light-blue"
+              :class="isTabActive(5) ? 'text-colorado-light-blue after:w-full' : 'after:w-8'">
+                Downtown Colorado Springs              </span>
+            </li>        </ul>
+        <!-- Close Tablet/Desktop Labels -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(0)"
+            :ref="isTabActive(0) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(0) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(0) }">
+                  Colorado Small Business Development Center serving the Pikes Peak Region                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(0) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(0)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg 1707w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-565x848.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1152x1728.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1365x2048.jpg 1365w"
+                      data-lazy-sizes="(max-width: 1707px) 100vw, 1707px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: left center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-scaled.jpg 1707w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-565x848.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1152x1728.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/Day-3-Generative-AI-58-1365x2048.jpg 1365w"
+                      sizes="(max-width: 1707px) 100vw, 1707px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: left center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    Colorado Small Business Development Center serving the Pikes Peak Region                  </span>
+                  <div class="tabbed-content">
+                    <h4><strong>Supporting growth in small businesses</strong></h4>
+<p><span style="font-weight: 400;">The Colorado Springs Chamber &amp; EDC is the proud <a href="https://coloradospringschamberedc.com/colorado-springs-chamber-economic-development-corporation-to-serve-as-new-host-for-pikes-peak-sbdc/" target="_blank" rel="noopener">host</a> of the <a href="https://pikespeaksbdc.org/" target="_blank" rel="noopener">Colorado Small Business Development Center serving the Pikes Peak Region</a>. </span></p>
+<p>The <a href="https://pikespeaksbdc.org/">Colorado Small Business Development Center serving the Pikes Peak Region</a> (SBDC) is one of the 14 statewide centers focused on helping Colorado&#8217;s small businesses achieve their goals. The SBDC supports small businesses in the Pikes Peak region through the provision of small business consulting and low- or no-cost training to help them start and grow.</p>
+<p>The SBDC connects small businesses with essential resources that maximize the economic potential of entrepreneurs and helps clients minimize risks through comprehensively written business plans, conducting financial forecasts, strategizing on marketing tactics, funding applications, and improving business operations. The SBDC also connects small business owners with resources and financing available through the <a href="https://oedit.colorado.gov/">Colorado Office of Economic Development and International Trade</a> (OEDIT.)</p>
+<p><span style="font-weight: 400;">The SBDC’s office is located at Catalyst Campus. </span></p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(1)"
+            :ref="isTabActive(1) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(1) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(1) }">
+                  SizeUp COS                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(1) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(1)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png 1350w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-565x753.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-1152x1536.png 1152w"
+                      data-lazy-sizes="(max-width: 1350px) 100vw, 1350px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1.png 1350w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-565x753.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/Data-800x1200-1-1152x1536.png 1152w"
+                      sizes="(max-width: 1350px) 100vw, 1350px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    SizeUp COS                  </span>
+                  <div class="tabbed-content">
+                    <h4 data-start="0" data-end="716">Free business intelligence for data-based decisions</h4>
+<p data-start="0" data-end="716"><a href="https://coloradospringschamberedc.com/economic-development/sizeup-cos/">SizeUp COS</a> is a free, powerful online tool offered by the Colorado Springs Chamber &amp; EDC to help local entrepreneurs and small business owners make smarter decisions using data. Whether you’re looking to launch a startup or grow an existing company, SizeUp COS delivers tailored business intelligence that’s typically out of reach for smaller organizations. Users can access industry-specific data on performance benchmarks, competitive landscapes, advertising opportunities, and more—giving them the same strategic insights large corporations rely on. This initiative aligns with the Chamber &amp; EDC’s broader mission to strengthen the region’s economy by empowering business leaders with accessible, actionable data.</p>
+<p data-start="718" data-end="1425" data-is-last-node="" data-is-only-node="">One of the key benefits of SizeUp COS is its ease of use and confidentiality. The platform does not store any user-entered information, ensuring that business planning remains private. Users can drill down to the zip code level or zoom out to compare data at city, county, metro, state, and national scales. Data sources include everything from IRS records to U.S. Census data and are updated regularly using rigorous methodologies. Businesses can also explore markets beyond the Pikes Peak region, with competitive insights available within a 120-mile radius.</p>
+<p data-start="718" data-end="1425" data-is-last-node="" data-is-only-node="">SizeUp COS makes big data a small business advantage—fueling smarter planning, deeper market understanding, and more strategic growth.</p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(2)"
+            :ref="isTabActive(2) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(2) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(2) }">
+                  Small Business Advocacy and Training                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(2) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(2)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg 1217w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-565x345.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-1152x704.jpg 1152w"
+                      data-lazy-sizes="(max-width: 1217px) 100vw, 1217px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780.jpg 1217w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-565x345.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/IMG_0780-1152x704.jpg 1152w"
+                      sizes="(max-width: 1217px) 100vw, 1217px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    Small Business Advocacy and Training                  </span>
+                  <div class="tabbed-content">
+                    <h4>Putting the best foot forward</h4>
+<p>Members of the Colorado Springs Chamber can contribute to the small business community’s voice through the Small Business Advisory Council. This group pools resources to grow businesses within the community, while also forging connections between company leadership.</p>
+<p>The <a href="https://pikespeaksbdc.org/" target="_blank" rel="noopener">Colorado Small Business Development Center serving the Pikes Peak Region</a> provides trainings and workshops with various tracts including financial, marketing, start-up and management/legal. Additionally, several annual events are held, including a cybersecurity summit and the state of small business event.</p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(3)"
+            :ref="isTabActive(3) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(3) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(3) }">
+                  COS Open for Biz                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(3) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(3)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-1152x769.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-2048x1366.jpg 2048w"
+                      data-lazy-sizes="(max-width: 2500px) 100vw, 2500px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-1152x769.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-3-business-partners-points-of-contact-2-2048x1366.jpg 2048w"
+                      sizes="(max-width: 2500px) 100vw, 2500px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    COS Open for Biz                  </span>
+                  <div class="tabbed-content">
+                    <h4>Guiding Your Business Every Step of the Way</h4>
+<p><a href="https://cosopenforbiz.com/" target="_blank" rel="noopener">COS Open For Biz</a> is a step-by-step guide designed to help entrepreneurs move from great idea to grand opening. This Chamber &amp; EDC resource, developed in partnership with the City of Colorado Springs and business partners, provides key points of contact, permitting details, and roadmaps for getting started.</p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(4)"
+            :ref="isTabActive(4) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(4) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(4) }">
+                  Small Business Calendar                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(4) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(4)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-2048x1365.jpg 2048w"
+                      data-lazy-sizes="(max-width: 2560px) 100vw, 2560px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/426A8393-scaled.jpg 2560w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/426A8393-2048x1365.jpg 2048w"
+                      sizes="(max-width: 2560px) 100vw, 2560px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    Small Business Calendar                  </span>
+                  <div class="tabbed-content">
+                    <p>In the Mix is a monthly lunch and learn (sponsored by The Picnic Basket) focusing on a small business topic that removes the big rocks in the way of business success. <strong><a href="https://business.coloradospringschamberedc.com/events">Explore topics here.</a></strong></p>
+<p>Breakfast &amp; Business cards is a great way to connect with other business owners in an informal setting. Each month focuses on a different industry, hosted by members around town. <strong><a href="https://business.coloradospringschamberedc.com/events">Explore networking breakfasts here.</a></strong></p>
+<p>Small Business Advisory Council meetings gather representatives from different industries to learn more about what the Chamber &amp; EDC are doing to help businesses innovate and grow. If you are considering SBAC membership, visit the <a href="https://coloradospringschamberedc.com/chamber-members-and-investors/voice-of-business-committee/">SBAC</a> page or contact Brian Mosley, Jr. at <a href="mailto:bmosley@cscedc.com">BMosley@cscedc.com</a>.</p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+          <!-- Mobile Only Labels -->
+          <div v-if="small"
+            @click="setTab(5)"
+            :ref="isTabActive(5) ? 'activeTab' : ''"
+            class="py-6 items border-t-3 border-colorado-light-blue"
+            :class="{ 'bg-gray-100 mb-2 cursor-pointer' : !isTabActive(5) }">
+            <div class="container">
+              <div class="flex items-center justify-between w-10/12 mx-auto">
+                <span class="text-sm font-semibold uppercase"
+                  :class="{ 'text-colorado-light-blue' : isTabActive(5) }">
+                  Downtown Colorado Springs                </span>
+                <svg viewBox="12.1 9.1 30 28.7"
+                  class="w-3 h-3 ml-2 fill-current"
+                  :class="isTabActive(5) ? 'text-colorado-light-blue' : 'rotate-45'">
+                  <path d="m30.3 23.8 11.5 11a.9.9 0 0 1 0 1.3l-1.5 1.4a1 1 0 0 1-1.4 0l-11.6-11h-.4l-11.6 11a1 1 0 0 1-1.4 0l-1.5-1.4c-.2-.2-.3-.4-.3-.7s.1-.4.3-.6l11.6-11-11.4-11.5a1 1 0 0 1 0-1.4L14 9.4a1 1 0 0 1 1.3 0l11.8 11.7L38.9 9.4a1 1 0 0 1 1.4 0l1.5 1.5a1 1 0 0 1 0 1.4L30.3 23.8z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <!-- Close Mobile Only Labels -->
+
+          <!-- Content Wrapper -->
+          <div v-if="isTabActive(5)" class="sm-only:container md:w-2/3 lg:w-3/4 xl:w-4/5 md:min-h-[48rem]">
+            <div class="mx-auto md:w-full xl:flex xl:flex-row-reverse">
+
+              <!-- Image -->
+              <div v-if="!medium" class="w-10/12 mx-auto mb-5 lg:mb-0 md:w-full xl:w-1/2 lg:pl-9">
+                <div class="aspect-w-9 aspect-h-6 xl:aspect-w-6 xl:aspect-h-7 bg-colorado-blue">                    <img
+                      src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20315%20200'%3E%3C/svg%3E"
+                      data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-2048x1366.jpg 2048w"
+                      data-lazy-sizes="(max-width: 2500px) 100vw, 2500px"
+                      alt=""
+                     
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg" ><noscript><img
+                      src="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg"
+                      srcset="https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum.jpg 2500w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-565x377.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-1152x768.jpg 1152w, https://coloradospringschamberedc.com/wp-content/uploads/small-business-resources-tabbed-content-2-us-olympic-museum-2048x1366.jpg 2048w"
+                      sizes="(max-width: 2500px) 100vw, 2500px"
+                      alt=""
+                      loading="lazy"
+                      width="315" 
+                      height="200"
+                      class="absolute inset-0 object-cover w-full h-full"
+                       style="object-position: center center;"                    ></noscript>                </div>
+              </div>
+              <!-- Close Image -->
+
+              <!-- Content -->
+              <div class="w-10/12 pb-6 mx-auto md:w-full xl:w-1/2 md:pl-9 md:pt-9 md:pr-3 lg:pr-0">
+
+                <!-- Inner Content -->
+                <div>
+                  <!-- label -->
+                  <span class="text-xs font-medium uppercase text-colorado-light-blue">
+                    Downtown Colorado Springs                  </span>
+                  <div class="tabbed-content">
+                    <h4>Business development events and initiatives keep Colorado Springs small businesses strong</h4>
+<p>Colorado Springs’ downtown stores and businesses are kept strong by numerous events and business development initiatives that take place throughout the year. In 2013, Colorado Springs initiated the <a href="https://www.visitcos.com/about-cvb/about-colorado-springs/city-for-champions/" target="_blank" rel="noopener">City for Champions</a> (C4C), a city-wide program focused on strengthening and diversifying the local economy. The enterprise was awarded $120.5 million over a 30-year period to finance economy-building projects like the <a href="https://usopm.org/" target="_blank" rel="noopener">U.S. Olympic &amp; Paralympic Museum</a>, the <a href="https://www.visitcos.com/about-cvb/about-colorado-springs/city-for-champions/venues/usafa-visitor-center/" target="_blank" rel="noopener">Gateway Visitor Center</a> and several <a href="https://coloradospringschamberedc.com/ed-robson-arena-opens-in-olympic-city-usa/" rel="noopener">new stadiums and arenas</a>. These investments have created a vibrant downtown with increased support that benefits local small businesses.</p>
+<p>Additionally, the Cultural Office of the Pikes Peak Region hosts their annual <a href="https://www.culturaloffice.org/programs/arts-month/" target="_blank" rel="noopener">Arts Month</a> in October, giving local artists and small businesses an opportunity to showcase their offerings.</p>
+                  </div>
+                </div>
+                <!-- Close Inner Content -->
+              </div>
+              <!-- Close Content -->
+
+            </div>
+          </div>
+          <!-- Close Content Wrapper -->
+      </div>
+    </div>
+  </section>        </div>
+        <!-- End tabbed-content -->        <!-- Start contact-us -->
+        <div class="module module-contact-us module-7">
+          
+<!-- Contact Us -->
+<section class="bg-gray-100 pb-28 md:pb-32 pt-36">
+
+  <!-- Container -->
+  <div class="container">
+    <div class="w-9/12 max-w-3xl mx-auto text-center md:w-10/12 text-colorado-dark-blue">
+
+      <!-- Header -->
+      <h4 class="relative text-2.625 md:text-3.25 font-bold tri-color-accent w-full accent-dark before:absolute before:inset-x-0 before:mx-auto before:-top-9 font-calluna">
+        Contact Us
+      </h4>
+        <!-- Default Contact -->
+        <div class="xl:pt-10">
+
+          <!-- Text -->
+          <p class="mb-8 uppercase md:mb-10">
+            Colorado Springs Chamber & EDC
+          </p>
+
+          <!-- CTA -->
+          <a href="https://coloradospringschamberedc.com/contact-us/"
+            target="_self"
+            class="py-3.5 inline-flex px-16 text-sm font-semibold text-white uppercase duration-150 bg-colorado-dark-blue hover:bg-colorado-light-blue">
+            Contact Us          </a>
+
+        </div>
+        <!-- Close Default Contact -->
+    </div>
+  </div>
+  <!-- Close Container -->
+
+</section>
+<!-- Close Contact Us -->
+        </div>
+        <!-- End contact-us -->        <!-- Start featured-news -->
+        <div class="module module-featured-news module-8">
+          
+<section class="container pt-32 pb-24 prose-mobile md:pt-40 md:pb-28 md:prose-tablet xl:prose-desktop">    <h3 class="relative w-11/12 mx-auto text-center text-colorado-dark-blue tri-color-accent accent-dark before:absolute before:-top-10 before:left-0 before:right-0 before:mx-auto md:before:-top-14">
+      Featured News & Media    </h3>    <!-- Posts Wrapper -->
+    <div class="flex flex-col w-10/12 mx-auto mt-10 md:w-2/3 md:mt-14 lg:w-1/2 xl:w-10/12 xl:grid xl:grid-cols-12 xl:gap-x-8 2xl:w-3/4">
+        <!-- Post Item -->
+        <a href="https://coloradospringschamberedc.com/colorado-springs-chamber-edc-announces-new-partnership-with-better-business-bureau-exponential-impact-and-colorado-sbdc-serving-pikes-peak-to-launch-joint-4business-after-hours-series/" class="flex flex-col w-full mb-14 md:mb-16 xl:col-span-4 xl:mb-0 last:mb-0 group">
+          <div class="relative aspect-w-16 aspect-h-11 bg-colorado-dark-blue md:aspect-h-9 xl:aspect-h-11 group-hover:after:h-4 after:absolute after:left-0 after:right-0 after:bottom-0 after:w-full after:h-1.5 after:bg-colorado-light-blue after:transition-all after:duration-150">              <img
+                src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20320'%3E%3C/svg%3E"
+                data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo.png 1800w, https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo-565x377.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo-1152x768.png 1152w"
+                data-lazy-sizes="(max-width: 1800px) 100vw, 1800px"
+               
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo.png" ><noscript><img
+                src="https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo.png"
+                srcset="https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo.png 1800w, https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo-565x377.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/4Business-Web-Logo-1152x768.png 1152w"
+                sizes="(max-width: 1800px) 100vw, 1800px"
+                loading="lazy"
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              ></noscript>          </div>
+
+          <div class="flex flex-col pt-5 md:pt-7">            <h6 class="text-colorado-dark-blue md:pr-6">
+              Colorado Springs Chamber &#038; EDC Announces New Partnership with Better Business Bureau, Exponential Impact, and Colorado SBDC Serving Pikes Peak to Launch Joint 4Business After Hours&nbsp;Series            </h6>
+          </div>
+        </a>
+        <!-- Close Post Item -->
+        <!-- Post Item -->
+        <a href="https://coloradospringschamberedc.com/colorado-springs-chamber-edc-strengthens-leadership-pathway-with-colorado-springs-rising-professionals/" class="flex flex-col w-full mb-14 md:mb-16 xl:col-span-4 xl:mb-0 last:mb-0 group">
+          <div class="relative aspect-w-16 aspect-h-11 bg-colorado-dark-blue md:aspect-h-9 xl:aspect-h-11 group-hover:after:h-4 after:absolute after:left-0 after:right-0 after:bottom-0 after:w-full after:h-1.5 after:bg-colorado-light-blue after:transition-all after:duration-150">              <img
+                src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20320'%3E%3C/svg%3E"
+                data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/CSRP.png 2000w, https://coloradospringschamberedc.com/wp-content/uploads/CSRP-565x377.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/CSRP-1152x768.png 1152w"
+                data-lazy-sizes="(max-width: 2000px) 100vw, 2000px"
+               
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/CSRP.png" ><noscript><img
+                src="https://coloradospringschamberedc.com/wp-content/uploads/CSRP.png"
+                srcset="https://coloradospringschamberedc.com/wp-content/uploads/CSRP.png 2000w, https://coloradospringschamberedc.com/wp-content/uploads/CSRP-565x377.png 565w, https://coloradospringschamberedc.com/wp-content/uploads/CSRP-1152x768.png 1152w"
+                sizes="(max-width: 2000px) 100vw, 2000px"
+                loading="lazy"
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              ></noscript>          </div>
+
+          <div class="flex flex-col pt-5 md:pt-7">            <h6 class="text-colorado-dark-blue md:pr-6">
+              Colorado Springs Chamber &#038; EDC Strengthens Leadership Pathway with Colorado Springs Rising&nbsp;Professionals            </h6>
+          </div>
+        </a>
+        <!-- Close Post Item -->
+        <!-- Post Item -->
+        <a href="https://coloradospringschamberedc.com/colorado-springs-brings-the-sport-of-kings-to-the-rodeo-ring/" class="flex flex-col w-full mb-14 md:mb-16 xl:col-span-4 xl:mb-0 last:mb-0 group">
+          <div class="relative aspect-w-16 aspect-h-11 bg-colorado-dark-blue md:aspect-h-9 xl:aspect-h-11 group-hover:after:h-4 after:absolute after:left-0 after:right-0 after:bottom-0 after:w-full after:h-1.5 after:bg-colorado-light-blue after:transition-all after:duration-150">              <img
+                src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20375%20320'%3E%3C/svg%3E"
+                data-lazy-srcset="https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation.jpg 1500w, https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation-565x318.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation-1152x647.jpg 1152w"
+                data-lazy-sizes="(max-width: 1500px) 100vw, 1500px"
+               
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              data-lazy-src="https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation.jpg" ><noscript><img
+                src="https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation.jpg"
+                srcset="https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation.jpg 1500w, https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation-565x318.jpg 565w, https://coloradospringschamberedc.com/wp-content/uploads/The-Broadmoor-Winter-Polo-Classic-Photo-Credit-Sports-Corporation-1152x647.jpg 1152w"
+                sizes="(max-width: 1500px) 100vw, 1500px"
+                loading="lazy"
+                alt=""
+                width="375"
+                height="320"
+                class="absolute inset-0 block object-cover w-full h-full"
+              ></noscript>          </div>
+
+          <div class="flex flex-col pt-5 md:pt-7">            <h6 class="text-colorado-dark-blue md:pr-6">
+              Colorado Springs Brings the Sport of Kings to the Rodeo&nbsp;Ring            </h6>
+          </div>
+        </a>
+        <!-- Close Post Item -->
+    </div>
+    <!-- Close Posts Wrapper -->    <div class="flex justify-center w-10/12 mx-auto mt-14 md:mt-16 xl:mt-24">
+      <a href="https://coloradospringschamberedc.com/news-and-media/" class="w-full px-10 py-4 text-sm font-semibold text-center text-white uppercase transition-colors duration-150 bg-colorado-dark-blue hover:bg-colorado-light-blue md:w-auto">
+        More News & Media      </a>
+    </div>
+</section>        </div>
+        <!-- End featured-news -->  </main>
+<footer class="ts-footer relative border-t-3 pt-14 md:pt-20 lg:pt-16 bg-colorado-dark-blue border-colorado-dark-red bg-cover bg-bottom bg-[url('/wp-content/themes/coloradosprings/dist/svgs/background-logo.svg')]">
+  <!-- Toggle Sitemap -->
+  <button class="absolute text-sm font-semibold text-white uppercase top-5 right-5 font-montserrat">
+    <span @click="toggleVisability()" class="flex items-center">
+      {{ isOpen ? 'Close' : 'Open' }} Sitemap
+      <svg xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 12 12"
+        class="w-3 h-3 ml-2 fill-current"
+        :class="{ 'rotate-45' : isOpen }"
+        >
+        <title>{{ isOpen ? 'Close' : 'Open' }} Sitemap</title>
+        <path d="M12 5H7V0H5v5H0v2h5v5h2V7h5z"/>
+      </svg>
+    </span>
+  </button>
+
+  <svg class="w-60 md:w-[19rem] mx-auto mb-4 md:mb-10 lg:mb-5"><title>Colorado Springs Logo</title><use href="#icon-colorado-springs-logo" /></svg>    <!-- Nav Menu -->
+    <div v-if="isOpen" id="footer-menu" class="w-full mb-12 md:mb-16 lg:mb-10">
+      <div class="container"><ul id="menu-footer-menu" class="footer-nav"><li class="menu-item menu-item-has-children top-level-menu-item current-parent"><a href="https://coloradospringschamberedc.com/economic-development/">Economic Development</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/cosfuture/">Foundation for Colorado Springs’ Future</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/titans-of-economic-development-advisory-council/">Titans of Economic Development Council</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/workforce-demographics/">Workforce &#038; Demographics</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/incentives-taxes/">Incentives &#038; Taxes</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/opportunity-zones/">Opportunity Zones</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/entrepreneur-resources-in-colorado-springs/">Entrepreneurship</a></li>
+	<li class="menu-item"><a href="https://properties.zoomprospector.com/coloradosprings?page=1&#038;s%5BSortDirection%5D=true&#038;s%5BradiusLat%5D=0&#038;s%5Bradius%5D=0&#038;s%5BradiusLng%5D=0&#038;s%5BSortBy%5D=featured&#038;s%5BSizeUnits%5D=1">Sites &#038; Properties</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/transportation-infrastructure/">Transportation &#038; Infrastructure</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/sizeup-cos/">SizeUp COS</a></li>
+	<li class="menu-item current"><a href="https://coloradospringschamberedc.com/economic-development/small-business-resources/" aria-current="page">Small Business Resources</a></li>
+	<li class="menu-item"><a href="https://cosopenforbiz.com/">COS Open For Biz</a></li>
+</ul>
+</li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/">Target Sectors</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/aerospace-defense/">Aerospace and Defense</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/cybersecurity-software-development/">Cybersecurity and Software Development</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/advanced-manufacturing-and-semiconductor-technology/">Advanced Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/medical-equipment-supplies-manufacturing/">Medical Equipment and Supplies Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/hardware-springs-manufacturing/">Hardware and Springs Manufacturing</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/economic-development/target-sectors/finance-and-insurance/">Finance and Insurance</a></li>
+</ul>
+</li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/government-affairs/">Government Affairs</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/government-affairs/advocacy/">Advocacy</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/government-affairs/government-affairs-council/">Government Affairs Council</a></li>
+</ul>
+</li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/defense-military/">Defense &#038; Military</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/defense-military/defense-development/">Defense Development</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/defense-military/veterans-cleared-talent/">Veterans &#038; Cleared Talent</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/cadec/">Colorado Aerospace &#038; Defense Economic Council</a></li>
+</ul>
+</li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/">Membership</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/join/">Join</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/membership-benefits/">Membership Benefits</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/chamber-members-and-investors/small-business-case-studies/">Small Business Case Studies</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/events/calendar/">Events</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/list/">Business Directory</a></li>
+	<li class="menu-item"><a href="https://business.coloradospringschamberedc.com/boardofgovernors/Search/board-of-governors-488789">Board of Governors</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/get-involved/">Get Involved</a></li>
+</ul>
+</li>
+<li class="menu-item menu-item-has-children top-level-menu-item"><a href="https://coloradospringschamberedc.com/live-work/">Live &#038; Work Here</a>
+<ul class="sub-menu">
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/find-your-cos/">Find Your COS</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/talent-resource-inventory/">Connect, Engage, and Recruit Talent</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/find-a-job/">Find a Job</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/cost-of-living-calculator/">Cost of Living</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/colorado-springs-communities/">Communities</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/outdoor-activities-climate/">Outdoor Activities &#038; Climate</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/education/">Education</a></li>
+	<li class="menu-item"><a href="https://coloradospringschamberedc.com/live-work/arts-culture/">Art &#038; Culture</a></li>
+</ul>
+</li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/news-and-media/">News and Media</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/category/blog/">Blog</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/about-us/">About Us</a></li>
+<li class="menu-item top-level-menu-item"><a href="https://coloradospringschamberedc.com/">Log In</a></li>
+</ul>      </div>
+    </div>
+    <!-- Close Nav Menu -->
+  <div class="mx-auto text-white text-center social-icons mb-4"><ul class="social-icons"><li><a href="https://www.facebook.com/ColoradoSpringsChamberEDC/" target="_blank" rel="nofollow noreferrer"><span class="sr-only">facebook</span><svg><use href="#icon-facebook" /></svg></a></li><li><a href="https://twitter.com/cscedc" target="_blank" rel="nofollow noreferrer"><span class="sr-only">twitter</span><svg><use href="#icon-twitter" /></svg></a></li><li><a href="https://www.instagram.com/coschamberedc/" target="_blank" rel="nofollow noreferrer"><span class="sr-only">instagram</span><svg><use href="#icon-instagram" /></svg></a></li><li><a href="https://www.linkedin.com/company/cscedc/" target="_blank" rel="nofollow noreferrer"><span class="sr-only">linkedin</span><svg><use href="#icon-linkedin" /></svg></a></li><li><a href="https://www.youtube.com/channel/UC-HELVJFaS8CdyNDQAoWTwQ" target="_blank" rel="nofollow noreferrer"><span class="sr-only">youtube</span><svg><use href="#icon-youtube" /></svg></a></li></ul></div>
+
+  <div class="footer-text">
+    <p>&copy; 2026 Colorado Springs Chamber &amp; EDC, All Rights Reserved <a href="https://coloradospringschamberedc.com/privacy-policy/">Privacy Policy</a> | <a href="https://coloradospringschamberedc.com/contact-us/">Contact Us</a> <span class="footer-text-break"> 102 South Tejon Street, Suite 1200, Colorado Springs, CO 80903</span></p>
+  </div>
+  
+  <!-- DCI -->
+  <div class="flex flex-col items-center pb-5 md:pb-7">
+    <a href="https://aboutdci.com/" target="_blank">
+      <svg class="w-8 h-8"><title>DCI Logo</title><use href="#icon-dci-logo" /></svg>    </a>
+    <span class="mt-2 text-xs text-white">
+      Created By    </span>
+  </div>
+
+</footer>
+
+</div>
+
+<script type="speculationrules">
+{"prefetch":[{"source":"document","where":{"and":[{"href_matches":"/*"},{"not":{"href_matches":["/wp-*.php","/wp-admin/*","/wp-content/uploads/*","/wp-content/*","/wp-content/plugins/*","/wp-content/themes/coloradosprings/*","/*\\?(.+)"]}},{"not":{"selector_matches":"a[rel~=\"nofollow\"]"}},{"not":{"selector_matches":".no-prefetch, .no-prefetch a"}}]},"eagerness":"conservative"}]}
+</script>
+<script type="rocketlazyloadscript" id="rocket-browser-checker-js-after">
+"use strict";var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||!1,descriptor.configurable=!0,"value"in descriptor&&(descriptor.writable=!0),Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){return protoProps&&defineProperties(Constructor.prototype,protoProps),staticProps&&defineProperties(Constructor,staticProps),Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor))throw new TypeError("Cannot call a class as a function")}var RocketBrowserCompatibilityChecker=function(){function RocketBrowserCompatibilityChecker(options){_classCallCheck(this,RocketBrowserCompatibilityChecker),this.passiveSupported=!1,this._checkPassiveOption(this),this.options=!!this.passiveSupported&&options}return _createClass(RocketBrowserCompatibilityChecker,[{key:"_checkPassiveOption",value:function(self){try{var options={get passive(){return!(self.passiveSupported=!0)}};window.addEventListener("test",null,options),window.removeEventListener("test",null,options)}catch(err){self.passiveSupported=!1}}},{key:"initRequestIdleCallback",value:function(){!1 in window&&(window.requestIdleCallback=function(cb){var start=Date.now();return setTimeout(function(){cb({didTimeout:!1,timeRemaining:function(){return Math.max(0,50-(Date.now()-start))}})},1)}),!1 in window&&(window.cancelIdleCallback=function(id){return clearTimeout(id)})}},{key:"isDataSaverModeOn",value:function(){return"connection"in navigator&&!0===navigator.connection.saveData}},{key:"supportsLinkPrefetch",value:function(){var elem=document.createElement("link");return elem.relList&&elem.relList.supports&&elem.relList.supports("prefetch")&&window.IntersectionObserver&&"isIntersecting"in IntersectionObserverEntry.prototype}},{key:"isSlowConnection",value:function(){return"connection"in navigator&&"effectiveType"in navigator.connection&&("2g"===navigator.connection.effectiveType||"slow-2g"===navigator.connection.effectiveType)}}]),RocketBrowserCompatibilityChecker}();
+//# sourceURL=rocket-browser-checker-js-after
+</script>
+<script id="rocket-preload-links-js-extra">
+var RocketPreloadLinksConfig = {"excludeUris":"/(?:.+/)?feed(?:/(?:.+/?)?)?$|/(?:.+/)?embed/|/(index.php/)?(.*)wp-json(/.*|$)|/refer/|/go/|/recommend/|/recommends/","usesTrailingSlash":"1","imageExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php","fileExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|pdf|doc|docx|xls|xlsx|php|html|htm","siteUrl":"https://coloradospringschamberedc.com","onHoverDelay":"100","rateThrottle":"3"};
+//# sourceURL=rocket-preload-links-js-extra
+</script>
+<script type="rocketlazyloadscript" id="rocket-preload-links-js-after">
+(function() {
+"use strict";var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},e=function(){function i(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,t,n){return t&&i(e.prototype,t),n&&i(e,n),e}}();function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var t=function(){function n(e,t){i(this,n),this.browser=e,this.config=t,this.options=this.browser.options,this.prefetched=new Set,this.eventTime=null,this.threshold=1111,this.numOnHover=0}return e(n,[{key:"init",value:function(){!this.browser.supportsLinkPrefetch()||this.browser.isDataSaverModeOn()||this.browser.isSlowConnection()||(this.regex={excludeUris:RegExp(this.config.excludeUris,"i"),images:RegExp(".("+this.config.imageExt+")$","i"),fileExt:RegExp(".("+this.config.fileExt+")$","i")},this._initListeners(this))}},{key:"_initListeners",value:function(e){-1<this.config.onHoverDelay&&document.addEventListener("mouseover",e.listener.bind(e),e.listenerOptions),document.addEventListener("mousedown",e.listener.bind(e),e.listenerOptions),document.addEventListener("touchstart",e.listener.bind(e),e.listenerOptions)}},{key:"listener",value:function(e){var t=e.target.closest("a"),n=this._prepareUrl(t);if(null!==n)switch(e.type){case"mousedown":case"touchstart":this._addPrefetchLink(n);break;case"mouseover":this._earlyPrefetch(t,n,"mouseout")}}},{key:"_earlyPrefetch",value:function(t,e,n){var i=this,r=setTimeout(function(){if(r=null,0===i.numOnHover)setTimeout(function(){return i.numOnHover=0},1e3);else if(i.numOnHover>i.config.rateThrottle)return;i.numOnHover++,i._addPrefetchLink(e)},this.config.onHoverDelay);t.addEventListener(n,function e(){t.removeEventListener(n,e,{passive:!0}),null!==r&&(clearTimeout(r),r=null)},{passive:!0})}},{key:"_addPrefetchLink",value:function(i){return this.prefetched.add(i.href),new Promise(function(e,t){var n=document.createElement("link");n.rel="prefetch",n.href=i.href,n.onload=e,n.onerror=t,document.head.appendChild(n)}).catch(function(){})}},{key:"_prepareUrl",value:function(e){if(null===e||"object"!==(void 0===e?"undefined":r(e))||!1 in e||-1===["http:","https:"].indexOf(e.protocol))return null;var t=e.href.substring(0,this.config.siteUrl.length),n=this._getPathname(e.href,t),i={original:e.href,protocol:e.protocol,origin:t,pathname:n,href:t+n};return this._isLinkOk(i)?i:null}},{key:"_getPathname",value:function(e,t){var n=t?e.substring(this.config.siteUrl.length):e;return n.startsWith("/")||(n="/"+n),this._shouldAddTrailingSlash(n)?n+"/":n}},{key:"_shouldAddTrailingSlash",value:function(e){return this.config.usesTrailingSlash&&!e.endsWith("/")&&!this.regex.fileExt.test(e)}},{key:"_isLinkOk",value:function(e){return null!==e&&"object"===(void 0===e?"undefined":r(e))&&(!this.prefetched.has(e.href)&&e.origin===this.config.siteUrl&&-1===e.href.indexOf("?")&&-1===e.href.indexOf("#")&&!this.regex.excludeUris.test(e.href)&&!this.regex.images.test(e.href))}}],[{key:"run",value:function(){"undefined"!=typeof RocketPreloadLinksConfig&&new n(new RocketBrowserCompatibilityChecker({capture:!0,passive:!0}),RocketPreloadLinksConfig).init()}}]),n}();t.run();
+}());
+
+//# sourceURL=rocket-preload-links-js-after
+</script>
+<script id="rocket_lazyload_css-js-extra">
+var rocket_lazyload_css_data = {"threshold":"300"};
+//# sourceURL=rocket_lazyload_css-js-extra
+</script>
+<script id="rocket_lazyload_css-js-after">
+!function o(n,c,a){function u(t,e){if(!c[t]){if(!n[t]){var r="function"==typeof require&&require;if(!e&&r)return r(t,!0);if(s)return s(t,!0);throw(e=new Error("Cannot find module '"+t+"'")).code="MODULE_NOT_FOUND",e}r=c[t]={exports:{}},n[t][0].call(r.exports,function(e){return u(n[t][1][e]||e)},r,r.exports,o,n,c,a)}return c[t].exports}for(var s="function"==typeof require&&require,e=0;e<a.length;e++)u(a[e]);return u}({1:[function(e,t,r){"use strict";{const c="undefined"==typeof rocket_pairs?[]:rocket_pairs,a=(("undefined"==typeof rocket_excluded_pairs?[]:rocket_excluded_pairs).map(t=>{var e=t.selector;document.querySelectorAll(e).forEach(e=>{e.setAttribute("data-rocket-lazy-bg-"+t.hash,"excluded")})}),document.querySelector("#wpr-lazyload-bg-container"));var o=rocket_lazyload_css_data.threshold||300;const u=new IntersectionObserver(e=>{e.forEach(t=>{t.isIntersecting&&c.filter(e=>t.target.matches(e.selector)).map(t=>{var e;t&&((e=document.createElement("style")).textContent=t.style,a.insertAdjacentElement("afterend",e),t.elements.forEach(e=>{u.unobserve(e),e.setAttribute("data-rocket-lazy-bg-"+t.hash,"loaded")}))})})},{rootMargin:o+"px"});function n(){0<(0<arguments.length&&void 0!==arguments[0]?arguments[0]:[]).length&&c.forEach(t=>{try{document.querySelectorAll(t.selector).forEach(e=>{"loaded"!==e.getAttribute("data-rocket-lazy-bg-"+t.hash)&&"excluded"!==e.getAttribute("data-rocket-lazy-bg-"+t.hash)&&(u.observe(e),(t.elements||=[]).push(e))})}catch(e){console.error(e)}})}n(),function(){const r=window.MutationObserver;return function(e,t){if(e&&1===e.nodeType)return(t=new r(t)).observe(e,{attributes:!0,childList:!0,subtree:!0}),t}}()(document.querySelector("body"),n)}},{}]},{},[1]);
+//# sourceURL=rocket_lazyload_css-js-after
+</script>
+<script id="tofino-js-extra">
+var tofinoJS = {"ajaxUrl":"https://coloradospringschamberedc.com/wp-admin/admin-ajax.php","nextNonce":"6eccdf7a93","cookieExpires":"999","themeUrl":"https://coloradospringschamberedc.com/wp-content/themes/coloradosprings","alertJS":"false","siteURL":"https://coloradospringschamberedc.com"};
+//# sourceURL=tofino-js-extra
+</script>
+<script type="rocketlazyloadscript" data-rocket-type="module" data-rocket-src="https://coloradospringschamberedc.com/wp-content/themes/coloradosprings/dist/app.js" id="tofino-js" data-rocket-defer defer></script>
+<script>window.lazyLoadOptions=[{elements_selector:"img[data-lazy-src],.rocket-lazyload,iframe[data-lazy-src]",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,callback_loaded:function(element){if(element.tagName==="IFRAME"&&element.dataset.rocketLazyload=="fitvidscompatible"){if(element.classList.contains("lazyloaded")){if(typeof window.jQuery!="undefined"){if(jQuery.fn.fitVids){jQuery(element).parent().fitVids()}}}}}},{elements_selector:".rocket-lazyload",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,}];window.addEventListener('LazyLoad::Initialized',function(e){var lazyLoadInstance=e.detail.instance;if(window.MutationObserver){var observer=new MutationObserver(function(mutations){var image_count=0;var iframe_count=0;var rocketlazy_count=0;mutations.forEach(function(mutation){for(var i=0;i<mutation.addedNodes.length;i++){if(typeof mutation.addedNodes[i].getElementsByTagName!=='function'){continue}
+if(typeof mutation.addedNodes[i].getElementsByClassName!=='function'){continue}
+images=mutation.addedNodes[i].getElementsByTagName('img');is_image=mutation.addedNodes[i].tagName=="IMG";iframes=mutation.addedNodes[i].getElementsByTagName('iframe');is_iframe=mutation.addedNodes[i].tagName=="IFRAME";rocket_lazy=mutation.addedNodes[i].getElementsByClassName('rocket-lazyload');image_count+=images.length;iframe_count+=iframes.length;rocketlazy_count+=rocket_lazy.length;if(is_image){image_count+=1}
+if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_count>0){lazyLoadInstance.update()}});var b=document.getElementsByTagName("body")[0];var config={childList:!0,subtree:!0};observer.observe(b,config)}},!1)</script><script data-no-minify="1" async src="https://coloradospringschamberedc.com/wp-content/plugins/wp-rocket/assets/js/lazyload/17.8.3/lazyload.min.js"></script>
+
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9dfb6394db523001',t:'MTc3NDA3OTY3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
+<!-- This website is like a Rocket, isn't it? Performance optimized by WP Rocket. Learn more: https://wp-rocket.me -->

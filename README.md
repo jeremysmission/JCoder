@@ -59,7 +59,7 @@ The agent config controls 15+ modules organized by sprint:
 
 ```bash
 # Check environment readiness
-python main.py doctor
+python main.py doctor check
 
 # Ingest a repository
 python main.py ingest /path/to/repo --index-name myproject
@@ -71,7 +71,7 @@ python main.py ask "How does authentication work?" --index-name myproject
 python main.py eval --benchmark evaluation/golden_questions_v1.json
 
 # CPU-only testing (no vLLM needed)
-python main.py --mock ask "What does the chunker do?"
+python main.py --mock ask "What does the chunker do?" --index-name myproject
 
 # Launch the GUI command center
 python main.py gui

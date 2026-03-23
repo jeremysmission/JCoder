@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://coloradospringschamberedc.com/economic-development/small-business-resources/",
+  "id": "startup_colorado_springs_chamber_resources",
+  "lane": "lane_05",
+  "notes": "Local chamber and ecosystem resource page.",
+  "saved_at_utc": "2026-03-21T07:54:30.634338+00:00",
+  "saved_relpath": "lane_05/startup_local_setup/startup_colorado_springs_chamber_resources.html",
+  "sha256": "ed43273a306bb3d1b3b62a9c104ecd0a1d22b52d7e247f32e2f38e2281dd5430",
+  "size_bytes": 164995,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://coloradospringschamberedc.com/economic-development/small-business-resources/"
+}

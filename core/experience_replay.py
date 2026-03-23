@@ -38,6 +38,9 @@ class Experience:
     timestamp: float
     use_count: int = 0
     q_value: float = 0.0
+    pass_count: int = 0
+    fail_count: int = 0
+    p2value: float = 0.0
 
 
 class ExperienceStore:
@@ -58,12 +61,16 @@ class ExperienceStore:
         min_confidence: float = 0.6,
         q_learning_rate: float = 0.2,
         q_value_weight: float = 0.3,
+        p2value_alpha: float = 0.5,
+        near_miss_boost: float = 1.3,
     ):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.min_confidence = min_confidence
         self.q_learning_rate = q_learning_rate
         self.q_value_weight = q_value_weight
+        self.p2value_alpha = p2value_alpha
+        self.near_miss_boost = near_miss_boost
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
@@ -97,10 +104,48 @@ class ExperienceStore:
                 conn.execute(
                     "ALTER TABLE experiences ADD COLUMN q_value REAL DEFAULT 0.0"
                 )
+            if "pass_count" not in cols:
+                conn.execute(
+                    "ALTER TABLE experiences ADD COLUMN pass_count INTEGER DEFAULT 0"
+                )
+            if "fail_count" not in cols:
+                conn.execute(
+                    "ALTER TABLE experiences ADD COLUMN fail_count INTEGER DEFAULT 0"
+                )
+            if "p2value" not in cols:
+                conn.execute(
+                    "ALTER TABLE experiences ADD COLUMN p2value REAL DEFAULT 0.0"
+                )
                 conn.commit()
 
+    def compute_p2value(
+        self,
+        confidence: float,
+        pass_count: int = 0,
+        fail_count: int = 0,
+    ) -> float:
+        """Compute P2Value priority score blending confidence with test pass rate.
+
+        When no test results exist (pass_count + fail_count == 0), returns
+        raw confidence.  Otherwise blends using ``p2value_alpha``:
+
+            base = alpha * confidence + (1 - alpha) * pass_rate
+
+        If ``fail_count == 1`` (near-miss), applies ``near_miss_boost``.
+        Result is capped at 1.0.
+        """
+        total = pass_count + fail_count
+        if total == 0:
+            return float(confidence)
+        pass_rate = pass_count / total
+        base = self.p2value_alpha * confidence + (1.0 - self.p2value_alpha) * pass_rate
+        if fail_count == 1:
+            base *= self.near_miss_boost
+        return min(1.0, max(0.0, base))
+
     def store(self, exp_id: str, query: str, answer: str,
-              source_files: List[str], confidence: float) -> bool:
+              source_files: List[str], confidence: float,
+              pass_count: int = 0, fail_count: int = 0) -> bool:
         """
         Store an experience if it meets quality criteria.
         Returns True if stored, False if rejected.
@@ -114,13 +159,14 @@ class ExperienceStore:
             return False
 
         keywords = self._extract_keywords(query)
+        p2value = self.compute_p2value(confidence, pass_count, fail_count)
 
         with self._connect() as conn:
-            # Enforce max size
+            # Enforce max size -- evict lowest p2value first
             conn.execute("""
                 DELETE FROM experiences WHERE exp_id IN (
                     SELECT exp_id FROM experiences
-                    ORDER BY confidence ASC, timestamp ASC
+                    ORDER BY p2value ASC, confidence ASC, timestamp ASC
                     LIMIT max(0, (SELECT count(*) FROM experiences) - ?)
                 )
             """, (self.MAX_EXPERIENCES - 1,))
@@ -128,12 +174,14 @@ class ExperienceStore:
             conn.execute("""
                 INSERT OR REPLACE INTO experiences
                 (exp_id, query, answer, source_files_json, confidence,
-                 timestamp, use_count, keywords, q_value)
-                VALUES (?, ?, ?, ?, ?, ?, 0, ?, 0.0)
+                 timestamp, use_count, keywords, q_value,
+                 pass_count, fail_count, p2value)
+                VALUES (?, ?, ?, ?, ?, ?, 0, ?, 0.0, ?, ?, ?)
             """, (
                 exp_id, query, answer[:2000],
                 json.dumps(source_files),
                 confidence, time.time(), keywords,
+                pass_count, fail_count, p2value,
             ))
             conn.commit()
         return True
@@ -150,12 +198,13 @@ class ExperienceStore:
         with self._connect() as conn:
             cur = conn.execute(
                 "SELECT exp_id, query, answer, source_files_json, "
-                "confidence, timestamp, use_count, keywords, q_value "
-                "FROM experiences ORDER BY confidence DESC LIMIT 100"
+                "confidence, timestamp, use_count, keywords, q_value, "
+                "pass_count, fail_count, p2value "
+                "FROM experiences ORDER BY p2value DESC, confidence DESC LIMIT 100"
             )
             rows = cur.fetchall()
 
-        # Score by keyword overlap
+        # Score by keyword overlap + p2value
         scored: List[Tuple[float, Experience]] = []
         for row in rows:
             exp_keywords = set((row[7] or "").split())
@@ -164,9 +213,11 @@ class ExperienceStore:
             overlap = len(query_keywords & exp_keywords)
             total = len(query_keywords | exp_keywords)
             jaccard = overlap / total if total > 0 else 0.0
-            # Combine keyword match with confidence
+            p2v = row[11] or 0.0
+            # Combine keyword match with p2value (replaces raw confidence)
+            quality = p2v if p2v > 0 else (row[4] or 0.0)
             score = (
-                (1.0 - self.q_value_weight) * (0.6 * jaccard + 0.4 * (row[4] or 0.0))
+                (1.0 - self.q_value_weight) * (0.6 * jaccard + 0.4 * quality)
                 + self.q_value_weight * max(0.0, min(1.0, row[8] or 0.0))
             )
 
@@ -178,6 +229,9 @@ class ExperienceStore:
                     timestamp=row[5] or 0.0,
                     use_count=row[6] or 0,
                     q_value=row[8] or 0.0,
+                    pass_count=row[9] or 0,
+                    fail_count=row[10] or 0,
+                    p2value=p2v,
                 )
                 scored.append((score, exp))
 
@@ -223,7 +277,8 @@ class ExperienceStore:
         with self._connect() as conn:
             cur = conn.execute("""
                 SELECT COUNT(*), AVG(confidence), SUM(use_count),
-                       AVG(use_count), AVG(q_value)
+                       AVG(use_count), AVG(q_value), AVG(p2value),
+                       SUM(CASE WHEN fail_count = 1 THEN 1 ELSE 0 END)
                 FROM experiences
             """)
             row = cur.fetchone()
@@ -235,6 +290,8 @@ class ExperienceStore:
             "total_uses": row[2] or 0,
             "avg_uses": round(row[3] or 0, 1),
             "avg_q_value": round(row[4] or 0, 3),
+            "avg_p2value": round(row[5] or 0, 3),
+            "near_miss_count": row[6] or 0,
         }
 
     def update_q_value(self, exp_id: str, reward: float) -> None:
@@ -265,9 +322,39 @@ class ExperienceStore:
             return []
 
         replay_count = max(0, min(max_total, int(round(max_total * replay_ratio))))
-        replay = self.retrieve(" ".join(exp.query for exp in new_experiences), top_k=replay_count)
-        combined = list(new_experiences) + replay
+        new_count = max_total - replay_count
+        replay = self.retrieve(
+            " ".join(exp.query for exp in new_experiences),
+            top_k=replay_count,
+        )
+        # Fall back to top-scoring stored experiences when keyword match is sparse
+        if len(replay) < replay_count:
+            replay = self._top_experiences(replay_count)
+        combined = list(new_experiences)[:new_count] + replay[:replay_count]
         return combined[:max_total]
+
+    def _top_experiences(self, top_k: int) -> List[Experience]:
+        """Return the highest-scoring experiences regardless of keyword match."""
+        with self._connect() as conn:
+            cur = conn.execute(
+                "SELECT exp_id, query, answer, source_files_json, "
+                "confidence, timestamp, use_count, keywords, q_value, "
+                "pass_count, fail_count, p2value "
+                "FROM experiences ORDER BY p2value DESC, confidence DESC LIMIT ?",
+                (top_k,),
+            )
+            rows = cur.fetchall()
+        return [
+            Experience(
+                exp_id=r[0], query=r[1], answer=r[2],
+                source_files=json.loads(r[3]) if r[3] else [],
+                confidence=r[4] or 0.0, timestamp=r[5] or 0.0,
+                use_count=r[6] or 0, q_value=r[8] or 0.0,
+                pass_count=r[9] or 0, fail_count=r[10] or 0,
+                p2value=r[11] or 0.0,
+            )
+            for r in rows
+        ]
 
     @staticmethod
     def _extract_keywords(text: str) -> str:

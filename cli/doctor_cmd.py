@@ -185,6 +185,26 @@ def _check_required_models(cr: _CheckResult, pulled_models: List[str]) -> None:
         cr.print_live("FAIL", "Required models",
                       f"'{configured_model}' not found in Ollama (pull it first)")
 
+    # Check embedder model (R12.4: nomic-embed-code)
+    try:
+        import yaml
+        models_path = _PROJECT_ROOT / "config" / "models.yaml"
+        if models_path.is_file():
+            models_cfg = yaml.safe_load(models_path.read_text(encoding="utf-8")) or {}
+            embed_name = models_cfg.get("embedder", {}).get("name", "")
+            if embed_name:
+                embed_base = embed_name.split(":")[0]
+                if embed_name in pulled_models or embed_base in normalised:
+                    cr.ok("Embedder model", f"'{embed_name}' is pulled")
+                    cr.print_live("OK", "Embedder model", f"'{embed_name}' is pulled")
+                else:
+                    cr.warn("Embedder model",
+                            f"'{embed_name}' not pulled (run: ollama pull {embed_name})")
+                    cr.print_live("WARN", "Embedder model",
+                                  f"'{embed_name}' not pulled (run: ollama pull {embed_name})")
+    except Exception:
+        pass  # Non-critical
+
 
 def _check_data_dirs(cr: _CheckResult) -> None:
     for rel in _REQUIRED_DIRS:

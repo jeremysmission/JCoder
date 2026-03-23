@@ -33,13 +33,13 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
-DATA_ROOT = Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data"))
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DATA_ROOT = Path(os.environ.get("JCODER_DATA", str(_PROJECT_ROOT / "data")))
 INDEX_DIR = DATA_ROOT / "indexes"
-INDEX_DIR.mkdir(parents=True, exist_ok=True)
 
 # Archive locations searched in order
 ARCHIVE_DIRS = [
-    Path(os.environ.get("JCODER_DATA", r"D:\JCoder_Data")),
+    DATA_ROOT,
     Path(r"D:\Projects\KnowledgeBase\stackexchange_20251231"),
     Path(r"D:\RAG Source Data\stackexchange_20251231"),
 ]
@@ -323,6 +323,7 @@ def _parse_and_index(xml_path: Path, site_key: str, db_path: Path) -> tuple:
 
 
 def main():
+    INDEX_DIR.mkdir(parents=True, exist_ok=True)
     print("=" * 60)
     print("StackExchange FTS5 Index Builder")
     print(f"Index dir: {INDEX_DIR}")

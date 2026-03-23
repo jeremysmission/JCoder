@@ -1,0 +1,9 @@
+{
+  "category": "legal_confidentiality_ai",
+  "error": "HTTPError: HTTP Error 403: Forbidden",
+  "id": "legal_aba_formal_opinion_512",
+  "lane": "lane_04",
+  "saved_at_utc": "2026-03-21T07:54:30.174116+00:00",
+  "status": "failed",
+  "url": "https://www.americanbar.org/content/dam/aba/administrative/professional_responsibility/ethics-opinions/aba-formal-opinion-512.pdf"
+}

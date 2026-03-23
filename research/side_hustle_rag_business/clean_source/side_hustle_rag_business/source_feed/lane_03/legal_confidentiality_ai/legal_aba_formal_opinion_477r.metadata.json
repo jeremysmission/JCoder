@@ -1,0 +1,15 @@
+{
+  "category": "legal_confidentiality_ai",
+  "content_type": "text/html",
+  "final_url": "https://www.americanbar.org/products/ecd/chapter/348777154/",
+  "id": "legal_aba_formal_opinion_477r",
+  "lane": "lane_03",
+  "notes": "Secure client communication and confidentiality baseline.",
+  "saved_at_utc": "2026-03-21T07:54:29.701438+00:00",
+  "saved_relpath": "lane_03/legal_confidentiality_ai/legal_aba_formal_opinion_477r.html",
+  "sha256": "b0ef95a1d62705d5f07bbc5fa54129182c4b233f3e5e9e6a7cddce0c0711a780",
+  "size_bytes": 185558,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.americanbar.org/products/ecd/chapter/348777154/"
+}

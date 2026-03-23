@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "text/html; charset=utf-8",
+  "final_url": "https://veterans.certify.sba.gov/",
+  "id": "startup_sba_vetcert",
+  "lane": "lane_02",
+  "notes": "Future veteran-owned certification path.",
+  "saved_at_utc": "2026-03-21T07:54:30.888517+00:00",
+  "saved_relpath": "lane_02/startup_local_setup/startup_sba_vetcert.html",
+  "sha256": "4007cd6e77dda6911f28c488a40b08fc50d7fb4b31c58dfab8007a48002b62af",
+  "size_bytes": 66746,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://veterans.certify.sba.gov/"
+}

@@ -1,0 +1,9 @@
+{
+  "category": "startup_local_setup",
+  "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate (_ssl.c:1010)>",
+  "id": "startup_colorado_springs_smallbiz",
+  "lane": "lane_01",
+  "saved_at_utc": "2026-03-21T07:54:28.767844+00:00",
+  "status": "failed",
+  "url": "https://hr.coloradosprings.gov/smallbiz"
+}

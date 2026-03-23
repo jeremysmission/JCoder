@@ -5,14 +5,18 @@
 #   llm.name: "Qwen/Qwen3-Coder-Next-80B"
 #   embedder.name: "nomic-ai/nomic-embed-code-v1"
 #   reranker.name: "Qwen/Qwen3-Reranker-4B"
+# Previous: phi4:14b-q4_K_M (good general, weaker on long code)
+# Switched to devstral: Mistral's dedicated coding model, 24B params
 llm:
-  name: "phi4-mini"
+  name: "devstral-small-2:24b"
   quantization: ""
   tensor_parallel: 1
   max_model_len: 32768
 
 embedder:
   name: "nomic-embed-text"
+  code_model: "nomic-embed-text"
+  text_model: "nomic-embed-text"
   dimension: 768
   quantization: ""
 

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -47,10 +48,28 @@ class TelemetryStore:
     def __init__(self, db_path: str):
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._local = threading.local()
         self._init_db()
 
     def _connect(self) -> sqlite3.Connection:
-        return sqlite3.connect(str(self.db_path))
+        local = self._local
+        conn = getattr(local, "conn", None)
+        if conn is None:
+            conn = sqlite3.connect(str(self.db_path), timeout=30.0)
+            conn.execute("PRAGMA busy_timeout=30000")
+            local.conn = conn
+        return conn
+
+    def close(self) -> None:
+        """Close all thread-local database connections."""
+        local = self._local
+        conn = getattr(local, "conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except sqlite3.ProgrammingError:
+                pass
+            local.conn = None
 
     def _init_db(self) -> None:
         with self._connect() as conn:

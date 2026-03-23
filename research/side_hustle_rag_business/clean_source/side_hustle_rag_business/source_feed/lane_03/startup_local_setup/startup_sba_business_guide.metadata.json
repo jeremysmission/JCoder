@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.sba.gov/business-guide",
+  "id": "startup_sba_business_guide",
+  "lane": "lane_03",
+  "notes": "Top-level startup and launch checklist.",
+  "saved_at_utc": "2026-03-21T07:54:29.723232+00:00",
+  "saved_relpath": "lane_03/startup_local_setup/startup_sba_business_guide.html",
+  "sha256": "3fe6c705df9159d3eb1eeff22801239bc034cbc39c4ebe86a64c20fd65b99251",
+  "size_bytes": 114857,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.sba.gov/business-guide"
+}

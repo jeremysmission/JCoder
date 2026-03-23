@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence",
+  "id": "governance_nist_generative_ai_profile",
+  "lane": "lane_05",
+  "notes": "Generative-AI-specific risk categories and controls.",
+  "saved_at_utc": "2026-03-21T07:54:30.807852+00:00",
+  "saved_relpath": "lane_05/market_demand_governance/governance_nist_generative_ai_profile.html",
+  "sha256": "17600aecc37b3254ba511742995d9eb2ce891fc40210068edd9dcda3a7855458",
+  "size_bytes": 82405,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-generative-artificial-intelligence"
+}

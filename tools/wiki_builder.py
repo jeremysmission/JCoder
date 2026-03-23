@@ -23,13 +23,25 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
+# Import central extension registry from core
+try:
+    from ingestion.chunker import LANGUAGE_MAP
+    _HAS_LANGUAGE_MAP = True
+except ImportError:
+    _HAS_LANGUAGE_MAP = False
+    LANGUAGE_MAP = {}
+
 # File types we can extract text from natively
-TEXT_EXTENSIONS = {
-    ".md", ".txt", ".py", ".js", ".ts", ".html", ".htm", ".css",
+# Base text extensions + all code extensions from LANGUAGE_MAP
+_BASE_TEXT_EXTENSIONS = {
+    ".md", ".txt", ".html", ".htm", ".css",
     ".json", ".yaml", ".yml", ".toml", ".cfg", ".ini", ".conf",
     ".sh", ".bash", ".ps1", ".bat", ".cmd", ".xml", ".csv",
     ".rst", ".log", ".env", ".gitignore", ".dockerfile",
 }
+TEXT_EXTENSIONS = _BASE_TEXT_EXTENSIONS.copy()
+if _HAS_LANGUAGE_MAP:
+    TEXT_EXTENSIONS.update(LANGUAGE_MAP.keys())
 
 # Extensions we recognize but can't parse without extra deps
 BINARY_EXTENSIONS = {

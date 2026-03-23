@@ -31,8 +31,17 @@ if sys.platform == "win32":
         sys.stdout.buffer, encoding="utf-8", errors="replace"
     )
 
+# Import central extension registry from core
+try:
+    from ingestion.chunker import LANGUAGE_MAP
+    _HAS_LANGUAGE_MAP = True
+except ImportError:
+    _HAS_LANGUAGE_MAP = False
+    LANGUAGE_MAP = {}
+
 # Document type classification by extension
-DOC_TYPES = {
+# Note: Core language extensions (from LANGUAGE_MAP) are dynamically added to "Code"
+_BASE_DOC_TYPES = {
     "Drawings": {".dwg", ".dxf", ".dgn", ".vsd", ".vsdx", ".stp", ".step", ".igs", ".iges"},
     "Documents": {".docx", ".doc", ".pdf", ".rtf", ".odt", ".txt", ".md"},
     "Spreadsheets": {".xlsx", ".xls", ".csv", ".ods"},
@@ -41,8 +50,13 @@ DOC_TYPES = {
     "Email": {".msg", ".eml", ".pst"},
     "Archives": {".zip", ".7z", ".rar", ".tar", ".gz"},
     "Video": {".mp4", ".avi", ".mkv", ".mov", ".wmv"},
-    "Code": {".py", ".ps1", ".sh", ".bat", ".js", ".html", ".htm", ".xml", ".json", ".yaml", ".yml"},
+    "Code": {".ps1", ".sh", ".bat", ".html", ".htm"},
 }
+
+# Build DOC_TYPES by starting with base and adding LANGUAGE_MAP extensions to Code
+DOC_TYPES = dict(_BASE_DOC_TYPES)
+if _HAS_LANGUAGE_MAP:
+    DOC_TYPES["Code"].update(LANGUAGE_MAP.keys())
 
 SKIP_DIRS = {
     "$recycle.bin", "system volume information", "windows",

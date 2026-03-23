@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "",
+  "final_url": "https://coloradosprings.gov/planning-and-development/page/home-occupation-permit",
+  "id": "startup_home_occupation_permit",
+  "lane": "lane_02",
+  "notes": "Home-based business permit requirements.",
+  "saved_at_utc": "2026-03-21T07:54:28.957827+00:00",
+  "saved_relpath": "lane_02/startup_local_setup/startup_home_occupation_permit.bin",
+  "sha256": "afda19ed678c6aa3d328970cf6d0aa2482941890aa530dddcfb1a09747c9a65a",
+  "size_bytes": 35856,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://coloradosprings.gov/planning-and-development/page/home-occupation-permit"
+}

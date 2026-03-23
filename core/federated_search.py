@@ -90,12 +90,14 @@ class FederatedSearch:
         max_workers: int = 8,
         cache_maxsize: int = 128,
         cache_ttl_s: float = 300.0,
+        min_quality: int = 0,
     ):
         self._indexes: Dict[str, IndexEngine] = {}
         self._weights: Dict[str, float] = {}
         self._embedder = embedding_engine
         self._rrf_k = rrf_k
         self._max_workers = max_workers
+        self._min_quality = min_quality
         self._pool: Optional[ThreadPoolExecutor] = None
         self._pool_lock = threading.Lock()
         self._cache = _SearchCache(maxsize=cache_maxsize, ttl_s=cache_ttl_s)
@@ -242,12 +244,14 @@ class FederatedSearch:
         top_k: int,
     ) -> List[Tuple[str, List]]:
         """Search all target indexes, parallel when >1 index."""
+        mq = self._min_quality
         if len(targets) <= 1:
             # Single index -- no thread overhead
             results = []
             for name in targets:
                 r = self._search_single(
                     self._indexes[name], query, query_vector, top_k,
+                    min_quality=mq,
                 )
                 results.append((name, r))
             return results
@@ -261,6 +265,7 @@ class FederatedSearch:
         def _do_search(name: str) -> Tuple[str, List]:
             r = self._search_single(
                 self._indexes[name], query, query_vector, top_k,
+                min_quality=mq,
             )
             return (name, r)
 
@@ -290,13 +295,14 @@ class FederatedSearch:
         query_text: str,
         query_vector: Optional[np.ndarray],
         k: int,
+        min_quality: int = 0,
     ) -> List:
         """Search one IndexEngine, using hybrid or FTS5-only."""
         if query_vector is not None and index.index is not None:
             return index.hybrid_search(query_vector, query_text, k)
         # Lazy FTS5: no metadata preloaded, query DB directly
         if not index.metadata and hasattr(index, "search_fts5_direct"):
-            return index.search_fts5_direct(query_text, k)
+            return index.search_fts5_direct(query_text, k, min_quality=min_quality)
         # FTS5 with preloaded metadata (small indexes, .meta.json)
         kw_results = index.search_keywords(query_text, k)
         results = []

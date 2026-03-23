@@ -44,6 +44,11 @@ agent:
     corrective_confidence_threshold: 0.5
     knowledge_graph_enabled: true
 
+  # Open knowledge fallback (R13) -- answer from LLM knowledge when no indexed sources match
+  retrieval:
+    open_knowledge_fallback: true
+    low_score_threshold: 0.15  # if best chunk < this, use open knowledge
+
   # Prompt evolution and adversarial hardening (Sprint 11)
   evolution:
     prompt_evolver_enabled: true

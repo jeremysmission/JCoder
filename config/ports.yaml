@@ -6,6 +6,8 @@
 #   llm: 8000
 #   embedder: 8001
 #   reranker: 8002
+# Ollama default instance (port 11434)
+# For dual-GPU: start second Ollama on 11435 and split llm/embedder
 llm: 11434
 embedder: 11434
 reranker: 8002

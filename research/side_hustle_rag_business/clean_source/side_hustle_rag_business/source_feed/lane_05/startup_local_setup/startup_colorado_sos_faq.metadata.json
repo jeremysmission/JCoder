@@ -1,0 +1,15 @@
+{
+  "category": "startup_local_setup",
+  "content_type": "text/html",
+  "final_url": "https://www.coloradosos.gov/pubs/business/FAQs/startBusiness.html",
+  "id": "startup_colorado_sos_faq",
+  "lane": "lane_05",
+  "notes": "Colorado business registration guidance.",
+  "saved_at_utc": "2026-03-21T07:54:30.404105+00:00",
+  "saved_relpath": "lane_05/startup_local_setup/startup_colorado_sos_faq.html",
+  "sha256": "f1430c58c7a1f3a46249af1cc8ef3a95f341df686aa60562d9c11615f5b3748f",
+  "size_bytes": 33880,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.coloradosos.gov/pubs/business/FAQs/startBusiness.html"
+}

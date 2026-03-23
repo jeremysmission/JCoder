@@ -1,0 +1,189 @@
+"""
+War room staleness detector for AI QA team.
+
+Scans the war room directory for each role's latest file, flags stale agents,
+and optionally generates replacement onboarding orders.
+
+Usage:
+    python scripts/war_room_staleness_check.py                    # report only
+    python scripts/war_room_staleness_check.py --onboard          # generate onboarding files
+    python scripts/war_room_staleness_check.py --threshold 30     # stale after 30 min (default: 45)
+"""
+from __future__ import annotations
+
+import argparse
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+WAR_ROOM = Path(os.environ.get(
+    "WAR_ROOM_DIR",
+    r"C:\Users\jerem\.ai_handoff",
+))
+
+ROLES = {
+    "qa1":  {"prefix": "qa1_",         "label": "QA1 (Acceptance Tester)"},
+    "qa2":  {"prefix": "qa2_",         "label": "QA2 (Infrastructure/DB Health)"},
+    "qa3":  {"prefix": "qa3_",         "label": "QA3 (Citation Quality)"},
+    "extqa1": {"prefix": "extqa1_",    "label": "External QA Auditor 1"},
+    "extqa2": {"prefix": "external_qa_auditor_2_", "label": "External QA Auditor 2"},
+    "coder":  {"prefix": "coder_",     "label": "Coder (Lead Engineer)"},
+    "codex":  {"prefix": "codex_coordinator_", "label": "Codex Coordinator"},
+}
+
+SPRINT_CONTEXT = """
+Active repo: C:\\HybridRAG3_Educational
+Current head: see `git log --oneline -1` in the repo
+War room: C:\\Users\\jerem\\.ai_handoff\\
+Sprint docs: docs/09_project_mgmt/SPRINT_PLAN_NEXT_5.md
+Session report: docs/09_project_mgmt/SESSION_REPORT_2026-03-19_CODER2.md
+"""
+
+
+def scan_war_room(war_room: Path) -> dict:
+    """Find the latest file per role by filename prefix and file mtime."""
+    results = {}
+    if not war_room.is_dir():
+        print(f"[ERROR] War room not found: {war_room}")
+        sys.exit(1)
+
+    files = sorted(war_room.iterdir(), key=lambda f: f.stat().st_mtime, reverse=True)
+
+    for role_key, info in ROLES.items():
+        prefix = info["prefix"]
+        latest = None
+        latest_mtime = None
+        for f in files:
+            if f.name.lower().startswith(prefix) and f.suffix == ".md":
+                latest = f
+                latest_mtime = datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc)
+                break
+        results[role_key] = {
+            "label": info["label"],
+            "latest_file": latest,
+            "latest_mtime": latest_mtime,
+        }
+    return results
+
+
+def report(results: dict, threshold_minutes: int) -> list:
+    """Print staleness report. Returns list of stale role keys."""
+    now = datetime.now(timezone.utc)
+    stale = []
+
+    print(f"\n{'Role':<35} {'Last Activity':<22} {'Age':>8}  Status")
+    print("-" * 85)
+
+    for role_key, info in results.items():
+        label = info["label"]
+        mtime = info["latest_mtime"]
+        if mtime is None:
+            print(f"{label:<35} {'(no files)':<22} {'N/A':>8}  NO FILES")
+            stale.append(role_key)
+            continue
+
+        age = now - mtime
+        age_min = age.total_seconds() / 60
+        age_str = f"{int(age_min)}m" if age_min < 60 else f"{age_min/60:.1f}h"
+
+        if age_min > threshold_minutes:
+            status = "STALE"
+            stale.append(role_key)
+        else:
+            status = "ACTIVE"
+
+        fname = info["latest_file"].name[-45:] if info["latest_file"] else ""
+        print(f"{label:<35} {mtime.strftime('%Y-%m-%d %H:%M UTC'):<22} {age_str:>8}  {status}")
+
+    print()
+    if stale:
+        print(f"STALE AGENTS ({len(stale)}): {', '.join(stale)}")
+    else:
+        print("All agents active.")
+    return stale
+
+
+def generate_onboarding(role_key: str, role_label: str, war_room: Path):
+    """Generate a replacement onboarding file in the war room."""
+    ts = datetime.now().strftime("%Y-%m-%d_%H%M")
+    filename = f"coder_{ts}_mdt_onboard_{role_key}_replacement.md"
+    filepath = war_room / filename
+
+    content = f"""ATTN {role_label.upper()}: REPLACEMENT ONBOARDING
+
+Role: {role_label}
+Date: {datetime.now().strftime('%Y-%m-%d %H:%M')} MDT
+Status: You are a REPLACEMENT for the previous {role_label} agent.
+
+---
+
+## IMMEDIATE ACTIONS
+
+1. Read the war room rules:
+   - File naming: {{role}}_{{YYYY-MM-DD}}_{{HHMM}}_mdt_{{short_topic}}.md
+   - Never edit other agents' files -- read only, post your own
+   - If it's not in the war room, it doesn't exist
+
+2. Read the current sprint plan:
+   - docs/09_project_mgmt/SPRINT_PLAN_NEXT_5.md
+
+3. Read the last session report:
+   - docs/09_project_mgmt/SESSION_REPORT_2026-03-19_CODER2.md
+
+4. Post a takeover acknowledgment file in the war room
+
+5. Review prior {role_key} files in the war room for context on your lane
+
+{SPRINT_CONTEXT}
+
+---
+
+## YOUR LANE
+
+You are responsible for your assigned testing/review lane.
+Check the sprint plan for your specific task assignments.
+Post findings as war room files. Do not discuss in chat.
+
+---
+
+Generated by war_room_staleness_check.py
+"""
+    filepath.write_text(content, encoding="utf-8")
+    print(f"  -> Onboarding file: {filepath.name}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="War room staleness detector")
+    parser.add_argument("--threshold", type=int, default=45,
+                        help="Minutes before an agent is considered stale (default: 45)")
+    parser.add_argument("--onboard", action="store_true",
+                        help="Generate onboarding files for stale roles")
+    parser.add_argument("--roles", type=str, default="",
+                        help="Comma-separated roles to check (default: all)")
+    args = parser.parse_args()
+
+    print(f"War room: {WAR_ROOM}")
+    print(f"Threshold: {args.threshold} minutes")
+
+    results = scan_war_room(WAR_ROOM)
+
+    if args.roles:
+        filter_keys = [r.strip() for r in args.roles.split(",")]
+        results = {k: v for k, v in results.items() if k in filter_keys}
+
+    stale = report(results, args.threshold)
+
+    if args.onboard and stale:
+        print(f"\nGenerating onboarding files for {len(stale)} stale roles...")
+        for role_key in stale:
+            info = results[role_key]
+            generate_onboarding(role_key, info["label"], WAR_ROOM)
+        print("Done.")
+    elif args.onboard and not stale:
+        print("\nNo stale agents -- no onboarding needed.")
+
+
+if __name__ == "__main__":
+    main()

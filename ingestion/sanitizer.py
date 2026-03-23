@@ -122,7 +122,7 @@ class SanitizationStats:
 class SanitizationConfig:
     enabled: bool = True
     clean_archive_dir: str = str(
-        Path(os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data")) / "clean_source"
+        Path(os.environ.get("JCODER_DATA", os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data"))) / "clean_source"
     )
     langdetect_threshold: float = 0.8
 

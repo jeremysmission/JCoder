@@ -44,11 +44,8 @@ class EmbeddingEngine:
         self._client = make_client(timeout_s=timeout)
         self._gate = gate
 
-    def embed(self, texts: List[str]) -> np.ndarray:
-        """
-        Convert multiple text chunks into vector form.
-        Returns an (N, dimension) numpy array of normalized embeddings.
-        """
+    def _post_embeddings(self, texts: List[str]) -> np.ndarray:
+        """Call the embedding endpoint once and normalize the returned vectors."""
         url = f"{self.endpoint}/embeddings"
         if self._gate:
             self._gate.guard(url)
@@ -62,16 +59,75 @@ class EmbeddingEngine:
         response.raise_for_status()
 
         data = response.json()["data"]
-        # vLLM returns embeddings sorted by index
         vectors = [item["embedding"] for item in sorted(data, key=lambda x: x["index"])]
         result = np.array(vectors, dtype=np.float32)
 
-        # Normalize for cosine similarity via inner product
         norms = np.linalg.norm(result, axis=1, keepdims=True)
         norms[norms == 0] = 1.0
-        result = result / norms
+        return result / norms
 
-        return result
+    @staticmethod
+    def _is_context_length_error(exc: Exception) -> bool:
+        """Return True for Ollama/vLLM 400s caused by oversized embedding input."""
+        if not isinstance(exc, httpx.HTTPStatusError):
+            return False
+        response = exc.response
+        if response is None or response.status_code != 400:
+            return False
+        body = ""
+        try:
+            body = response.text.lower()
+        except Exception:
+            return False
+        return "context length" in body and "input length" in body
+
+    def _embed_single_with_fallback(self, text: str) -> np.ndarray:
+        """Retry a single oversized chunk with progressively shorter prefixes."""
+        last_exc: Exception | None = None
+        try:
+            return self._post_embeddings([text])[0]
+        except Exception as exc:
+            if not self._is_context_length_error(exc):
+                raise
+            last_exc = exc
+            log.warning(
+                "Embedding input exceeded context window; retrying with truncation",
+            )
+
+        cuts = [3500, 3000, 2500, 2000, 1500, 1000, 512]
+        for cut in cuts:
+            if len(text) <= cut:
+                continue
+            try:
+                return self._post_embeddings([text[:cut]])[0]
+            except Exception as exc:
+                if not self._is_context_length_error(exc):
+                    raise
+                last_exc = exc
+
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("Embedding truncation fallback failed without an exception")
+
+    def embed(self, texts: List[str]) -> np.ndarray:
+        """
+        Convert multiple text chunks into vector form.
+        Returns an (N, dimension) numpy array of normalized embeddings.
+        """
+        if not texts:
+            return np.empty((0, self.dimension), dtype=np.float32)
+
+        try:
+            return self._post_embeddings(texts)
+        except Exception as exc:
+            if not self._is_context_length_error(exc):
+                raise
+
+        log.warning(
+            "Embedding batch exceeded context window; retrying items individually",
+        )
+        vectors = [self._embed_single_with_fallback(text) for text in texts]
+        return np.vstack(vectors)
 
     def embed_single(self, text: str) -> np.ndarray:
         """Convert a single query into a vector."""

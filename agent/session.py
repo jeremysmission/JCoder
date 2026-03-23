@@ -118,16 +118,34 @@ class SessionStore:
         ------
         FileNotFoundError
             If no session with that ID exists.
+        ValueError
+            If the session file is corrupted.
         """
         path = self._path(session_id)
         if not path.exists():
             raise FileNotFoundError(f"No session found: {session_id}")
-        data = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+            log.warning("Corrupted session file %s: %s", session_id, exc)
+            raise
         return data
 
     def resume_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Load only the message history for resuming an agent run."""
-        return self.load(session_id)["history"]
+        data = self.load(session_id)
+        # Warn if session is stale (> 24 hours old)
+        try:
+            updated = datetime.fromisoformat(data["updated_at"])
+            age_hours = (datetime.now(timezone.utc) - updated).total_seconds() / 3600
+            if age_hours > 24:
+                log.warning(
+                    "Session %s is %.0f hours old -- context may be stale",
+                    session_id, age_hours,
+                )
+        except (KeyError, ValueError):
+            pass
+        return data["history"]
 
     def list_sessions(
         self,
@@ -168,7 +186,7 @@ class SessionStore:
     def cleanup(self, max_age_days: int = 30) -> int:
         """Delete sessions older than *max_age_days*. Returns count deleted."""
         cutoff = datetime.now(timezone.utc).timestamp() - (
-            max_age_days * 86400
+            max_age_days * 86400 + 0.01  # 10ms grace avoids race with just-created sessions
         )
         deleted = 0
         for fp in self._dir.glob("*.json"):

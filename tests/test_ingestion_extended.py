@@ -90,13 +90,16 @@ class TestFileDiscovery:
             "node_modules": {"dep.py": "y = 2"},
             "__pycache__": {"cached.py": "z = 3"},
             ".git": {"config.py": "w = 4"},
+            "data": {"indexes": {"generated.py": "a = 5"}},
+            "logs": {"agent": {"trace.py": "b = 6"}},
+            ".tmp_pytest_case": {"temp.py": "c = 7"},
         })
         chunker = _mock_chunker()
         loader = RepoLoader(chunker)
         chunks = loader.load(str(tmp_path))
         chunked_files = {c["file"] for c in chunks}
         assert any("core.py" in f for f in chunked_files)
-        for skip in ("node_modules", "__pycache__", ".git"):
+        for skip in ("node_modules", "__pycache__", ".git", "data", "logs", ".tmp_pytest_case"):
             assert not any(skip in f for f in chunked_files)
 
     def test_nonexistent_root_raises(self):

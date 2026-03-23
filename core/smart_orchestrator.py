@@ -60,6 +60,7 @@ class SmartOrchestrator:
         reflection: Optional[ReflectionEngine] = None,
         corrective: Optional[CorrectiveRetriever] = None,
         confidence_gate: float = 0.2,
+        open_knowledge_fallback: bool = False,
     ):
         self.retriever = retriever
         self.runtime = runtime
@@ -68,6 +69,7 @@ class SmartOrchestrator:
         self.reflection = reflection
         self.corrective = corrective
         self.confidence_gate = confidence_gate
+        self.open_knowledge_fallback = open_knowledge_fallback
 
         # Fallback standard orchestrator for timeout wrapping
         self._base = Orchestrator(retriever, runtime, timeout)
@@ -99,6 +101,9 @@ class SmartOrchestrator:
         retrieval_ms = (time.time() - t_ret) * 1000
 
         if not chunks:
+            if self.open_knowledge_fallback:
+                return self._open_knowledge_answer(
+                    query_id, question, retrieval_meta, retrieval_ms)
             result = SmartAnswerResult(
                 answer="No relevant code found in the index.",
                 sources=[], chunk_count=0,
@@ -107,6 +112,16 @@ class SmartOrchestrator:
             )
             self._log_event(query_id, question, result, retrieval_ms, 0)
             return result
+
+        # Open knowledge fallback: if all retrieved chunks score very low
+        if self.open_knowledge_fallback and chunks:
+            max_score = max(
+                (c.get("federated_score", c.get("score", 0.5)) for c in chunks),
+                default=0.0,
+            )
+            if max_score < 0.15:
+                return self._open_knowledge_answer(
+                    query_id, question, retrieval_meta, retrieval_ms)
 
         # --- Step 2: Generation ---
         t_gen = time.time()
@@ -187,3 +202,35 @@ class SmartOrchestrator:
                 query_id,
                 exc_info=True,
             )
+
+    _OPEN_KNOWLEDGE_PREFIX = (
+        "[Open Knowledge Mode] No indexed sources matched your question. "
+        "This answer comes from the model's general knowledge and may not "
+        "be specific to your codebase.\n\n"
+    )
+
+    def _open_knowledge_answer(
+        self,
+        query_id: str,
+        question: str,
+        retrieval_meta: Dict,
+        retrieval_ms: float,
+    ) -> SmartAnswerResult:
+        """Generate an answer without RAG context when retrieval fails.
+
+        Uses the LLM's parametric knowledge with a clear disclaimer.
+        """
+        t_gen = time.time()
+        response = self.runtime.generate(question, [])
+        gen_ms = (time.time() - t_gen) * 1000
+
+        result = SmartAnswerResult(
+            answer=self._OPEN_KNOWLEDGE_PREFIX + response,
+            sources=[],
+            chunk_count=0,
+            confidence=0.1,
+            retrieval_strategy="open_knowledge_fallback",
+            retrieval_attempts=retrieval_meta.get("attempts", 1),
+        )
+        self._log_event(query_id, question, result, retrieval_ms, gen_ms)
+        return result

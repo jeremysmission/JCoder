@@ -75,7 +75,7 @@ e524139 Identifier-heavy sparse heuristic, YAML indexing, skip evaluation/
 - `python main.py --mock eval --benchmark evaluation/golden_questions_v1.json --index-name bench_snapshot` -- run golden eval
 - `python main.py --mock eval ... --diagnose-retrieval` -- show source rankings for failures
 - `python main.py measure` -- GPU/torch/CUDA measurement
-- `python main.py doctor` -- environment checks
+- `python main.py doctor check` -- environment checks
 - `python main.py --mock ask "question" --index-name <name>` -- ask questions
 - `python main.py gui` / `jcoder-gui` -- launch the generated command-center GUI
 - `python -m pytest tests/ -q` -- 35 tests

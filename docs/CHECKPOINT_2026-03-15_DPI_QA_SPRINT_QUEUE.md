@@ -117,6 +117,27 @@ Priority: Address during normal development
 
 ---
 
+## SPRINT R12: Beast 70B Qualification Gate (HIGH)
+Priority: Must pass before JCoder claims Beast as the 70B test lane
+
+### R12.1 Beast-only storage and boundary check
+- Verify the 70B pull path resolves to Beast global model storage, never under JCoder or other repo directories
+- Verify work GPU standards and the HybridRAG3 Python stack remain unchanged
+
+### R12.2 Dual-GPU evidence capture
+- Capture `nvidia-smi` telemetry during model load and one prompt
+- Confirm both 24 GB RTX 3090s engage through memory residency and or sustained utilization
+- Record the current sharding assumption explicitly: NVLink is inactive, so Beast is operating as two independent GPUs
+
+### R12.3 Operator rollback proof
+- Document how to remove the imported 70B model and revert Beast-only launch or environment changes
+- Keep JCoder, Hustle, and Beast coordination notes aligned on the same storage boundary and hardware assumptions
+
+### Exit Criteria
+- There is a saved proof pack showing Beast-only storage, dual-GPU engagement, and rollback steps for the first 70B import and prompt run
+
+---
+
 ## GRADE CARD
 | Dimension | Grade |
 |-----------|-------|

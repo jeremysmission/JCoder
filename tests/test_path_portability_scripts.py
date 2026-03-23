@@ -52,11 +52,10 @@ def test_build_fts5_indexes_falls_back_to_default(monkeypatch):
     monkeypatch.delenv("JCODER_DATA", raising=False)
 
     mod = _reload_script("build_fts5_indexes", monkeypatch)
-    # Falls back to the hardcoded default D:\JCoder_Data
-    expected = Path(r"D:\JCoder_Data")
-    assert mod.DATA_ROOT == expected
-    assert mod.CLEAN_DIR == expected / "clean_source"
-    assert mod.INDEX_DIR == expected / "indexes"
+    # Falls back to project_root/data when JCODER_DATA not set
+    assert mod.DATA_ROOT.name == "data"
+    assert mod.CLEAN_DIR == mod.DATA_ROOT / "clean_source"
+    assert mod.INDEX_DIR == mod.DATA_ROOT / "indexes"
 
 
 def test_build_se_indexes_uses_jcoder_data_env(monkeypatch, tmp_path):
