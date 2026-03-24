@@ -365,18 +365,31 @@ def _hybrid_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]
 
 
 def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
-    """Quick FTS5 search across indexes."""
+    """Quick FTS5 search across indexes using OR query for better recall."""
+    _STOPWORDS = {
+        "a", "an", "the", "is", "it", "in", "on", "to", "of", "for",
+        "and", "or", "with", "how", "do", "i", "you", "what", "can",
+        "does", "should", "would", "that", "this", "be", "are", "was",
+        "were", "been", "have", "has", "had", "will", "by", "from", "at",
+        "not", "no", "but", "if", "my", "me", "we", "they", "its",
+    }
     results = []
     idx_path = Path(index_dir)
     if not idx_path.exists():
         return results
 
-    clean_q = " ".join(
+    # Build OR query for better recall, filter stopwords
+    words = [
         w for w in question.split()
-        if w.isalnum() or w.replace("_", "").isalnum()
-    )
-    if not clean_q:
+        if (w.isalnum() or w.replace("_", "").isalnum())
+        and w.lower() not in _STOPWORDS
+        and len(w) > 1
+    ]
+    if not words:
         return results
+
+    # FTS5 OR query: "word1 OR word2 OR word3"
+    fts_query = " OR ".join(words)
 
     for entry in idx_path.iterdir():
         if not entry.name.endswith(".fts5.db"):
@@ -384,8 +397,9 @@ def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
         try:
             conn = sqlite3.connect(str(entry))
             rows = conn.execute(
-                "SELECT search_content FROM chunks WHERE chunks MATCH ? LIMIT ?",
-                (clean_q, 3),
+                "SELECT search_content FROM chunks WHERE chunks MATCH ? "
+                "ORDER BY rank LIMIT ?",
+                (fts_query, 5),
             ).fetchall()
             conn.close()
             for row in rows:
