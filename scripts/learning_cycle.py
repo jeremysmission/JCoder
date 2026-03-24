@@ -67,7 +67,7 @@ def run_baseline_eval(
         question_text = q.get("question", "")
 
         # Retrieve context
-        context = _fts5_retrieve(question_text, index_dir)
+        context = _hybrid_retrieve(question_text, index_dir)
         has_context = len(context) > 0
 
         # Score: simple keyword overlap
@@ -302,6 +302,60 @@ def compare_and_report(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _hybrid_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
+    """Hybrid FAISS+FTS5 retrieval with RRF fusion."""
+    fts5_results = _fts5_retrieve(question, index_dir, top_k=top_k * 2)
+
+    # Try FAISS semantic search
+    faiss_results = []
+    try:
+        from core.config import load_config
+        from core.embedding_engine import EmbeddingEngine
+        import faiss as _faiss
+        import numpy as np
+
+        cfg = load_config()
+        engine = EmbeddingEngine(cfg.embedder, timeout=15)
+        query_vec = engine.embed_single(question)
+
+        idx_path = Path(index_dir)
+        for faiss_file in idx_path.glob("*.faiss"):
+            try:
+                index = _faiss.read_index(str(faiss_file))
+                if index.ntotal == 0:
+                    continue
+                meta_file = faiss_file.with_suffix(".faiss.meta.json")
+                if not meta_file.exists():
+                    continue
+                import json as _json
+                with open(meta_file, "r", encoding="utf-8") as mf:
+                    meta = _json.load(mf)
+                D, I = index.search(query_vec.reshape(1, -1), min(5, index.ntotal))
+                for idx_val, score in zip(I[0], D[0]):
+                    if 0 <= idx_val < len(meta):
+                        text = meta[idx_val].get("text", "")[:500]
+                        if text:
+                            faiss_results.append((float(score), text))
+            except Exception:
+                continue
+        engine.close()
+    except Exception:
+        pass  # Fall back to FTS5-only
+
+    # RRF fusion: merge FTS5 and FAISS results
+    rrf_k = 60
+    scored: Dict[str, float] = {}
+    for rank, text in enumerate(fts5_results):
+        scored[text] = scored.get(text, 0) + 1.0 / (rrf_k + rank + 1)
+    for rank, (_, text) in enumerate(sorted(faiss_results, key=lambda x: -x[0])):
+        scored[text] = scored.get(text, 0) + 1.0 / (rrf_k + rank + 1)
+
+    if scored:
+        fused = sorted(scored.items(), key=lambda x: -x[1])
+        return [text for text, _ in fused[:top_k]]
+    return fts5_results[:top_k]
+
 
 def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
     """Quick FTS5 search across indexes."""
