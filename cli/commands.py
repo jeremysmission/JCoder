@@ -175,7 +175,7 @@ def ingest(ctx, path: str, index_name: str):
 
 @cli.command()
 @click.argument("question")
-@click.option("--index-name", default="default", help="Index to search")
+@click.option("--index-name", default="jcoder_self", help="Index to search")
 @click.pass_context
 def ask(ctx, question: str, index_name: str):
     """Ask a question about ingested code."""

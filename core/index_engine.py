@@ -127,7 +127,8 @@ class IndexEngine:
         self._flat_index = faiss.IndexFlatIP(dimension)
         self._gpu_available = False
 
-        if hasattr(faiss, "index_cpu_to_all_gpus"):
+        gpu_count = faiss.get_num_gpus() if hasattr(faiss, "get_num_gpus") else 0
+        if gpu_count > 0 and hasattr(faiss, "index_cpu_to_all_gpus"):
             free_mb = _gpu_min_free_mb()
             if free_mb > gpu_safety_margin_mb:
                 try:
