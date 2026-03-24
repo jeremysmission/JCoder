@@ -14,10 +14,13 @@ llm:
   tensor_parallel: 1
   max_model_len: 32768
 
+# Upgraded to v2-moe: 62% better separation between similar/dissimilar pairs,
+# MoE architecture (475M params, 305M active), 100+ programming languages,
+# Matryoshka dims (768->256 with minimal loss), 8192 token context.
 embedder:
-  name: "nomic-embed-text"
-  code_model: "nomic-embed-text"
-  text_model: "nomic-embed-text"
+  name: "nomic-embed-text-v2-moe"
+  code_model: "nomic-embed-text-v2-moe"
+  text_model: "nomic-embed-text-v2-moe"
   dimension: 768
   quantization: ""
 
