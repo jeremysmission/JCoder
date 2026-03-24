@@ -16,6 +16,7 @@ gracefully and uses a single model for everything.
 """
 
 import logging
+import os
 import re
 from typing import List, Optional
 
@@ -43,6 +44,11 @@ class EmbeddingEngine:
         self.dimension = config.dimension or 768
         self._client = make_client(timeout_s=timeout)
         self._gate = gate
+
+        # Ollama bug #6262: batch embedding quality degrades when
+        # OLLAMA_NUM_PARALLEL > 1. Set to 1 for embedding jobs.
+        if "OLLAMA_NUM_PARALLEL" not in os.environ:
+            os.environ["OLLAMA_NUM_PARALLEL"] = "1"
 
     def _post_embeddings(self, texts: List[str]) -> np.ndarray:
         """Call the embedding endpoint once and normalize the returned vectors."""
