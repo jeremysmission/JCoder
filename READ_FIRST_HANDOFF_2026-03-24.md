@@ -121,4 +121,28 @@ c19c710 Complete extension single-source-of-truth and switch default model to ph
 4. phi4:14b-q4_K_M answer generation
 
 ---
-Signed: Claude Opus 4.6 | 2026-03-24 ~06:30 MDT
+## Session Update #2 (~08:30 MDT)
+
+### G-Wave Sprints
+- **G1**: jcoder_self FAISS rebuilding with v2-moe (still running, 187K chunks)
+- **G2**: FAISS GPU check fixed. pynvml installed. Dual 3090s detected (21GB/19GB free).
+- **G3**: Doctor 16/16 GREEN
+- **G4**: stackoverflow FAISS rebuilding (50K chunks, running in background)
+- **G5**: LLM-as-judge eval: **5.22%** (up from 4.17% keyword-only)
+  - python 5.56→8.36%, algorithms 18.33→20.33%, debugging 0→2.20%
+- **G6**: `jcoder ask` default index switched to jcoder_self (187K vectors)
+- OLLAMA_FLASH_ATTENTION=1 enabled (15-20% speed boost)
+- OLLAMA_NUM_PARALLEL=1 for embedding quality (bug #6262 fix)
+
+### Integration Test Results
+All new features verified working together:
+- FlashRank reranker: LOADED
+- nomic-embed-text-v2-moe: 768-dim embeddings OK
+- OLLAMA_FLASH_ATTENTION=1: SET
+- OLLAMA_NUM_PARALLEL=1: SET
+- Doctor: 16/16 GREEN
+
+### Total Commits: 20
+All pushed to origin/master. Latest: 51e5338
+
+Signed: Claude Opus 4.6 | 2026-03-24 ~08:30 MDT
