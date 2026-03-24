@@ -32,6 +32,22 @@ from .config import StorageConfig
 
 log = logging.getLogger(__name__)
 
+# Optional FlashRank reranker (lightweight, no server required)
+try:
+    from flashrank import Ranker, RerankRequest
+    _FLASHRANK_RANKER = None  # lazy init
+
+    def _get_flashrank():
+        global _FLASHRANK_RANKER
+        if _FLASHRANK_RANKER is None:
+            _FLASHRANK_RANKER = Ranker()
+            log.info("FlashRank reranker loaded")
+        return _FLASHRANK_RANKER
+
+    _HAS_FLASHRANK = True
+except ImportError:
+    _HAS_FLASHRANK = False
+
 
 def _normalize_for_search(text: str) -> str:
     """Normalize code text for FTS5 keyword matching.
@@ -458,12 +474,33 @@ class IndexEngine:
         # Sort by fused score descending
         ranked = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
 
-        results = []
-        for idx, score in ranked[:k]:
+        # Collect candidates (widen pool for reranking)
+        rerank_pool = k * 3 if _HAS_FLASHRANK else k
+        candidates = []
+        for idx, score in ranked[:rerank_pool]:
             meta = self._metadata_at(idx)
             if meta is not None:
-                results.append((score, meta))
-        return results
+                candidates.append((score, meta))
+
+        # FlashRank reranking if available
+        if _HAS_FLASHRANK and len(candidates) > 1:
+            try:
+                ranker = _get_flashrank()
+                passages = [
+                    {"id": i, "text": m.get("text", m.get("search_content", ""))[:1000]}
+                    for i, (_, m) in enumerate(candidates)
+                ]
+                rerank_req = RerankRequest(query=query_text, passages=passages)
+                reranked = ranker.rerank(rerank_req)
+                results = []
+                for item in reranked[:k]:
+                    orig_idx = int(item["id"])
+                    results.append((float(item["score"]), candidates[orig_idx][1]))
+                return results
+            except Exception as exc:
+                log.warning("FlashRank reranking failed, using RRF order: %s", exc)
+
+        return candidates[:k]
 
     def _build_fts5(self):
         """Build per-index FTS5 DB from current metadata."""
