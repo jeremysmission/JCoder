@@ -222,7 +222,7 @@ def retrieve_rag_context(question: str, index_dir: str, top_k: int = 5) -> str:
         # OR-based query so any keyword can match
         fts_query = " OR ".join(words[:10])
         rows = conn.execute(
-            "SELECT content FROM chunks WHERE chunks MATCH ? LIMIT ?",
+            "SELECT search_content FROM chunks WHERE chunks MATCH ? LIMIT ?",
             (fts_query, top_k),
         ).fetchall()
         conn.close()

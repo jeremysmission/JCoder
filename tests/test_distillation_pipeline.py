@@ -87,9 +87,9 @@ class TestRetrieveContext:
         # Create a small FTS5 index
         db = tmp_path / "test.fts5.db"
         conn = sqlite3.connect(str(db))
-        conn.execute("CREATE VIRTUAL TABLE chunks USING fts5(content)")
-        conn.execute("INSERT INTO chunks (content) VALUES (?)",
-                     ("Python sorting algorithm quicksort implementation",))
+        conn.execute("CREATE VIRTUAL TABLE chunks USING fts5(search_content, source_path, chunk_id)")
+        conn.execute("INSERT INTO chunks (search_content, source_path, chunk_id) VALUES (?, ?, ?)",
+                     ("Python sorting algorithm quicksort implementation", "test.py", "c0"))
         conn.commit()
         conn.close()
 

@@ -323,7 +323,7 @@ def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
         try:
             conn = sqlite3.connect(str(entry))
             rows = conn.execute(
-                "SELECT content FROM chunks WHERE chunks MATCH ? LIMIT ?",
+                "SELECT search_content FROM chunks WHERE chunks MATCH ? LIMIT ?",
                 (clean_q, 3),
             ).fetchall()
             conn.close()
