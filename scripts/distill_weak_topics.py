@@ -102,17 +102,23 @@ def retrieve_context(question: str, index_dir: str, top_k: int = 5) -> str:
             continue
         try:
             conn = sqlite3.connect(entry.path)
-            # Clean query for FTS5 (remove special chars)
-            clean_q = " ".join(
+            # Clean query for FTS5: OR between terms for better recall
+            _stopwords = {"a", "an", "the", "is", "it", "in", "on", "to",
+                         "of", "for", "and", "or", "with", "how", "do", "i",
+                         "you", "what", "can", "does", "that", "this", "be"}
+            words = [
                 w for w in question.split()
-                if w.isalnum() or w.replace("_", "").isalnum()
-            )
-            if not clean_q:
+                if (w.isalnum() or w.replace("_", "").isalnum())
+                and w.lower() not in _stopwords and len(w) > 1
+            ]
+            if not words:
                 conn.close()
                 continue
+            fts_query = " OR ".join(words)
             rows = conn.execute(
-                "SELECT search_content FROM chunks WHERE chunks MATCH ? LIMIT ?",
-                (clean_q, 3),
+                "SELECT search_content FROM chunks WHERE chunks MATCH ? "
+                "ORDER BY rank LIMIT ?",
+                (fts_query, 3),
             ).fetchall()
             conn.close()
             for row in rows:
