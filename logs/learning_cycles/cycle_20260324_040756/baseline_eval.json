@@ -1,0 +1,1420 @@
+{
+  "timestamp": "2026-03-24T10:25:09Z",
+  "eval_set": "C:\\Users\\jerem\\JCoder\\evaluation\\agent_eval_set_200.json",
+  "total_questions": 200,
+  "overall_score": 0.0417,
+  "category_scores": {
+    "python": 0.0556,
+    "javascript": 0.0,
+    "systems": 0.0143,
+    "security": 0.025,
+    "algorithms": 0.1833,
+    "debugging": 0.0,
+    "go": 0.1071,
+    "rust": 0.0,
+    "shell": 0.0
+  },
+  "elapsed_s": 1033.8,
+  "results": [
+    {
+      "question_id": "py_001",
+      "category": "python",
+      "score": 0.3333333333333333,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "py_002",
+      "category": "python",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "py_003",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_004",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_005",
+      "category": "python",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "py_006",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_007",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_008",
+      "category": "python",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 4
+    },
+    {
+      "question_id": "py_009",
+      "category": "python",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "py_010",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_011",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_012",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_013",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_014",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "py_015",
+      "category": "python",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_001",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_002",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "js_003",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_004",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_005",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_006",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_007",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_008",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_009",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "js_010",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_001",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_002",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_003",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "sys_004",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_005",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_006",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_007",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_008",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_009",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_010",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_001",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_002",
+      "category": "security",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "sec_003",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_004",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_005",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "algo_001",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "algo_002",
+      "category": "algorithms",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "algo_003",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "algo_004",
+      "category": "algorithms",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "algo_005",
+      "category": "algorithms",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "dbg_001",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "dbg_002",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "dbg_003",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_004",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_005",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_051",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "js_052",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_053",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_054",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "js_055",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_056",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_057",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_058",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_059",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_060",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_061",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_062",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_063",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_064",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_065",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_066",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_067",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "js_068",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_069",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_070",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_071",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_072",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_073",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_074",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_075",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_076",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_077",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_078",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_079",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "js_080",
+      "category": "javascript",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_081",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_082",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_083",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_084",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_085",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "sys_086",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_087",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "sys_088",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_089",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_090",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_091",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_092",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_093",
+      "category": "systems",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "sys_094",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_095",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_096",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_097",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_098",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_099",
+      "category": "systems",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "sys_100",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_101",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_102",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_103",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_104",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sys_105",
+      "category": "systems",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_106",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_107",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_108",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_109",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_110",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_111",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_112",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_113",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_114",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_115",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_116",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_117",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_118",
+      "category": "security",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "sec_119",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_120",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_121",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_122",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_123",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_124",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_125",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_126",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_127",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_128",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_129",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "sec_130",
+      "category": "security",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_131",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "alg_132",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_133",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_134",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_135",
+      "category": "algorithms",
+      "score": 1.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "alg_136",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "alg_137",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_138",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "alg_139",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_140",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "alg_141",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_142",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "alg_143",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "alg_144",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "alg_145",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_146",
+      "category": "algorithms",
+      "score": 0.25,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "alg_147",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_148",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_149",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_150",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_151",
+      "category": "algorithms",
+      "score": 1.0,
+      "has_context": true,
+      "context_chunks": 3
+    },
+    {
+      "question_id": "alg_152",
+      "category": "algorithms",
+      "score": 0.5,
+      "has_context": true,
+      "context_chunks": 1
+    },
+    {
+      "question_id": "alg_153",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_154",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "alg_155",
+      "category": "algorithms",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_156",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_157",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_158",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_159",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "dbg_160",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_161",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_162",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_163",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_164",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_165",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_166",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_167",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_168",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_169",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_170",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_171",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_172",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_173",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_174",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_175",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_176",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_177",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_178",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_179",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "dbg_180",
+      "category": "debugging",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_181",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_182",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_183",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_184",
+      "category": "go",
+      "score": 0.75,
+      "has_context": true,
+      "context_chunks": 2
+    },
+    {
+      "question_id": "multi_185",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_186",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_187",
+      "category": "go",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_188",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_189",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_190",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_191",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_192",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 4
+    },
+    {
+      "question_id": "multi_193",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_194",
+      "category": "rust",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_195",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_196",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_197",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_198",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    },
+    {
+      "question_id": "multi_199",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": true,
+      "context_chunks": 5
+    },
+    {
+      "question_id": "multi_200",
+      "category": "shell",
+      "score": 0.0,
+      "has_context": false,
+      "context_chunks": 0
+    }
+  ]
+}

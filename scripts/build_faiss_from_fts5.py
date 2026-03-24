@@ -65,7 +65,7 @@ def load_fts5_chunks(db_path: str, max_chunks: int = 50000) -> list:
 
 
 def build_faiss_index(db_name: str, index_dir: str, batch_size: int = 32,
-                      max_chunks: int = 50000):
+                      max_chunks: int = 50000, embed_model: str = "nomic-embed-text"):
     """Build FAISS index from an FTS5 database."""
     import faiss
 
@@ -110,7 +110,7 @@ def build_faiss_index(db_name: str, index_dir: str, batch_size: int = 32,
         batch = chunks[i:i + batch_size]
         texts = [c["content"] for c in batch]
         try:
-            vectors = embed_batch(texts)
+            vectors = embed_batch(texts, model=embed_model)
             all_vectors.extend(vectors)
         except Exception as e:
             print(f"  [ERROR] Batch {i}: {e}")
@@ -160,9 +160,10 @@ def build_faiss_index(db_name: str, index_dir: str, batch_size: int = 32,
 
 def main():
     os.chdir(os.environ.get("JCODER_ROOT", str(Path(__file__).resolve().parent.parent)))
-    index_dir = "data/indexes"
-    batch_size = 32
-    max_chunks = 50000
+    index_dir = os.environ.get("JCODER_INDEX_DIR", "data/indexes")
+    batch_size = int(os.environ.get("JCODER_FAISS_BATCH", "32"))
+    max_chunks = int(os.environ.get("JCODER_FAISS_MAX_CHUNKS", "50000"))
+    embed_model = os.environ.get("JCODER_EMBED_MODEL", "nomic-embed-text")
     target_db = None
 
     args = sys.argv[1:]
@@ -178,9 +179,10 @@ def main():
     print(f"  Index dir: {index_dir}")
     print(f"  Batch size: {batch_size}")
     print(f"  Max chunks per DB: {max_chunks}")
+    print(f"  Embed model: {embed_model}")
 
     if target_db:
-        build_faiss_index(target_db, index_dir, batch_size, max_chunks)
+            build_faiss_index(target_db, index_dir, batch_size, max_chunks, embed_model)
     else:
         # Find FTS5 databases without FAISS counterparts
         fts5_dbs = sorted(Path(index_dir).glob("*.fts5.db"))
@@ -200,7 +202,7 @@ def main():
 
         for db_name in ordered:
             print(f"\n--- {db_name} ---")
-            build_faiss_index(db_name, index_dir, batch_size, max_chunks)
+            build_faiss_index(db_name, index_dir, batch_size, max_chunks, embed_model)
 
 
 if __name__ == "__main__":
