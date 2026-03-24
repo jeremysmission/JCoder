@@ -81,5 +81,44 @@ c19c710 Complete extension single-source-of-truth and switch default model to ph
 - Full regression before commit
 - Pre-push hook blocks Co-Authored-By trailers
 
+## Session Update (~06:30 MDT)
+
+### Additional Completed Sprints
+- **F1**: Hybrid FAISS+FTS5+RRF retrieval wired into learning cycle eval
+- **F2**: phi4 beats Qwen 3.5 9B (93% vs 70%, 6.9s vs 16.5s). phi4 stays as default.
+- **F3**: FlashRank reranker (TinyBERT-L-2, 3MB ONNX) added to hybrid_search pipeline. Runs after RRF fusion on 3x candidate pool. Verified: correctly separates relevant (0.9997) from irrelevant (0.0000).
+- **F4**: Demo verified end-to-end: `jcoder ask` produces clean BST implementations, LRU decorators, architecture explanations.
+- **F5**: Embedding model upgraded to nomic-embed-text-v2-moe (62% better separation, 100+ code languages).
+
+### Models Available on Ollama
+- phi4:14b-q4_K_M (9.1 GB) -- primary LLM
+- qwen3.5:9b (6.6 GB) -- evaluated, slower/worse than phi4
+- nomic-embed-text-v2-moe (1.0 GB) -- primary embedder (upgraded from v1)
+- nomic-embed-text (0.3 GB) -- legacy, still available
+- phi4-mini (2.5 GB) -- cascade fallback
+
+### Total Commits This Session: 13
+```
+0738d3b Upgrade embedding model to nomic-embed-text-v2-moe
+2f7113e Add FlashRank reranker stage to hybrid search pipeline
+5bd47dd Add hybrid retrieval learning cycle baseline results
+479f4ad Wire hybrid FAISS+FTS5+RRF retrieval into learning cycle eval
+d6512e3 Complete first full 6-phase learning cycle with fixed retrieval
+8b7a721 Add crash-safe handoff doc for 2026-03-24 session
+cf3dad1 Complete Sprint B: all 5 oversized modules split under 500 LOC
+8b18671 Remove duplicate TOOL_SCHEMAS from tools.py (638 -> 228 LOC)
+8d57190 Split agent/core.py (805 -> 509 LOC) + extract core_recovery.py
+9d4684a Fix FTS5 column name mismatch breaking learning cycle retrieval
+23e7231 Fix GUI tk_app import: add missing theme API functions
+c19c710 Complete extension single-source-of-truth and switch default model to phi4
+```
+
+### DEMO-READY: YES
+`jcoder ask "question"` works end-to-end with:
+1. Hybrid FAISS+FTS5 retrieval (187K vectors + 74 FTS5 databases)
+2. RRF fusion
+3. FlashRank reranking
+4. phi4:14b-q4_K_M answer generation
+
 ---
-Signed: Claude Opus 4.6 | 2026-03-24 ~05:00 MDT
+Signed: Claude Opus 4.6 | 2026-03-24 ~06:30 MDT
