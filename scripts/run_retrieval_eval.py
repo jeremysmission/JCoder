@@ -114,15 +114,15 @@ def run_eval(
     if not index_dir:
         index_dir = os.environ.get("JCODER_DATA", "data")
 
-    # Try to load repo index (the one that indexes JCoder's own code)
+    # Load the repo index that should answer the JCoder golden set first.
     cfg = load_config(None)
     storage = StorageConfig(index_dir=os.path.join(index_dir, "indexes"))
     dimension = cfg.embedder.dimension or 768
     index = IndexEngine(dimension=dimension, storage=storage)
 
-    # Try loading agent_memory or repos index
+    # Prefer the self-index, then fall back to smaller or legacy indexes.
     loaded = False
-    for idx_name in ["agent_memory", "repos", "default"]:
+    for idx_name in ["jcoder_self", "jcoder_demo", "agent_memory", "repos", "default"]:
         try:
             index.load(idx_name)
             if index.count > 0 or hasattr(index, "_fts_conn"):
@@ -132,11 +132,7 @@ def run_eval(
             continue
 
     if not loaded:
-        # Use FTS5 direct mode with any available .fts5.db
-        fts_dir = Path(config.index_dir)
-        fts_files = sorted(fts_dir.glob("*.fts5.db")) if fts_dir.exists() else []
-        if not fts_files:
-            return {"error": "No indexes found", "golden_count": len(golden)}
+        return {"error": "No matching repo index found", "golden_count": len(golden)}
 
     results = []
     t0 = time.monotonic()
