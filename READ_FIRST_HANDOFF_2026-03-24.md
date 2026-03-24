@@ -1,0 +1,85 @@
+# JCoder Handoff -- 2026-03-24 (~05:00 MDT)
+
+## What Was Done This Session
+
+### SPRINT A: Self-Learning Pipeline UNBLOCKED (CRITICAL FIX)
+- **Root cause found**: FTS5 column name mismatch. `learning_cycle.py`, `distill_weak_topics.py`, `test_self_learning.py` all queried `SELECT content FROM chunks` but the actual column is `search_content`.
+- **Impact**: Baseline eval returned 0 chunks for ALL 200 questions. Now returns 73 results from 26 databases.
+- **Files fixed**: learning_cycle.py, distill_weak_topics.py, test_self_learning.py, test_distillation_pipeline.py
+- **Embedding engine verified working**: nomic-embed-text via Ollama `/v1/embeddings` returns correct 768-dim vectors.
+
+### SPRINT S1: Extension Single-Source-of-Truth (QA PASSED)
+- sanitizer.py: Replaced hardcoded CODE_EXT_TO_LANG (14 exts) with LANGUAGE_MAP derivation (15 exts + 41 supported)
+- prep_stage_for_index.py: Replaced hardcoded CODE_EXTS/TEXT_EXTS with registry derivations
+- chunker.py: Added .cc/.cxx C++ aliases to LANGUAGE_MAP
+- Fixed C# taxonomy split (c_sharp -> csharp normalization)
+- Purged all D:/ fallback paths from 4 files
+
+### SPRINT S1b: Model Switch
+- Default model switched from devstral-small-2:24b to phi4:14b-q4_K_M
+- **WARNING**: Research found phi4 has only 16K context window -- may be too small for RAG. Evaluate Qwen 2.5 Coder 14B (128K) or Qwen 3.5 9B (262K) ASAP.
+
+### SPRINT S3: GUI Fix
+- tk_app.py couldn't import -- missing `apply_ttk_theme`, `configure_entry_widget`, `configure_text_widget`, `palette` in theme.py. Added proper implementations.
+- Deep packet test: 129/130 modules clean (only agent.bridge_factory circular import remains, pre-existing).
+
+### SPRINT B: Module Splits COMPLETE
+All 5 oversized agent modules now under 500 LOC:
+| Module | Before | After | Extracted |
+|--------|--------|-------|-----------|
+| core.py | 805 | 509 | core_recovery.py (182) |
+| tools.py | 638 | 228 | (used existing tool_schemas.py) |
+| bridge.py | 544 | 375 | bridge_strategies.py |
+| multi_agent.py | 586 | 432 | artifact_bus.py |
+| config_loader.py | 565 | 445 | config_yaml_helpers.py |
+
+### Research Dispatches (posted to war room)
+1. OLLAMA_FLASH_ATTENTION=1 for free 15-20% speed boost
+2. nomic-embed-text-v2-moe is clear upgrade (pulling now)
+3. Ollama batch embedding bug #6262 -- set OLLAMA_NUM_PARALLEL=1
+4. FAISS IVF+PQ should replace IndexFlatIP for 2M+ vectors
+5. Add reranker stage (mxbai-rerank-v2 or FlashRank) for +18.5% MRR
+6. Qwen 3.5 9B (released Mar 2) needs evaluation as primary model
+
+## What's Running in Background
+- `ollama pull nomic-embed-text-v2-moe` -- downloading upgraded embedder
+- `ollama pull qwen3.5:9b` -- downloading for eval
+- `jcoder ingest .` -- self-ingestion (may have completed or timed out)
+
+## What's NOT Done Yet
+- [ ] SPRINT C: Build FAISS indexes for top-10 FTS5 databases (IVF+PQ type)
+- [ ] SPRINT D: Run complete learning cycle phases 4-6 (now unblocked!)
+- [ ] SPRINT E: Fix 4 known retrieval failures (G028, G030, G034, G037)
+- [ ] Evaluate Qwen 3.5 9B vs phi4 vs devstral on canary battery
+- [ ] Benchmark nomic-embed-text-v2-moe vs v1
+- [ ] Set OLLAMA_FLASH_ATTENTION=1 environment variable
+- [ ] Add reranker stage to retrieval pipeline
+- [ ] Verify phi4 16K context doesn't truncate large RAG contexts
+
+## Commits Pushed (6 total)
+```
+cf3dad1 Complete Sprint B: all 5 oversized modules split under 500 LOC
+8b18671 Remove duplicate TOOL_SCHEMAS from tools.py (638 -> 228 LOC)
+8d57190 Split agent/core.py (805 -> 509 LOC) + extract core_recovery.py
+9d4684a Fix FTS5 column name mismatch breaking learning cycle retrieval
+23e7231 Fix GUI tk_app import: add missing theme API functions
+c19c710 Complete extension single-source-of-truth and switch default model to phi4
+```
+
+## Test Status
+- **2862 passed, 0 failed, 5 skipped**
+- Deep packet test: 129/130 modules importing clean
+
+## GPU Status
+- GPU 0 (CUDA:0): HybridRAG3/Ollama
+- GPU 1 (CUDA:1): JCoder (configured in default.yaml)
+
+## Critical Rules (from war room)
+- No hardcoded drive paths (use JCODER_DATA env var)
+- No shell/profile/startup automation
+- Max 500 LOC per module
+- Full regression before commit
+- Pre-push hook blocks Co-Authored-By trailers
+
+---
+Signed: Claude Opus 4.6 | 2026-03-24 ~05:00 MDT
