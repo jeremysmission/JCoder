@@ -38,6 +38,17 @@ This handoff captures the minimum important truth needed for the next crew to re
 
 ## Immediate priorities
 
+### Current sprint queue
+
+The next five execution slices are now prioritized as:
+1. R23: Dual-GPU Beast validation
+2. R24: Ingest saturation pass
+3. R25: Retrieval baseline and regression check
+4. R26: Self-learning cycle
+5. R27: Demo hardening
+
+Reference plan: [docs/SPRINT_PLAN_R23_R27_2026-03-24.md](/C:/Users/jerem/JCoder/docs/SPRINT_PLAN_R23_R27_2026-03-24.md)
+
 ### 1. Shell and CLI recovery verification
 
 Verify in this order:

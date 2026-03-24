@@ -37,9 +37,9 @@ except ImportError:
 # Models to pull on BEAST (all approved -- no restrictions for JCoder)
 REQUIRED_MODELS: List[Dict[str, str]] = [
     {
-        "name": "devstral:24b",
-        "description": "Primary code model (24B, Mistral)",
-        "min_vram_gb": 14,
+        "name": "phi4:14b-q4_K_M",
+        "description": "Primary code/reasoning model (14B, Q4)",
+        "min_vram_gb": 9,
     },
     {
         "name": "nomic-embed-text",
@@ -50,9 +50,9 @@ REQUIRED_MODELS: List[Dict[str, str]] = [
 
 OPTIONAL_MODELS: List[Dict[str, str]] = [
     {
-        "name": "phi4:14b-q4_K_M",
-        "description": "Fallback code model (14B, Microsoft)",
-        "min_vram_gb": 9,
+        "name": "devstral:24b",
+        "description": "Fallback code model (24B, Mistral)",
+        "min_vram_gb": 14,
     },
     {
         "name": "mistral-nemo:12b",

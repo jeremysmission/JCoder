@@ -26,7 +26,7 @@ if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
 from core.index_engine import IndexEngine
-from core.config import StorageConfig
+from core.config import StorageConfig, load_config
 
 
 def load_golden_set(path: str = "") -> List[Dict]:
@@ -115,8 +115,10 @@ def run_eval(
         index_dir = os.environ.get("JCODER_DATA", "data")
 
     # Try to load repo index (the one that indexes JCoder's own code)
-    config = StorageConfig(index_dir=os.path.join(index_dir, "indexes"))
-    index = IndexEngine(config)
+    cfg = load_config(None)
+    storage = StorageConfig(index_dir=os.path.join(index_dir, "indexes"))
+    dimension = cfg.embedder.dimension or 768
+    index = IndexEngine(dimension=dimension, storage=storage)
 
     # Try loading agent_memory or repos index
     loaded = False

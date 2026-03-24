@@ -1,0 +1,912 @@
+{
+  "timestamp": 1774347992.7148511,
+  "golden_count": 40,
+  "evaluated": 40,
+  "top_k": 10,
+  "min_quality": 0,
+  "elapsed_s": 0.02,
+  "metrics": {
+    "file_hit_rate": 0.0,
+    "recall_at_5": 0.0,
+    "mrr_at_10": 0.0,
+    "avg_symbol_rate": 0.22
+  },
+  "per_question": [
+    {
+      "id": "G001",
+      "question": "Where is the Chunker class defined?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "Chunker",
+          "hit": false
+        },
+        {
+          "symbol": "chunk_file",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G002",
+      "question": "What languages does tree-sitter support in the chunker?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "LANGUAGE_MAP",
+          "hit": false
+        },
+        {
+          "symbol": ".py",
+          "hit": true
+        },
+        {
+          "symbol": ".js",
+          "hit": true
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G003",
+      "question": "How does AST-based chunking work?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_chunk_by_ast",
+          "hit": false
+        },
+        {
+          "symbol": "BOUNDARY_NODES",
+          "hit": false
+        },
+        {
+          "symbol": "tree_sitter",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G004",
+      "question": "What happens when tree-sitter grammar is not installed?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_chunk_by_chars",
+          "hit": false
+        },
+        {
+          "symbol": "_try_load_language",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G005",
+      "question": "How does the RepoLoader skip directories?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "SKIP_DIRS",
+          "hit": false
+        },
+        {
+          "symbol": "node_modules",
+          "hit": false
+        },
+        {
+          "symbol": ".git",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G006",
+      "question": "What file extensions does RepoLoader support?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "supported_extensions",
+          "hit": false
+        },
+        {
+          "symbol": "LANGUAGE_MAP",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G007",
+      "question": "How does RRF fusion merge vector and keyword results?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "hybrid_search",
+          "hit": false
+        },
+        {
+          "symbol": "rrf_scores",
+          "hit": false
+        },
+        {
+          "symbol": "rrf_k",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G008",
+      "question": "How does FAISS GPU fallback work?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "index_cpu_to_all_gpus",
+          "hit": false
+        },
+        {
+          "symbol": "_gpu_available",
+          "hit": false
+        },
+        {
+          "symbol": "gpu_safety_margin",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G009",
+      "question": "How does FTS5 keyword search work in IndexEngine?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "search_keywords",
+          "hit": false
+        },
+        {
+          "symbol": "fts5",
+          "hit": true
+        },
+        {
+          "symbol": "MATCH",
+          "hit": true
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G010",
+      "question": "What does the FTS5 query sanitizer do?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_sanitize_fts5_query",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G011",
+      "question": "How are vectors added to the index?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "add_vectors",
+          "hit": false
+        },
+        {
+          "symbol": "dimension",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G012",
+      "question": "How is the index saved and loaded from disk?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "save",
+          "hit": false
+        },
+        {
+          "symbol": "load",
+          "hit": true
+        },
+        {
+          "symbol": "write_index",
+          "hit": false
+        },
+        {
+          "symbol": "meta.json",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.25,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G013",
+      "question": "How does the EmbeddingEngine call vLLM?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "embed",
+          "hit": true
+        },
+        {
+          "symbol": "httpx",
+          "hit": true
+        },
+        {
+          "symbol": "/embeddings",
+          "hit": true
+        }
+      ],
+      "symbol_rate": 1.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G014",
+      "question": "How are embeddings normalized?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "normalize",
+          "hit": true
+        },
+        {
+          "symbol": "norms",
+          "hit": false
+        },
+        {
+          "symbol": "linalg",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G015",
+      "question": "How does the Runtime module communicate with the LLM?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "generate",
+          "hit": true
+        },
+        {
+          "symbol": "chat/completions",
+          "hit": false
+        },
+        {
+          "symbol": "httpx",
+          "hit": true
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G016",
+      "question": "What system prompt does the Runtime use?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "SYSTEM_PROMPT",
+          "hit": false
+        },
+        {
+          "symbol": "code assistant",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G017",
+      "question": "How does the reranker score documents?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "rerank",
+          "hit": true
+        },
+        {
+          "symbol": "/score",
+          "hit": true
+        },
+        {
+          "symbol": "top_n",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G018",
+      "question": "What happens when the reranker is disabled?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "enabled",
+          "hit": false
+        },
+        {
+          "symbol": "pass-through",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G019",
+      "question": "How does the retrieval pipeline orchestrate search?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "retrieve",
+          "hit": true
+        },
+        {
+          "symbol": "hybrid_search",
+          "hit": false
+        },
+        {
+          "symbol": "rerank",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G020",
+      "question": "What does the Orchestrator return?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "AnswerResult",
+          "hit": false
+        },
+        {
+          "symbol": "answer",
+          "hit": true
+        },
+        {
+          "symbol": "sources",
+          "hit": true
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G021",
+      "question": "How does the eval guard verify benchmark integrity?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "verify_hashes",
+          "hit": false
+        },
+        {
+          "symbol": "SHA-256",
+          "hit": false
+        },
+        {
+          "symbol": "compute_file_hash",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G022",
+      "question": "Where are benchmark hashes stored?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "config/",
+          "hit": false
+        },
+        {
+          "symbol": "benchmark_hashes.json",
+          "hit": false
+        },
+        {
+          "symbol": "HASH_FILENAME",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G023",
+      "question": "How does the eval guard detect unlisted benchmark files?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "Unlisted",
+          "hit": false
+        },
+        {
+          "symbol": "listed",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G024",
+      "question": "How does the config loader find YAML files?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_find_config_dir",
+          "hit": false
+        },
+        {
+          "symbol": "JCODER_CONFIG_DIR",
+          "hit": false
+        },
+        {
+          "symbol": "load_config",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G025",
+      "question": "What happens when config files are missing?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "missing",
+          "hit": true
+        },
+        {
+          "symbol": "_load_yaml",
+          "hit": false
+        },
+        {
+          "symbol": "defaults",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G026",
+      "question": "What policy caps are enforced?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "PoliciesConfig",
+          "hit": false
+        },
+        {
+          "symbol": "max_parallel_requests",
+          "hit": false
+        },
+        {
+          "symbol": "max_context_tokens",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G027",
+      "question": "How does timeout conversion work?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_ms_to_seconds",
+          "hit": false
+        },
+        {
+          "symbol": "ceil",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G028",
+      "question": "What Protocol interfaces are defined?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "IEmbedder",
+          "hit": false
+        },
+        {
+          "symbol": "IRetriever",
+          "hit": false
+        },
+        {
+          "symbol": "IReranker",
+          "hit": false
+        },
+        {
+          "symbol": "ILLM",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G029",
+      "question": "How does the mock embedder generate deterministic vectors?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "MockEmbedder",
+          "hit": false
+        },
+        {
+          "symbol": "SHA-256",
+          "hit": false
+        },
+        {
+          "symbol": "_hash_to_vector",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G030",
+      "question": "How does the mock reranker score results?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "MockReranker",
+          "hit": false
+        },
+        {
+          "symbol": "overlap",
+          "hit": true
+        },
+        {
+          "symbol": "query_words",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G031",
+      "question": "What CLI commands are available?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "doctor",
+          "hit": false
+        },
+        {
+          "symbol": "ingest",
+          "hit": false
+        },
+        {
+          "symbol": "ask",
+          "hit": true
+        },
+        {
+          "symbol": "eval",
+          "hit": true
+        },
+        {
+          "symbol": "seal-benchmarks",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.4,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G032",
+      "question": "How does the --mock flag work in the CLI?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "mock",
+          "hit": true
+        },
+        {
+          "symbol": "MockEmbedder",
+          "hit": false
+        },
+        {
+          "symbol": "_build_pipeline",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G033",
+      "question": "How does the ingest command batch embeddings?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "batch_size",
+          "hit": true
+        },
+        {
+          "symbol": "embed_batch_size",
+          "hit": false
+        },
+        {
+          "symbol": "concatenate",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G034",
+      "question": "What does the doctor command check?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_check_endpoint",
+          "hit": true
+        },
+        {
+          "symbol": "_check_gpu",
+          "hit": false
+        },
+        {
+          "symbol": "_check_faiss",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G035",
+      "question": "How does doctor detect GPU memory?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "nvidia-smi",
+          "hit": false
+        },
+        {
+          "symbol": "pynvml",
+          "hit": false
+        },
+        {
+          "symbol": "free_mb",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G036",
+      "question": "What vLLM ports are configured?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "8000",
+          "hit": true
+        },
+        {
+          "symbol": "8001",
+          "hit": true
+        },
+        {
+          "symbol": "8002",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.6666666666666666,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G037",
+      "question": "What GPU safety margin is configured?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "memory_safety_margin_mb",
+          "hit": false
+        },
+        {
+          "symbol": "2048",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G038",
+      "question": "How does the per-GPU VRAM margin check work?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_gpu_min_free_mb",
+          "hit": false
+        },
+        {
+          "symbol": "min",
+          "hit": true
+        },
+        {
+          "symbol": "pynvml",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.3333333333333333,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G039",
+      "question": "What chunk metadata fields are stored?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "content",
+          "hit": true
+        },
+        {
+          "symbol": "source_path",
+          "hit": true
+        },
+        {
+          "symbol": "content_hash",
+          "hit": false
+        },
+        {
+          "symbol": "chunker_version",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.5,
+      "mrr": 0.0,
+      "results_count": 10
+    },
+    {
+      "id": "G040",
+      "question": "How are chunk IDs made deterministic across OS?",
+      "file_hit": false,
+      "file_rank": 0,
+      "symbol_hits": [
+        {
+          "symbol": "_hash",
+          "hit": false
+        },
+        {
+          "symbol": "sha256",
+          "hit": false
+        },
+        {
+          "symbol": "replace",
+          "hit": false
+        }
+      ],
+      "symbol_rate": 0.0,
+      "mrr": 0.0,
+      "results_count": 10
+    }
+  ]
+}
