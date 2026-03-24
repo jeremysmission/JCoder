@@ -218,6 +218,11 @@ def load_config(config_dir: Optional[str] = None) -> JCoderConfig:
       policies.yaml -- hard caps and timeouts
       default.yaml -- storage, chunking, retrieval (legacy single-file support)
     """
+    # Performance: enable Ollama flash attention if not explicitly set.
+    # Free 15-20% speed boost + 30% VRAM reduction on supported GPUs.
+    if "OLLAMA_FLASH_ATTENTION" not in os.environ:
+        os.environ["OLLAMA_FLASH_ATTENTION"] = "1"
+
     d = _find_config_dir(config_dir)
 
     # Report which config files are present
