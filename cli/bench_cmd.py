@@ -70,7 +70,7 @@ def bench_search(queries: int, top_k: int, index_dir: str | None):
             if cfg.memory_index_dir:
                 scan_dirs.append(Path(cfg.memory_index_dir))
         except Exception:
-            scan_dirs.append(Path(os.environ.get("JCODER_DATA", "D:/JCoder_Data")) / "indexes")
+            scan_dirs.append(Path(os.environ.get("JCODER_DATA", "data")) / "indexes")
 
     # Deduplicate and resolve
     seen: set[Path] = set()

@@ -44,24 +44,19 @@ try:
 except Exception:  # pragma: no cover
     py7zr = None
 
+from ingestion.chunker import LANGUAGE_MAP
+from ingestion.parser_registry import DOCUMENT_EXTENSIONS
 
-CODE_EXT_TO_LANG = {
-    ".py": "python",
-    ".js": "javascript",
-    ".ts": "typescript",
-    ".tsx": "typescript",
-    ".java": "java",
-    ".go": "go",
-    ".rs": "rust",
-    ".c": "c",
-    ".cpp": "cpp",
-    ".cc": "cpp",
-    ".cxx": "cpp",
-    ".cs": "csharp",
-    ".rb": "ruby",
-    ".php": "php",
-    ".kt": "kotlin",
-}
+# Derive code extension->language mapping from the single source of truth.
+# Only entries with a non-None language value are code files (AST-parseable).
+CODE_EXT_TO_LANG = {ext: lang for ext, lang in LANGUAGE_MAP.items() if lang is not None}
+
+# All extensions the sanitizer should consider as candidates.
+# Union of code + text/config (LANGUAGE_MAP) + document formats (parser registry)
+# plus domain-specific formats (.jsonl, .zst) used for SE/Reddit data.
+_SUPPORTED_TEXT_EXTS = (
+    set(LANGUAGE_MAP.keys()) | set(DOCUMENT_EXTENSIONS) | {".jsonl", ".zst"}
+)
 
 MAGIC_7Z = bytes.fromhex("377ABCAF271C")
 MAGIC_ZST = bytes.fromhex("28B52FFD")
@@ -122,7 +117,7 @@ class SanitizationStats:
 class SanitizationConfig:
     enabled: bool = True
     clean_archive_dir: str = str(
-        Path(os.environ.get("JCODER_DATA", os.environ.get("JCODER_DATA_DIR", "D:/JCoder_Data"))) / "clean_source"
+        Path(os.environ.get("JCODER_DATA", os.environ.get("JCODER_DATA_DIR", "data"))) / "clean_source"
     )
     langdetect_threshold: float = 0.8
 
@@ -216,7 +211,7 @@ def _normalize_lang(tag: str) -> str:
     t = (tag or "").strip().lower()
     if t in ("c++", "cpp"):
         return "cpp"
-    if t in ("c#", "csharp"):
+    if t in ("c#", "csharp", "c_sharp"):
         return "csharp"
     if t in ("js",):
         return "javascript"
@@ -269,11 +264,10 @@ class SanitizationPipeline:
         return str(run_dir), stats, str(log_path)
 
     def _iter_candidate_files(self, root: Path) -> Iterable[Path]:
+        archive_exts = {".7z", ".zip", ".tar", ".gz", ".xz", ".parquet"}
         if root.is_file():
             ext = root.suffix.lower()
-            if ext in {".xml", ".json", ".jsonl", ".zst", ".md", ".txt"} or ext in CODE_EXT_TO_LANG:
-                yield root
-            elif ext in {".7z", ".zip", ".tar", ".gz", ".xz", ".parquet"}:
+            if ext in _SUPPORTED_TEXT_EXTS or ext in archive_exts:
                 yield root
             return
         for dirpath, dirnames, filenames in os.walk(root):
@@ -281,10 +275,7 @@ class SanitizationPipeline:
             for fn in filenames:
                 fp = Path(dirpath) / fn
                 ext = fp.suffix.lower()
-                if ext in {".xml", ".json", ".jsonl", ".zst", ".md", ".txt"} or ext in CODE_EXT_TO_LANG:
-                    yield fp
-                elif ext in {".7z", ".zip", ".tar", ".gz", ".xz", ".parquet"}:
-                    # Archive formats are intentionally skipped in this stage.
+                if ext in _SUPPORTED_TEXT_EXTS or ext in archive_exts:
                     yield fp
 
     def _process_file(self, fp: Path, run_dir: Path, stats: SanitizationStats) -> None:
@@ -550,7 +541,7 @@ class SanitizationPipeline:
                     names = zf.namelist()
                     wanted = [n for n in names if n.lower().endswith("posts.xml")]
                     if not wanted:
-                        wanted = [n for n in names if Path(n).suffix.lower() in {".xml", ".json", ".jsonl", ".zst", ".md", ".txt"} or Path(n).suffix.lower() in CODE_EXT_TO_LANG]
+                        wanted = [n for n in names if Path(n).suffix.lower() in _SUPPORTED_TEXT_EXTS]
                     if not wanted:
                         stats.compressed_skipped += 1
                         stats.skipped_files.append(f"{fp} [no_supported_members]")
@@ -560,7 +551,7 @@ class SanitizationPipeline:
                 try:
                     with tarfile.open(fp, "r:*") as tf:
                         members = tf.getmembers()
-                        wanted = [m for m in members if m.isfile() and (m.name.lower().endswith("posts.xml") or Path(m.name).suffix.lower() in {".xml", ".json", ".jsonl", ".zst", ".md", ".txt"} or Path(m.name).suffix.lower() in CODE_EXT_TO_LANG)]
+                        wanted = [m for m in members if m.isfile() and (m.name.lower().endswith("posts.xml") or Path(m.name).suffix.lower() in _SUPPORTED_TEXT_EXTS)]
                         if not wanted:
                             stats.compressed_skipped += 1
                             stats.skipped_files.append(f"{fp} [no_supported_members]")

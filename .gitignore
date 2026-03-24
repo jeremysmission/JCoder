@@ -27,6 +27,11 @@ Thumbs.db
 logs/weekly_scraper/*.json
 *.py.tmp.*
 
+# Cloned reference repos (large, not part of JCoder source)
+CheatSheetSeries/
+dia-additional-shapes/
+drawio-libs/
+
 # Experimental/research dirs (not production)
 _active_learn/
 _continual/

@@ -5,10 +5,11 @@
 #   llm.name: "Qwen/Qwen3-Coder-Next-80B"
 #   embedder.name: "nomic-ai/nomic-embed-code-v1"
 #   reranker.name: "Qwen/Qwen3-Reranker-4B"
-# Previous: phi4:14b-q4_K_M (good general, weaker on long code)
-# Switched to devstral: Mistral's dedicated coding model, 24B params
+# Switched back to phi4: 10x faster than devstral, higher eval scores
+# (59% vs 35% overall, 5/5 coding vs 0/5). See evaluation/results_local/model_comparison_2026-03-23.md
+# devstral kept as cascade fallback for complex reasoning
 llm:
-  name: "devstral-small-2:24b"
+  name: "phi4:14b-q4_K_M"
   quantization: ""
   tensor_parallel: 1
   max_model_len: 32768

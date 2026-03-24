@@ -31,6 +31,8 @@ LANGUAGE_MAP = {
     ".java": "java",
     ".cpp": "cpp",
     ".c": "c",
+    ".cc": "cpp",
+    ".cxx": "cpp",
     ".cs": "c_sharp",
     ".go": "go",
     ".rs": "rust",

@@ -1,6 +1,6 @@
 agent:
   backend: openai
-  model: "devstral-small-2:24b"
+  model: "phi4:14b-q4_K_M"
   endpoint: "https://api.openai.com/v1"
   max_iterations: 50
   max_tokens_budget: 500000
@@ -8,7 +8,7 @@ agent:
 
   # Ollama defaults (when backend=ollama)
   ollama_endpoint: "http://localhost:11434/v1"
-  ollama_model: "devstral-small-2:24b"
+  ollama_model: "phi4:14b-q4_K_M"
 
   # API defaults (when backend=openai or anthropic)
   # Keys read from environment: OPENAI_API_KEY, ANTHROPIC_API_KEY
@@ -63,7 +63,7 @@ agent:
   # Distillation: send weak eval topics to strong model for expert explanations
   distillation:
     enabled: true
-    model: "devstral-small-2:24b"
+    model: "phi4:14b-q4_K_M"
     top: 20
     budget_usd: 2.0
     resume: true

@@ -27,27 +27,26 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.config import load_config
-from ingestion.chunker import Chunker
+from ingestion.chunker import Chunker, LANGUAGE_MAP
+from ingestion.parser_registry import DOCUMENT_EXTENSIONS
 from ingestion.repo_loader import RepoLoader
 from ingestion.sanitizer import SanitizationConfig, SanitizationPipeline
 
 
 _DEFAULT_ROOTS_STR = os.environ.get("JCODER_DATA_ROOTS", os.pathsep.join([
-    r"D:\Projects\KnowledgeBase\stackexchange_20251231",
-    r"D:\Projects\reddit",
-    r"D:\Projects\KnowledgeBase\sources\ragas",
-    r"D:\RAG Source Data\stackexchange_20251231",
-    r"D:\Projects\softwarerecs.stackexchange.com",
-    r"D:\Misc\ZippedDownloadsDumps",
-    r"D:\Archive\HybridRAG3_VariousVersions\HybridRAG3_Archive\2026-02-16\orphans",
+    os.path.join(os.environ.get("JCODER_DATA", "data"), "source_dumps", "stackexchange"),
+    os.path.join(os.environ.get("JCODER_DATA", "data"), "source_dumps", "reddit"),
+    os.path.join(os.environ.get("JCODER_DATA", "data"), "source_dumps", "git_github"),
 ]))
 DEFAULT_ROOTS = [r for r in _DEFAULT_ROOTS_STR.split(os.pathsep) if r]
 
-CODE_EXTS = {
-    ".py", ".js", ".ts", ".tsx", ".java", ".go", ".rs", ".c", ".cpp", ".cc",
-    ".cxx", ".cs", ".rb", ".php", ".kt",
-}
-TEXT_EXTS = {".xml", ".json", ".jsonl", ".zst", ".md", ".txt"}
+# Derive from single source of truth (LANGUAGE_MAP + parser registry).
+CODE_EXTS = {ext for ext, lang in LANGUAGE_MAP.items() if lang is not None}
+TEXT_EXTS = (
+    {ext for ext, lang in LANGUAGE_MAP.items() if lang is None}
+    | set(DOCUMENT_EXTENSIONS)
+    | {".jsonl", ".zst"}  # domain-specific: SE/Reddit data formats
+)
 ARCHIVE_EXTS = {".7z", ".zip", ".tar", ".gz", ".xz", ".parquet"}
 MAGIC_7Z = bytes.fromhex("377ABCAF271C")
 MAGIC_ZST = bytes.fromhex("28B52FFD")
@@ -190,7 +189,7 @@ def main() -> int:
         latest_logs.clear()
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    _jcoder_data = Path(os.environ.get("JCODER_DATA_DIR", "data"))
+    _jcoder_data = Path(os.environ.get("JCODER_DATA", os.environ.get("JCODER_DATA_DIR", "data")))
     prep_root = _jcoder_data / "prep_stage" / f"prep_{ts}"
     prep_root.mkdir(parents=True, exist_ok=True)
     report_json = prep_root / "prep_report.json"
