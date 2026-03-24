@@ -1,4 +1,16 @@
-# Master Handoff - 2026-03-22
+# Master Handoff - 2026-03-24
+
+## Crash-Recovery Checkpoint
+
+Current live state:
+- `agent/bridge.py`, `agent/config_loader.py`, and `agent/multi_agent.py` are mid-refactor.
+- Added support files: `agent/artifact_bus.py`, `agent/bridge_strategies.py`, `agent/config_yaml_helpers.py`.
+- S1 cleanup is verified: extension lists are derived from single-source registries, `c_sharp` normalizes to `csharp`, and `JCODER_DATA` now drives prep output roots.
+- The remaining blocker is not code-specific: pytest tempdir cleanup is still failing with `WinError 5` on this workstation.
+
+Recovery rule:
+- If the machine crashes, resume from `git status` and do not discard any of the new split files.
+- Update war room before any push or further refactor.
 
 ## Current system truth
 

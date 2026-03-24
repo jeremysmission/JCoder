@@ -1,4 +1,23 @@
-# JCoder Handoff — 2026-03-23 (Updated ~07:00 MDT — Autonomous Night Sprint FINAL)
+# JCoder Handoff — 2026-03-24 (Crash-Recovery Checkpoint)
+
+## Emergency Recall
+
+Current worktree state:
+- `agent/bridge.py`, `agent/config_loader.py`, and `agent/multi_agent.py` are mid-split.
+- New support modules exist and should be kept: `agent/artifact_bus.py`, `agent/bridge_strategies.py`, `agent/config_yaml_helpers.py`.
+- `S1` extension allowlist cleanup is verified; `c_sharp` now normalizes back to `csharp`.
+- `prep_stage_for_index.py` now uses `JCODER_DATA` for its prep output root as well as input roots.
+
+Verification status:
+- `sanitizer` count check: `15 41`
+- `prep_stage_for_index` count check: `15 26`
+- Remaining test blocker is environmental: pytest tempdir cleanup hits `WinError 5` on this machine.
+
+If the machine crashes, resume from this point:
+1. Inspect `git status`.
+2. Continue the agent split only if the new modules are intact.
+3. Re-run the targeted bridge/config/multi-agent tests after tempdir permission is resolved.
+4. Keep the war room updated before any push.
 
 ## What Was Done
 
