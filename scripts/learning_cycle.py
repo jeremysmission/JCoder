@@ -70,14 +70,21 @@ def run_baseline_eval(
         context = _hybrid_retrieve(question_text, index_dir)
         has_context = len(context) > 0
 
-        # Score: simple keyword overlap
+        # Score: keyword overlap + optional LLM judge
         expected = q.get("expected_keywords", [])
-        score = _keyword_score(context, expected)
+        kw_score = _keyword_score(context, expected)
+
+        # LLM-as-judge for context relevancy (RAGAS-style)
+        llm_score = _llm_judge_score(question_text, context, expected)
+        # Combined: 40% keyword overlap + 60% LLM judge (if available)
+        score = 0.4 * kw_score + 0.6 * llm_score if llm_score > 0 else kw_score
 
         results.append({
             "question_id": qid,
             "category": category,
             "score": score,
+            "keyword_score": kw_score,
+            "llm_judge_score": llm_score,
             "has_context": has_context,
             "context_chunks": len(context),
         })
@@ -397,6 +404,58 @@ def _keyword_score(contexts: List[str], expected: List[str]) -> float:
     combined = " ".join(contexts).lower()
     hits = sum(1 for kw in expected if kw.lower() in combined)
     return hits / len(expected)
+
+
+def _llm_judge_score(
+    question: str,
+    contexts: List[str],
+    expected_keywords: List[str],
+    model: str = "phi4:14b-q4_K_M",
+    endpoint: str = "http://localhost:11434/api/generate",
+) -> float:
+    """Use LLM-as-judge to score retrieval quality (RAGAS-style).
+
+    Scores context_relevancy: does the retrieved context contain
+    information needed to answer the question?
+    Returns a float 0.0-1.0.
+    """
+    if not contexts:
+        return 0.0
+
+    context_text = "\n---\n".join(c[:300] for c in contexts[:5])
+    prompt = (
+        "You are a retrieval quality judge. Given a question and retrieved "
+        "context chunks, rate how relevant the context is for answering the "
+        "question.\n\n"
+        f"Question: {question}\n\n"
+        f"Expected concepts: {', '.join(expected_keywords)}\n\n"
+        f"Retrieved context:\n{context_text}\n\n"
+        "Rate the context relevancy on a scale of 0 to 10, where:\n"
+        "0 = completely irrelevant\n"
+        "5 = partially relevant (some useful info)\n"
+        "10 = highly relevant (contains key concepts needed)\n\n"
+        "Respond with ONLY a single integer 0-10, nothing else."
+    )
+
+    try:
+        import httpx
+
+        r = httpx.post(
+            endpoint,
+            json={"model": model, "prompt": prompt, "stream": False,
+                  "options": {"num_predict": 5, "temperature": 0.0}},
+            timeout=30,
+        )
+        answer = r.json().get("response", "").strip()
+        # Extract first integer from response
+        for token in answer.split():
+            token_clean = token.strip(".,;:!")
+            if token_clean.isdigit():
+                score = int(token_clean)
+                return min(max(score / 10.0, 0.0), 1.0)
+        return 0.0
+    except Exception:
+        return 0.0
 
 
 def _log_study_event(db_path: str, qid: str, question: str, chunks: int) -> None:
