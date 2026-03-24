@@ -1,0 +1,182 @@
+[
+  {
+    "id": "alg_135",
+    "question": "Implement a singly linked list in Python with insert, delete, search, and reverse methods.",
+    "category": "algorithms",
+    "baseline_score": 1.0
+  },
+  {
+    "id": "alg_151",
+    "question": "Implement a union-find (disjoint set) data structure with path compression and union by rank in Python.",
+    "category": "algorithms",
+    "baseline_score": 1.0
+  },
+  {
+    "id": "multi_184",
+    "question": "Write a Go interface for a key-value store with Get, Set, and Delete methods, and implement it with an in-memory map.",
+    "category": "go",
+    "baseline_score": 0.75
+  },
+  {
+    "id": "py_008",
+    "question": "Write a generator function that yields Fibonacci numbers indefinitely.",
+    "category": "python",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "algo_002",
+    "question": "Implement a trie (prefix tree) with insert, search, and starts_with methods in Python.",
+    "category": "algorithms",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "algo_004",
+    "question": "Solve the 'longest substring without repeating characters' problem using the sliding window technique.",
+    "category": "algorithms",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "algo_005",
+    "question": "Use the two-pointer technique to find all pairs in a sorted array that sum to a target value.",
+    "category": "algorithms",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "sec_118",
+    "question": "How do I use the cryptography library in Python to encrypt and decrypt data with AES-GCM (authenticated encryption)?",
+    "category": "security",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "alg_152",
+    "question": "Solve the coin change problem using dynamic programming. Return both the minimum number of coins and which coins to use.",
+    "category": "algorithms",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "py_001",
+    "question": "How do I recursively find all .py files in a directory using pathlib?",
+    "category": "python",
+    "baseline_score": 0.3333333333333333
+  },
+  {
+    "id": "sec_002",
+    "question": "What is Cross-Site Scripting (XSS)? Show a vulnerable code example and the fix.",
+    "category": "security",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "algo_003",
+    "question": "What is the time and space complexity of merge sort? Implement it in Python.",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "sys_093",
+    "question": "How do I use git cherry-pick to apply a specific commit from one branch to another, resolving conflicts?",
+    "category": "systems",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "sys_099",
+    "question": "How do I check which process is listening on a specific port using lsof and netstat/ss?",
+    "category": "systems",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "alg_136",
+    "question": "Implement a binary search tree (BST) in Python with insert, search, and in-order traversal methods.",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "alg_138",
+    "question": "Implement a min-heap (priority queue) from scratch in Python with insert, extract_min, and heapify operations.",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "alg_140",
+    "question": "Implement breadth-first search (BFS) on a graph represented as an adjacency list in Python.",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "alg_142",
+    "question": "Implement Dijkstra's shortest path algorithm in Python using a priority queue (heapq).",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "alg_146",
+    "question": "Solve the 'minimum window substring' problem using the sliding window technique in Python.",
+    "category": "algorithms",
+    "baseline_score": 0.25
+  },
+  {
+    "id": "py_002",
+    "question": "How do I count word frequencies in a text file using collections.Counter?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_003",
+    "question": "Show me how to flatten a list of lists using itertools.chain.from_iterable.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_004",
+    "question": "Write a simple async TCP echo server using asyncio that handles multiple clients concurrently.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_005",
+    "question": "How do I read and write JSON files in Python using the json module?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_006",
+    "question": "Write a decorator that logs the execution time of any function it wraps.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_007",
+    "question": "Write a context manager class that temporarily changes the working directory and restores it on exit.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_009",
+    "question": "Implement the singleton pattern in Python using a metaclass.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_010",
+    "question": "I get 'TypeError: unhashable type: list' when using a list as a dictionary key. How do I fix this?",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_011",
+    "question": "Explain this traceback and how to fix it: 'RecursionError: maximum recursion depth exceeded in comparison'",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_012",
+    "question": "Write a FastAPI endpoint that accepts a JSON body with 'name' and 'age' fields and returns a greeting.",
+    "category": "python",
+    "baseline_score": 0.0
+  },
+  {
+    "id": "py_013",
+    "question": "Write a pytest test that uses parametrize to test a function with multiple input/output pairs.",
+    "category": "python",
+    "baseline_score": 0.0
+  }
+]

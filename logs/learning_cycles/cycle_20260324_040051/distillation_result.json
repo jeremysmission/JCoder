@@ -1,0 +1,8 @@
+{
+  "distilled": 0,
+  "skipped": 20,
+  "errors": 0,
+  "total_cost": 0.0,
+  "budget_reached": false,
+  "model": "phi4:14b-q4_K_M"
+}
