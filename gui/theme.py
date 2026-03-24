@@ -126,3 +126,52 @@ def apply_ttk_styles(theme: dict | None = None) -> None:
         bordercolor=t["border"],
     )
     style.map("TScrollbar", background=[("active", t["scrollbar_fg"])])
+
+
+# Public dict used by gui.tk_app and external consumers.
+THEME = DARK
+
+
+def palette(name: str | None = None) -> dict:
+    """Return the active colour palette dictionary."""
+    return DARK
+
+
+def apply_ttk_theme(root=None, theme: dict | None = None) -> None:
+    """Alias for apply_ttk_styles (used by tk_app)."""
+    apply_ttk_styles(theme)
+
+
+def configure_text_widget(widget, theme: dict | None = None) -> None:
+    """Apply dark theme colours to a tk.Text widget."""
+    t = theme or DARK
+    widget.configure(
+        bg=t["input_bg"],
+        fg=t["input_fg"],
+        insertbackground=t["fg"],
+        selectbackground=t["accent"],
+        selectforeground=t["accent_fg"],
+        relief="flat",
+        borderwidth=1,
+        highlightbackground=t["border"],
+        highlightcolor=t["accent"],
+        highlightthickness=1,
+        font=FONT_MONO,
+    )
+
+
+def configure_entry_widget(widget, theme: dict | None = None) -> None:
+    """Apply dark theme colours to a tk.Entry widget."""
+    t = theme or DARK
+    widget.configure(
+        bg=t["input_bg"],
+        fg=t["input_fg"],
+        insertbackground=t["fg"],
+        selectbackground=t["accent"],
+        selectforeground=t["accent_fg"],
+        relief="flat",
+        borderwidth=1,
+        highlightbackground=t["border"],
+        highlightcolor=t["accent"],
+        highlightthickness=1,
+    )
