@@ -203,7 +203,9 @@ class LessonsIndex:
             if len(w) > 3 and w.isalnum()
         )
         overlap = len(challenge_words & lesson_words)
-        if overlap < 2:
+        # Require at least 1 keyword overlap (was 2 — too strict,
+        # gated out valid lessons for topo sort and LRU cache)
+        if overlap < 1:
             return ""  # Not relevant enough — no context > bad context
 
         parts = ["## Relevant Past Experience\n"]
