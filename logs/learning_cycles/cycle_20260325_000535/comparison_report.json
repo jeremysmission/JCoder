@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-03-25T07:03:12Z",
+  "overall_baseline": 0.3648,
+  "overall_reeval": 0.3647,
+  "overall_delta": -0.0001,
+  "categories_improved": 0,
+  "categories_regressed": 0,
+  "category_deltas": {
+    "algorithms": {
+      "baseline": 0.5,
+      "reeval": 0.5,
+      "delta": 0.0,
+      "improved": false
+    },
+    "go": {
+      "baseline": 0.2543,
+      "reeval": 0.2543,
+      "delta": 0.0,
+      "improved": false
+    },
+    "trick": {
+      "baseline": 0.3125,
+      "reeval": 0.3125,
+      "delta": 0.0,
+      "improved": false
+    },
+    "python": {
+      "baseline": 0.3933,
+      "reeval": 0.392,
+      "delta": -0.0013,
+      "improved": false
+    },
+    "shell": {
+      "baseline": 0.2533,
+      "reeval": 0.2533,
+      "delta": 0.0,
+      "improved": false
+    },
+    "injection": {
+      "baseline": 0.3211,
+      "reeval": 0.3211,
+      "delta": 0.0,
+      "improved": false
+    },
+    "canary": {
+      "baseline": 0.26,
+      "reeval": 0.26,
+      "delta": 0.0,
+      "improved": false
+    },
+    "security": {
+      "baseline": 0.3873,
+      "reeval": 0.3873,
+      "delta": 0.0,
+      "improved": false
+    },
+    "javascript": {
+      "baseline": 0.3229,
+      "reeval": 0.3229,
+      "delta": 0.0,
+      "improved": false
+    },
+    "systems": {
+      "baseline": 0.328,
+      "reeval": 0.328,
+      "delta": 0.0,
+      "improved": false
+    },
+    "debugging": {
+      "baseline": 0.3657,
+      "reeval": 0.3657,
+      "delta": 0.0,
+      "improved": false
+    },
+    "rust": {
+      "baseline": 0.3457,
+      "reeval": 0.3457,
+      "delta": 0.0,
+      "improved": false
+    }
+  }
+}

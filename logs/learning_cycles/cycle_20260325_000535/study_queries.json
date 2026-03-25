@@ -1,0 +1,302 @@
+[
+  {
+    "id": "dbg_166",
+    "question": "What is a deadlock? Show a Python threading example that creates a deadlock and how to fix it with lock ordering.",
+    "category": "debugging",
+    "baseline_score": 0.88
+  },
+  {
+    "id": "multi_194",
+    "question": "Implement a simple Rust enum with variants that hold different data types and use pattern matching to process them.",
+    "category": "rust",
+    "baseline_score": 0.88
+  },
+  {
+    "id": "js_059",
+    "question": "How do I implement a concurrency limiter that runs at most N promises at a time from a large array of tasks?",
+    "category": "javascript",
+    "baseline_score": 0.78
+  },
+  {
+    "id": "js_065",
+    "question": "How do I spawn a child process in Node.js, capture its stdout and stderr, and handle its exit code?",
+    "category": "javascript",
+    "baseline_score": 0.78
+  },
+  {
+    "id": "py_004",
+    "question": "Write a simple async TCP echo server using asyncio that handles multiple clients concurrently.",
+    "category": "python",
+    "baseline_score": 0.7466666666666666
+  },
+  {
+    "id": "py_006",
+    "question": "Write a decorator that logs the execution time of any function it wraps.",
+    "category": "python",
+    "baseline_score": 0.7466666666666666
+  },
+  {
+    "id": "py_002",
+    "question": "How do I count word frequencies in a text file using collections.Counter?",
+    "category": "python",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "dbg_005",
+    "question": "What does this error mean and how do I fix it?\n\nRuntimeError: This event loop is already running\n\nI see this when calling asyncio.run() inside a Jupyter notebook.",
+    "category": "debugging",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "sys_088",
+    "question": "Write a Dockerfile that installs Python dependencies from requirements.txt and copies the application code, using proper layer caching.",
+    "category": "systems",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "sec_107",
+    "question": "What is an insecure direct object reference (IDOR) vulnerability? Show an example in a REST API and the fix.",
+    "category": "security",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "sec_120",
+    "question": "How do I use HMAC in Python to create and verify message authentication codes for API request signing?",
+    "category": "security",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "dbg_161",
+    "question": "How do I detect and fix memory leaks in a long-running Python application? Show how to use tracemalloc to find the source.",
+    "category": "debugging",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "dbg_180",
+    "question": "How do I use objgraph to visualize object reference graphs and find the source of memory leaks in Python?",
+    "category": "debugging",
+    "baseline_score": 0.6799999999999999
+  },
+  {
+    "id": "sys_098",
+    "question": "How do I use dig and nslookup to troubleshoot DNS resolution issues for a domain?",
+    "category": "systems",
+    "baseline_score": 0.66
+  },
+  {
+    "id": "dbg_165",
+    "question": "Explain the difference between shallow copy and deep copy in Python. When does each cause unexpected bugs?",
+    "category": "debugging",
+    "baseline_score": 0.66
+  },
+  {
+    "id": "sys_004",
+    "question": "Write a Dockerfile for a Python FastAPI app that uses multi-stage builds to minimize the final image size.",
+    "category": "systems",
+    "baseline_score": 0.64
+  },
+  {
+    "id": "js_052",
+    "question": "Write code that uses the IntersectionObserver API to lazy-load images as they scroll into view.",
+    "category": "javascript",
+    "baseline_score": 0.64
+  },
+  {
+    "id": "sys_007",
+    "question": "Explain git rebase vs merge. Show how to interactively rebase the last 5 commits to squash them.",
+    "category": "systems",
+    "baseline_score": 0.62
+  },
+  {
+    "id": "py_007",
+    "question": "Write a context manager class that temporarily changes the working directory and restores it on exit.",
+    "category": "python",
+    "baseline_score": 0.6133333333333333
+  },
+  {
+    "id": "trick_002",
+    "question": "What is the time complexity of checking if an element is in a Python list vs a set?",
+    "category": "trick",
+    "baseline_score": 0.6
+  },
+  {
+    "id": "py_008",
+    "question": "Write a generator function that yields Fibonacci numbers indefinitely.",
+    "category": "python",
+    "baseline_score": 0.5800000000000001
+  },
+  {
+    "id": "sys_083",
+    "question": "How do I use sed to find and replace a string across multiple files in-place, creating backups of the originals?",
+    "category": "systems",
+    "baseline_score": 0.5800000000000001
+  },
+  {
+    "id": "sec_116",
+    "question": "How do I use the Python hashlib module to compute SHA-256 hashes of files, handling large files efficiently?",
+    "category": "security",
+    "baseline_score": 0.5800000000000001
+  },
+  {
+    "id": "sec_126",
+    "question": "Explain why you should never use ECB mode for AES encryption. Show the difference between ECB and CBC modes with code.",
+    "category": "security",
+    "baseline_score": 0.5800000000000001
+  },
+  {
+    "id": "dbg_004",
+    "question": "What does this error mean and how do I fix it?\n\nImportError: cannot import name 'Foo' from partially initialized module 'mymodule' (most likely due to a circular import)",
+    "category": "debugging",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "js_053",
+    "question": "How do I create a drag-and-drop sortable list using the native HTML5 Drag and Drop API?",
+    "category": "javascript",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "sec_109",
+    "question": "What is command injection and how do I prevent it when executing shell commands from a Python application?",
+    "category": "security",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "sec_111",
+    "question": "How do I implement JWT authentication in a Python FastAPI application with token creation and verification?",
+    "category": "security",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "sec_129",
+    "question": "How do I use Python's secrets module to generate cryptographically secure tokens and random passwords?",
+    "category": "security",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "dbg_178",
+    "question": "How do I use timeit to accurately benchmark small code snippets in Python, avoiding common measurement pitfalls?",
+    "category": "debugging",
+    "baseline_score": 0.58
+  },
+  {
+    "id": "sys_001",
+    "question": "How do I find all files larger than 100MB modified in the last 7 days using the find command?",
+    "category": "systems",
+    "baseline_score": 0.56
+  },
+  {
+    "id": "sec_005",
+    "question": "What is CSRF and how do you protect against it in a web application? Show an implementation.",
+    "category": "security",
+    "baseline_score": 0.56
+  },
+  {
+    "id": "sec_130",
+    "question": "What is deserialization vulnerability in Python? Show how pickle can be exploited and what safer alternatives exist.",
+    "category": "security",
+    "baseline_score": 0.56
+  },
+  {
+    "id": "dbg_163",
+    "question": "How do I reduce memory usage when processing a large file in Python? Show the difference between reading all lines vs using a generator.",
+    "category": "debugging",
+    "baseline_score": 0.56
+  },
+  {
+    "id": "sec_001",
+    "question": "Show me a Python example of SQL injection and how to fix it using parameterized queries.",
+    "category": "security",
+    "baseline_score": 0.54
+  },
+  {
+    "id": "py_015",
+    "question": "Write a pytest fixture that creates a temporary SQLite database, yields the connection, and cleans up after the test.",
+    "category": "python",
+    "baseline_score": 0.52
+  },
+  {
+    "id": "sys_103",
+    "question": "How do I use Docker networking to allow containers to communicate with each other by service name in a custom bridge network?",
+    "category": "systems",
+    "baseline_score": 0.52
+  },
+  {
+    "id": "dbg_176",
+    "question": "What does this error mean and how do I fix it?\n\nasyncio.exceptions.CancelledError\n\nMy async task was cancelled unexpectedly during a long-running operation.",
+    "category": "debugging",
+    "baseline_score": 0.52
+  },
+  {
+    "id": "js_074",
+    "question": "How do I use WeakMap and WeakRef in JavaScript to implement a cache that allows garbage collection of unused entries?",
+    "category": "javascript",
+    "baseline_score": 0.5
+  },
+  {
+    "id": "js_001",
+    "question": "Write an async function that fetches data from two URLs in parallel using Promise.all.",
+    "category": "javascript",
+    "baseline_score": 0.48000000000000004
+  },
+  {
+    "id": "js_079",
+    "question": "Explain JavaScript closures with a practical example showing how to create private state in a module pattern.",
+    "category": "javascript",
+    "baseline_score": 0.48000000000000004
+  },
+  {
+    "id": "sys_082",
+    "question": "Write an awk command that processes a CSV file and prints the sum of values in the third column grouped by the first column.",
+    "category": "systems",
+    "baseline_score": 0.48000000000000004
+  },
+  {
+    "id": "multi_183",
+    "question": "Implement a Go select statement that reads from multiple channels with a timeout, handling the first available result.",
+    "category": "go",
+    "baseline_score": 0.48000000000000004
+  },
+  {
+    "id": "multi_200",
+    "question": "Write a bash script that implements a simple job queue: reads tasks from a file, runs them with configurable parallelism, and logs results.",
+    "category": "shell",
+    "baseline_score": 0.48000000000000004
+  },
+  {
+    "id": "js_005",
+    "question": "How do I use event delegation to handle click events on dynamically added list items?",
+    "category": "javascript",
+    "baseline_score": 0.48
+  },
+  {
+    "id": "js_051",
+    "question": "How do I select all elements with a specific class and change their text content using querySelectorAll?",
+    "category": "javascript",
+    "baseline_score": 0.48
+  },
+  {
+    "id": "sys_090",
+    "question": "Write a multi-stage Dockerfile for a Go application that compiles in one stage and produces a minimal scratch-based final image.",
+    "category": "systems",
+    "baseline_score": 0.48
+  },
+  {
+    "id": "sec_114",
+    "question": "How do I configure CORS headers in a FastAPI application to allow specific origins and methods?",
+    "category": "security",
+    "baseline_score": 0.48
+  },
+  {
+    "id": "canary_001",
+    "question": "What Python module handles quantum entanglement simulation in the standard library?",
+    "category": "canary",
+    "baseline_score": 0.44666666666666666
+  },
+  {
+    "id": "sys_094",
+    "question": "How do I use git reflog to recover a commit that was lost after a bad rebase or reset?",
+    "category": "systems",
+    "baseline_score": 0.44
+  }
+]
