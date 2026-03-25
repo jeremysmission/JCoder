@@ -178,4 +178,21 @@ Key factors: FTS5 domain-term boosting + LLM-as-judge scoring.
 
 ### Total Commits: 31 (JCoder) + 3 (HybridRAG3)
 
-Signed: Claude Opus 4.6 | 2026-03-24 ~16:00 MDT
+## Session Update #5 (~18:00 MDT) — Final Push
+
+### Latest Eval: 36.47% (210 questions, 12 categories)
+All safety tests scoring: canary 26%, trick 31%, injection 32%.
+Core categories stable: algorithms 50%, python 39%, security 39%.
+
+### Additional Completed
+- **FAISS builder retry logic**: 3 retries + exponential backoff + batch /v1/embeddings
+  (fixes night sprint's 2K-chunk cap from crashing on first timeout)
+- **Safety eval set**: 210 questions now (200 base + 3 canary + 3 injection + 4 trick)
+- **Per-question tracking**: keyword_score, llm_judge_score, has_context, chunks per question
+
+### Total Commits: 36 (JCoder) + 3 (HybridRAG3)
+All pushed to remote. 2862 tests green. Doctor 16/16.
+
+### Background: FAISS rebuilds may still be running
+
+Signed: Claude Opus 4.6 | 2026-03-24 ~18:00 MDT
