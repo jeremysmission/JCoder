@@ -51,9 +51,24 @@ class ProgressiveDifficultyEngine:
     is always challenged at the EDGE of its capability.
     """
 
-    # The sweet spot: 30-60% success rate = maximum learning
-    TARGET_LOW = 0.30
-    TARGET_HIGH = 0.60
+    # Calibrated from cognitive science research:
+    # - 85% rule (Wilson et al. 2019, Nature Communications)
+    # - Desirable difficulty (Bjork 1994)
+    # - Zone of Proximal Development (Vygotsky 1978)
+    # - Absolute Zero learnability (Zhao et al. 2025)
+    #
+    # Phase progression:
+    #   New concepts: 85% (optimal gradient signal)
+    #   Core learning: 70-80% (flow state, complex tasks)
+    #   Mastery push: 60-70% (desirable difficulty)
+    #   Self-play: 50% (maximum information gain)
+    #
+    # We use the CORE LEARNING zone as default (70% target)
+    # because coding challenges are complex multi-step tasks
+    # where richer error signals produce deeper learning.
+    TARGET_LOW = 0.50   # below this = too hard, ease up
+    TARGET_HIGH = 0.80  # above this = too easy, escalate
+    TARGET_OPTIMAL = 0.70  # the sweet spot for complex tasks
 
     def __init__(self, state_path: str = "data/progressive_difficulty.json"):
         self.state_path = Path(state_path)
