@@ -181,12 +181,30 @@ class LessonsIndex:
         few-shot examples and warnings that help phi4 avoid
         repeating mistakes.
         """
+        # RELEVANCE GATE: only inject top-1 most relevant lesson.
+        # Context pollution finding (2026-03-25): too much mixed context
+        # CONFUSES phi4. Quality > quantity. If no highly relevant
+        # result exists, return empty (no context > bad context).
         lessons = self.retrieve(
-            challenge_description, category=category, top_k=3,
+            challenge_description, category=category, top_k=1,
         )
 
         if not lessons:
             return ""
+
+        # Additional relevance check: does the lesson description
+        # share significant keyword overlap with the challenge?
+        challenge_words = set(
+            w.lower() for w in challenge_description.split()
+            if len(w) > 3 and w.isalnum()
+        )
+        lesson_words = set(
+            w.lower() for w in lessons[0]["description"].split()
+            if len(w) > 3 and w.isalnum()
+        )
+        overlap = len(challenge_words & lesson_words)
+        if overlap < 2:
+            return ""  # Not relevant enough — no context > bad context
 
         parts = ["## Relevant Past Experience\n"]
 
