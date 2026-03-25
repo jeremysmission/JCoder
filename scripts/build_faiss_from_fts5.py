@@ -22,20 +22,59 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
 def embed_batch(texts: list, model: str = "nomic-embed-text") -> np.ndarray:
-    """Embed a batch of texts using Ollama."""
+    """Embed a batch of texts using Ollama /v1/embeddings with retry logic.
+
+    Uses the OpenAI-compatible batch endpoint for much higher throughput.
+    Retries up to 3 times with exponential backoff on failures.
+    """
     import urllib.request
-    vectors = []
-    for text in texts:
-        payload = json.dumps({"model": model, "prompt": text[:2000]}).encode()
-        req = urllib.request.Request(
-            "http://localhost:11434/api/embeddings",
-            data=payload,
-            headers={"Content-Type": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.loads(resp.read())
-            vectors.append(data["embedding"])
-    return np.array(vectors, dtype=np.float32)
+    import time as _time
+
+    MAX_RETRIES = 3
+    payload = json.dumps({
+        "model": model,
+        "input": [t[:2000] for t in texts],
+    }).encode()
+
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            req = urllib.request.Request(
+                "http://localhost:11434/v1/embeddings",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+            )
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read())
+            vectors = [d["embedding"] for d in sorted(data["data"], key=lambda x: x["index"])]
+            return np.array(vectors, dtype=np.float32)
+        except Exception as exc:
+            if attempt < MAX_RETRIES:
+                delay = 2 ** attempt
+                print(f"    Embed retry {attempt + 1}/{MAX_RETRIES} in {delay}s: {exc}")
+                _time.sleep(delay)
+            else:
+                # Fall back to one-at-a-time on final failure
+                print(f"    Batch embed failed, falling back to single-text mode")
+                vectors = []
+                for text in texts:
+                    for retry in range(2):
+                        try:
+                            p = json.dumps({"model": model, "prompt": text[:2000]}).encode()
+                            r = urllib.request.Request(
+                                "http://localhost:11434/api/embeddings",
+                                data=p,
+                                headers={"Content-Type": "application/json"},
+                            )
+                            with urllib.request.urlopen(r, timeout=30) as resp:
+                                d = json.loads(resp.read())
+                            vectors.append(d["embedding"])
+                            break
+                        except Exception:
+                            if retry == 0:
+                                _time.sleep(1)
+                            else:
+                                raise
+                return np.array(vectors, dtype=np.float32)
 
 
 def load_fts5_chunks(db_path: str, max_chunks: int = 50000) -> list:
