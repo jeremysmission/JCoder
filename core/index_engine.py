@@ -29,24 +29,14 @@ except ImportError:
 import numpy as np
 
 from .config import StorageConfig
+from .fusion import (
+    HAS_FLASHRANK as _HAS_FLASHRANK,
+    rrf_fusion,
+    dbsf_fusion,
+    rerank_candidates,
+)
 
 log = logging.getLogger(__name__)
-
-# Optional FlashRank reranker (lightweight, no server required)
-try:
-    from flashrank import Ranker, RerankRequest
-    _FLASHRANK_RANKER = None  # lazy init
-
-    def _get_flashrank():
-        global _FLASHRANK_RANKER
-        if _FLASHRANK_RANKER is None:
-            _FLASHRANK_RANKER = Ranker()
-            log.info("FlashRank reranker loaded")
-        return _FLASHRANK_RANKER
-
-    _HAS_FLASHRANK = True
-except ImportError:
-    _HAS_FLASHRANK = False
 
 
 def _normalize_for_search(text: str) -> str:
@@ -433,57 +423,6 @@ class IndexEngine:
         ]
         return any(re.search(p, query) for p in patterns)
 
-    def _rrf_fusion(
-        self,
-        vector_results: List[Tuple[int, float]],
-        keyword_results: List[Tuple[int, float]],
-    ) -> Dict[int, float]:
-        """Reciprocal Rank Fusion: rank-based, ignores score magnitudes."""
-        scores: Dict[int, float] = {}
-        for rank, (idx, _) in enumerate(vector_results):
-            scores[idx] = scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
-        for rank, (idx, _) in enumerate(keyword_results):
-            scores[idx] = scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
-        return scores
-
-    @staticmethod
-    def _dbsf_fusion(
-        vector_results: List[Tuple[int, float]],
-        keyword_results: List[Tuple[int, float]],
-    ) -> Dict[int, float]:
-        """Distribution-Based Score Fusion: normalizes using mean +/- 3*std.
-
-        Unlike RRF, DBSF uses actual score magnitudes. Each retriever's
-        scores are normalized to [0, 1] using the distribution within that
-        retriever's results (mean +/- 3 standard deviations as bounds).
-        Normalized scores are then summed across retrievers.
-
-        Ref: LlamaIndex QueryFusionRetriever, Qdrant hybrid queries.
-        """
-        def _normalize(results: List[Tuple[int, float]]) -> Dict[int, float]:
-            if not results:
-                return {}
-            scores = [s for _, s in results]
-            mean = sum(scores) / len(scores)
-            if len(scores) > 1:
-                var = sum((s - mean) ** 2 for s in scores) / len(scores)
-                std = var ** 0.5
-            else:
-                std = 0.0
-            lo = mean - 3 * std
-            span = 6 * std if std > 0 else 1.0
-            return {idx: max(0.0, min(1.0, (s - lo) / span)) for idx, s in results}
-
-        v_norm = _normalize(vector_results)
-        k_norm = _normalize(keyword_results)
-
-        fused: Dict[int, float] = {}
-        for idx, score in v_norm.items():
-            fused[idx] = fused.get(idx, 0.0) + score
-        for idx, score in k_norm.items():
-            fused[idx] = fused.get(idx, 0.0) + score
-        return fused
-
     def hybrid_search(self, query_vector: np.ndarray, query_text: str, k: int) -> List[Tuple[float, Dict]]:
         """
         Run both vector and keyword search, fuse with RRF.
@@ -516,9 +455,9 @@ class IndexEngine:
         keyword_results = self.search_keywords(query_text, k_sparse)
 
         if self.fusion_method == "dbsf":
-            fused_scores = self._dbsf_fusion(vector_results, keyword_results)
+            fused_scores = dbsf_fusion(vector_results, keyword_results)
         else:
-            fused_scores = self._rrf_fusion(vector_results, keyword_results)
+            fused_scores = rrf_fusion(vector_results, keyword_results, self.rrf_k)
 
         # Sort by fused score descending
         ranked = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
@@ -531,25 +470,7 @@ class IndexEngine:
             if meta is not None:
                 candidates.append((score, meta))
 
-        # FlashRank reranking if available
-        if _HAS_FLASHRANK and len(candidates) > 1:
-            try:
-                ranker = _get_flashrank()
-                passages = [
-                    {"id": i, "text": m.get("text", m.get("search_content", ""))[:1000]}
-                    for i, (_, m) in enumerate(candidates)
-                ]
-                rerank_req = RerankRequest(query=query_text, passages=passages)
-                reranked = ranker.rerank(rerank_req)
-                results = []
-                for item in reranked[:k]:
-                    orig_idx = int(item["id"])
-                    results.append((float(item["score"]), candidates[orig_idx][1]))
-                return results
-            except Exception as exc:
-                log.warning("FlashRank reranking failed, using RRF order: %s", exc)
-
-        return candidates[:k]
+        return rerank_candidates(query_text, candidates, k)
 
     def _build_fts5(self):
         """Build per-index FTS5 DB from current metadata."""
