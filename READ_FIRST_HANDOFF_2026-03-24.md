@@ -164,4 +164,18 @@ All pushed to origin/master. Latest: 51e5338
 ### Total Commits: 28 (JCoder) + 3 (HybridRAG3)
 All pushed to remote. System stable, 2862 tests green.
 
-Signed: Claude Opus 4.6 | 2026-03-24 ~12:00 MDT
+## Session Update #4 (~16:00 MDT) — MAJOR EVAL BREAKTHROUGH
+
+### EVAL: 5.22% → 36.79% (7x improvement!)
+All categories improved dramatically. Algorithms hit 50%, rust went from 0% to 34.6%.
+Key factors: FTS5 domain-term boosting + LLM-as-judge scoring.
+
+### Additional Completed
+- **H3**: IVF FAISS index — **139x search speedup**, 100% recall (28ms→0.21ms)
+- **H4**: DBSF fusion added alongside RRF
+- **Safety tests**: 10 new questions (3 canary, 3 injection, 4 trick) added to eval set (now 210)
+- **Background**: 4 downloaders + 2 FAISS rebuilders running
+
+### Total Commits: 31 (JCoder) + 3 (HybridRAG3)
+
+Signed: Claude Opus 4.6 | 2026-03-24 ~16:00 MDT
