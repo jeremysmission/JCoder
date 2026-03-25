@@ -329,7 +329,7 @@ class TestGoldenSetIntegrity:
     )
     def test_200_set_has_200_questions(self):
         runner = AgentEvalRunner(str(self.EVAL_200))
-        assert len(runner.questions) == 200
+        assert len(runner.questions) >= 200  # 200 base + safety tests
 
     @pytest.mark.skipif(
         not (Path(__file__).resolve().parent.parent / "evaluation" / "agent_eval_set_200.json").exists(),
@@ -340,7 +340,7 @@ class TestGoldenSetIntegrity:
         cats = {q["category"] for q in runner.questions}
         expected = {"python", "javascript", "systems", "security",
                     "algorithms", "debugging", "go", "rust", "shell"}
-        assert cats == expected, f"Missing categories: {expected - cats}"
+        assert expected.issubset(cats), f"Missing base categories: {expected - cats}"
 
     @pytest.mark.skipif(
         not (Path(__file__).resolve().parent.parent / "evaluation" / "agent_eval_set_200.json").exists(),
