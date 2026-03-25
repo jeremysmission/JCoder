@@ -255,15 +255,35 @@ def generate_challenge_bank(
 def evaluate_challenge(
     challenge: ProceduralChallenge,
     model: str = "phi4:14b-q4_K_M",
+    use_lessons: bool = True,
 ) -> Dict[str, Any]:
-    """Send challenge to model and evaluate by execution."""
+    """Send challenge to model and evaluate by execution.
+
+    When use_lessons=True, retrieves past experience from the lessons
+    index before generating. This is how a 14B model competes with 100B+:
+    it retrieves EXACTLY the right patterns and avoids known mistakes.
+    """
     import httpx
+
+    # Retrieve lessons from past attempts (RAG-powered self-learning)
+    lesson_context = ""
+    if use_lessons:
+        try:
+            from core.lessons_index import LessonsIndex
+            lessons = LessonsIndex()
+            lesson_context = lessons.build_context_prompt(
+                challenge.description, category=challenge.category,
+            )
+        except Exception:
+            pass
 
     prompt = (
         f"Write a Python function `{challenge.expected_function}` that solves:\n\n"
         f"{challenge.description}\n\n"
-        f"Respond with ONLY the Python function code, nothing else."
     )
+    if lesson_context:
+        prompt += f"{lesson_context}\n\n"
+    prompt += "Respond with ONLY the Python function code, nothing else."
 
     t0 = time.time()
     try:
@@ -304,6 +324,22 @@ def evaluate_challenge(
         passed = False
         error = str(exc)
 
+    # Store attempt in lessons index (RAG feedback loop)
+    if use_lessons:
+        try:
+            from core.lessons_index import LessonsIndex
+            lessons = LessonsIndex()
+            lessons.store_attempt(
+                challenge_description=challenge.description,
+                generated_code=code.strip(),
+                passed=passed,
+                error_message=error,
+                category=challenge.category,
+                difficulty=challenge.difficulty,
+            )
+        except Exception:
+            pass
+
     return {
         "challenge_id": challenge.challenge_id,
         "category": challenge.category,
@@ -311,6 +347,7 @@ def evaluate_challenge(
         "passed": passed,
         "error": error,
         "gen_time": gen_time,
+        "had_lessons": bool(lesson_context),
     }
 
 
