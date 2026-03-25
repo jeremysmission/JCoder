@@ -416,7 +416,7 @@ def run_experiment(
     # Phase 4: Compare
     delta = bank_b_score - bank_a_score
     print(f"\n{'=' * 60}")
-    print(f"RESULT: Bank A={bank_a_score:.0%} → Bank B={bank_b_score:.0%} (delta: {delta:+.0%})")
+    print(f"RESULT: Bank A={bank_a_score:.0%} -> Bank B={bank_b_score:.0%} (delta: {delta:+.0%})")
     print(f"Improved: {'YES' if delta > 0 else 'NO' if delta == 0 else 'REGRESSED'}")
     print(f"{'=' * 60}")
 
