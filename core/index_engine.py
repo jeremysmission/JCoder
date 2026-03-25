@@ -108,6 +108,7 @@ class IndexEngine:
         self.dimension = dimension
         self.storage = storage
         self.rrf_k = rrf_k
+        self.fusion_method = "rrf"  # "rrf" or "dbsf"
         self.metadata: List[Dict] = []
         self._fts5_error_logged = False
         self._sparse_only = sparse_only
@@ -432,6 +433,57 @@ class IndexEngine:
         ]
         return any(re.search(p, query) for p in patterns)
 
+    def _rrf_fusion(
+        self,
+        vector_results: List[Tuple[int, float]],
+        keyword_results: List[Tuple[int, float]],
+    ) -> Dict[int, float]:
+        """Reciprocal Rank Fusion: rank-based, ignores score magnitudes."""
+        scores: Dict[int, float] = {}
+        for rank, (idx, _) in enumerate(vector_results):
+            scores[idx] = scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
+        for rank, (idx, _) in enumerate(keyword_results):
+            scores[idx] = scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
+        return scores
+
+    @staticmethod
+    def _dbsf_fusion(
+        vector_results: List[Tuple[int, float]],
+        keyword_results: List[Tuple[int, float]],
+    ) -> Dict[int, float]:
+        """Distribution-Based Score Fusion: normalizes using mean +/- 3*std.
+
+        Unlike RRF, DBSF uses actual score magnitudes. Each retriever's
+        scores are normalized to [0, 1] using the distribution within that
+        retriever's results (mean +/- 3 standard deviations as bounds).
+        Normalized scores are then summed across retrievers.
+
+        Ref: LlamaIndex QueryFusionRetriever, Qdrant hybrid queries.
+        """
+        def _normalize(results: List[Tuple[int, float]]) -> Dict[int, float]:
+            if not results:
+                return {}
+            scores = [s for _, s in results]
+            mean = sum(scores) / len(scores)
+            if len(scores) > 1:
+                var = sum((s - mean) ** 2 for s in scores) / len(scores)
+                std = var ** 0.5
+            else:
+                std = 0.0
+            lo = mean - 3 * std
+            span = 6 * std if std > 0 else 1.0
+            return {idx: max(0.0, min(1.0, (s - lo) / span)) for idx, s in results}
+
+        v_norm = _normalize(vector_results)
+        k_norm = _normalize(keyword_results)
+
+        fused: Dict[int, float] = {}
+        for idx, score in v_norm.items():
+            fused[idx] = fused.get(idx, 0.0) + score
+        for idx, score in k_norm.items():
+            fused[idx] = fused.get(idx, 0.0) + score
+        return fused
+
     def hybrid_search(self, query_vector: np.ndarray, query_text: str, k: int) -> List[Tuple[float, Dict]]:
         """
         Run both vector and keyword search, fuse with RRF.
@@ -463,17 +515,13 @@ class IndexEngine:
         vector_results = self.search_vectors(query_vector, k)
         keyword_results = self.search_keywords(query_text, k_sparse)
 
-        # Reciprocal Rank Fusion
-        rrf_scores: Dict[int, float] = {}
-
-        for rank, (idx, _score) in enumerate(vector_results):
-            rrf_scores[idx] = rrf_scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
-
-        for rank, (idx, _score) in enumerate(keyword_results):
-            rrf_scores[idx] = rrf_scores.get(idx, 0.0) + 1.0 / (self.rrf_k + rank + 1)
+        if self.fusion_method == "dbsf":
+            fused_scores = self._dbsf_fusion(vector_results, keyword_results)
+        else:
+            fused_scores = self._rrf_fusion(vector_results, keyword_results)
 
         # Sort by fused score descending
-        ranked = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+        ranked = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)
 
         # Collect candidates (widen pool for reranking)
         rerank_pool = k * 3 if _HAS_FLASHRANK else k
