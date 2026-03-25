@@ -277,13 +277,17 @@ def evaluate_challenge(
         except Exception:
             pass
 
-    prompt = (
-        f"Write a Python function `{challenge.expected_function}` that solves:\n\n"
-        f"{challenge.description}\n\n"
-    )
+    # CRITICAL: Function signature FIRST, description second.
+    # phi4 ignores RAG context when signature is buried at the end.
+    # This was discovered empirically: 0/12 graph failures were ALL
+    # TypeError on wrong argument count. phi4 KNOWS Dijkstra but
+    # generates the wrong function signature.
+    prompt = f"IMPORTANT: Your function MUST be named `{challenge.expected_function}` "
+    prompt += f"and accept the EXACT parameters shown in the problem description.\n\n"
     if lesson_context:
         prompt += f"{lesson_context}\n\n"
-    prompt += "Respond with ONLY the Python function code, nothing else."
+    prompt += f"Problem: {challenge.description}\n\n"
+    prompt += f"Write ONLY the Python function `{challenge.expected_function}`. No explanations."
 
     t0 = time.time()
     try:
