@@ -46,3 +46,4 @@ _telemetry/
 !data/progressive_difficulty.json
 !data/strategy_evolver.db
 !data/ast_graph.db
+!data/indexes/opencodereasoning.fts5.db
