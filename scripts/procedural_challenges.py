@@ -43,7 +43,7 @@ class ProceduralChallenge:
     difficulty: int  # 1-10
     expected_function: str
     test_cases: str  # Python code that tests the solution
-    reference_answer: str  # brute-force solution for verification
+    reference_answer: str = ""  # brute-force solution for verification
     seed: int = 0
 
 
