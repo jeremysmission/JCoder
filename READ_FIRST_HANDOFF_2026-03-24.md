@@ -225,4 +225,25 @@ All pushed. 2862 tests green. Doctor 16/16.
 
 ### Total: 44 commits (JCoder) + 3 (HybridRAG3)
 
-Signed: Claude Opus 4.6 | 2026-03-25 ~03:00 MDT
+## Session Update (2026-03-25 ~04:00 MDT) — AGI Compound Architecture
+
+### Built This Wave
+1. **AST Code Graph** — 1,533 nodes, 8,715 edges in 1.3s. Finds callers, blast radius, structural context.
+2. **Strategy Evolver** — Darwinian retrieval strategy evolution with tournament selection.
+3. **Autonomous Improvement Engine** — FailureAnalyzer + StrategyGenerator + hypothesis generation.
+4. **Improvement Flywheel** — Wires all 5 subsystems into accelerating cycle. Tracks acceleration.
+5. **FeedbackRouter** — Closes GVU triangle. Routes outcomes simultaneously to Experience Replay + Strategy Evolver.
+
+### Research Findings (Compound Architecture)
+3 compounding loops identified, 2 meta-accelerators:
+- **Loop 1 (GVU)**: Self-Play × Experience Replay × Prompt Evolution
+- **Loop 2 (Structural)**: AST Graph × Strategy Evolver
+- **Loop 3 (QD)**: Quality-Diversity Archive × All 5 Systems
+- **Accelerator 1**: Recursive Meta-Learning (rate of improvement increases)
+- **Accelerator 2**: Darwin Godel Machine (evolve the evolver itself)
+- **Escape velocity metric**: delta/time across 3+ revolutions
+
+### Total: 47 commits (JCoder) + 3 (HybridRAG3)
+All pushed. 2862 tests green.
+
+Signed: Claude Opus 4.6 | 2026-03-25 ~04:00 MDT
