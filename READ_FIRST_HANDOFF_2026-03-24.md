@@ -145,4 +145,23 @@ All new features verified working together:
 ### Total Commits: 20
 All pushed to origin/master. Latest: 51e5338
 
-Signed: Claude Opus 4.6 | 2026-03-24 ~08:30 MDT
+## Session Update #3 (~12:00 MDT) — Continued Sprint Wave
+
+### H-Wave Sprints Completed
+- **H2**: FTS5 domain-term boosting for rust/shell/js. Rust eval 0.25→0.50.
+- **H3**: IVF FAISS index built — **139x search speedup**, 100% recall. 28.69ms→0.21ms/query.
+- **H4**: DBSF fusion added alongside RRF. Configurable via `engine.fusion_method`.
+
+### Background Tasks Running
+- 4 parallel downloaders (arxiv agentic, best practices, RFC, Python docs)
+- 2 FAISS rebuilders (stackoverflow 50K, code_search_net 50K)
+- LLM-judged eval with boosted retrieval
+
+### GPU Status
+- GPU 0: 100% (Ollama, 8GB/24GB)
+- GPU 1: 3% (15.6GB free — available for additional work)
+
+### Total Commits: 28 (JCoder) + 3 (HybridRAG3)
+All pushed to remote. System stable, 2862 tests green.
+
+Signed: Claude Opus 4.6 | 2026-03-24 ~12:00 MDT
