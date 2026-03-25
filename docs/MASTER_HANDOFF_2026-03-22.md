@@ -49,6 +49,8 @@ The next five execution slices are now prioritized as:
 
 Reference plan: [docs/SPRINT_PLAN_R23_R27_2026-03-24.md](/C:/Users/jerem/JCoder/docs/SPRINT_PLAN_R23_R27_2026-03-24.md)
 
+Weekly retrospective: [docs/WEEKLY_RETROSPECTIVE_2026-03-24.md](/C:/Users/jerem/JCoder/docs/WEEKLY_RETROSPECTIVE_2026-03-24.md)
+
 ### 1. Shell and CLI recovery verification
 
 Verify in this order:
