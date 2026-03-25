@@ -193,6 +193,18 @@ Core categories stable: algorithms 50%, python 39%, security 39%.
 ### Total Commits: 36 (JCoder) + 3 (HybridRAG3)
 All pushed to remote. 2862 tests green. Doctor 16/16.
 
-### Background: FAISS rebuilds may still be running
+## Session Update #6 (FINAL ~20:00 MDT)
 
-Signed: Claude Opus 4.6 | 2026-03-24 ~18:00 MDT
+### New Corpus Downloaded
+- **1,460 arXiv papers** (agentic AI, ML, code generation, RAG) — indexed to FTS5
+- **Best practices corpus** — downloaded and indexed
+- Total: 77 FTS5 databases (14.9 GB), 79 FAISS indexes (1.6 GB)
+
+### Fusion Refactored
+- Extracted core/fusion.py (RRF + DBSF + FlashRank reranker)
+- index_engine.py reduced from 653 to 574 LOC
+
+### Total Session: 38 commits (JCoder) + 3 (HybridRAG3)
+All pushed. 2862 tests green. Doctor 16/16.
+
+Signed: Claude Opus 4.6 | 2026-03-24 FINAL ~20:00 MDT
