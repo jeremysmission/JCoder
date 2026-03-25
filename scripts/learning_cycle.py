@@ -372,13 +372,23 @@ def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
         "does", "should", "would", "that", "this", "be", "are", "was",
         "were", "been", "have", "has", "had", "will", "by", "from", "at",
         "not", "no", "but", "if", "my", "me", "we", "they", "its",
+        "using", "write", "explain", "example", "showing", "when",
+        "between", "difference", "implement", "create",
     }
+    # Technical terms that signal a specific language/domain — boost these
+    _TECH_TERMS = {
+        "rust", "fn", "impl", "struct", "trait", "ownership", "borrow",
+        "bash", "shell", "grep", "awk", "sed", "pipe", "chmod",
+        "javascript", "async", "await", "promise", "typescript",
+        "python", "decorator", "generator", "comprehension",
+        "goroutine", "channel", "defer", "interface",
+    }
+
     results = []
     idx_path = Path(index_dir)
     if not idx_path.exists():
         return results
 
-    # Build OR query for better recall, filter stopwords
     words = [
         w for w in question.split()
         if (w.isalnum() or w.replace("_", "").isalnum())
@@ -388,26 +398,35 @@ def _fts5_retrieve(question: str, index_dir: str, top_k: int = 5) -> List[str]:
     if not words:
         return results
 
-    # FTS5 OR query: "word1 OR word2 OR word3"
-    fts_query = " OR ".join(words)
+    # Boost technical terms by doubling them in the query
+    boosted = []
+    for w in words:
+        boosted.append(w)
+        if w.lower() in _TECH_TERMS:
+            boosted.append(w)  # double weight
 
+    fts_query = " OR ".join(boosted)
+
+    scored_results: List[tuple] = []
     for entry in idx_path.iterdir():
         if not entry.name.endswith(".fts5.db"):
             continue
         try:
             conn = sqlite3.connect(str(entry))
             rows = conn.execute(
-                "SELECT search_content FROM chunks WHERE chunks MATCH ? "
-                "ORDER BY rank LIMIT ?",
-                (fts_query, 5),
+                "SELECT search_content, rank FROM chunks "
+                "WHERE chunks MATCH ? ORDER BY rank LIMIT ?",
+                (fts_query, 3),
             ).fetchall()
             conn.close()
-            for row in rows:
-                results.append(row[0][:500])
+            for text, rank in rows:
+                scored_results.append((float(rank), text[:500]))
         except Exception:
             continue
 
-    return results[:top_k]
+    # Sort by BM25 rank (lower = better match)
+    scored_results.sort(key=lambda x: x[0])
+    return [text for _, text in scored_results[:top_k]]
 
 
 def _keyword_score(contexts: List[str], expected: List[str]) -> float:
