@@ -77,7 +77,9 @@ def run_baseline_eval(
         # LLM-as-judge for context relevancy (RAGAS-style)
         llm_score = _llm_judge_score(question_text, context, expected)
         # Combined: 40% keyword overlap + 60% LLM judge (if available)
-        score = 0.4 * kw_score + 0.6 * llm_score if llm_score > 0 else kw_score
+        # Weight calibrated by autonomous failure analyzer:
+        # LLM judge finds relevant context that keyword scorer misses
+        score = 0.3 * kw_score + 0.7 * llm_score if llm_score > 0 else kw_score
 
         results.append({
             "question_id": qid,
