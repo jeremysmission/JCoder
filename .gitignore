@@ -42,3 +42,7 @@ _qd_archive/
 _research/
 _runs_demo/
 _telemetry/
+!data/indexes/lessons_learned.fts5.db
+!data/progressive_difficulty.json
+!data/strategy_evolver.db
+!data/ast_graph.db
