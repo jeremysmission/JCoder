@@ -571,6 +571,15 @@ class IndexEngine:
         faiss_path = path + ".faiss"
         if faiss is not None and os.path.exists(faiss_path):
             cpu_index = faiss.read_index(faiss_path)
+
+            # Configure IVF nprobe if the index supports it
+            if hasattr(cpu_index, "nprobe"):
+                cpu_index.nprobe = 32
+                log.info(
+                    "IVF index loaded: nlist=%s, nprobe=32",
+                    getattr(cpu_index, "nlist", "?"),
+                )
+
             if self._gpu_available:
                 try:
                     self.index = faiss.index_cpu_to_all_gpus(cpu_index)
