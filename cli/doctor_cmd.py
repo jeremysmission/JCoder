@@ -324,6 +324,24 @@ def _check_fts5_indexes(cr: _CheckResult) -> None:
                       "no FTS5 indexes found in any configured directory")
 
 
+def _check_hybrid_pipeline(cr: _CheckResult) -> None:
+    """Verify the hybrid search pipeline can load and search."""
+    try:
+        from core.config import load_config
+        from core.embedding_engine import EmbeddingEngine
+
+        cfg = load_config()
+        engine = EmbeddingEngine(cfg.embedder, timeout=10)
+        vec = engine.embed_single("test query")
+        engine.close()
+        dim = vec.shape[0]
+        cr.ok("Hybrid pipeline", f"embed OK (dim={dim}), model={cfg.embedder.name}")
+        cr.print_live("OK", "Hybrid pipeline", f"embed OK (dim={dim})")
+    except Exception as e:
+        cr.warn("Hybrid pipeline", f"embed failed: {e}")
+        cr.print_live("WARN", "Hybrid pipeline", str(e))
+
+
 def _check_agent_package(cr: _CheckResult) -> None:
     errors = []
     for name in ("Agent", "create_backend", "ToolRegistry"):
@@ -385,8 +403,21 @@ def check():
     console.print("\n[bold underline]9. FTS5 indexes[/bold underline]")
     _check_fts5_indexes(cr)
 
-    console.print("\n[bold underline]10. Agent package[/bold underline]")
+    console.print("\n[bold underline]10. Hybrid search pipeline[/bold underline]")
+    _check_hybrid_pipeline(cr)
+
+    console.print("\n[bold underline]11. Agent package[/bold underline]")
     _check_agent_package(cr)
+
+    console.print("\n[bold underline]12. FlashRank reranker[/bold underline]")
+    try:
+        from core.fusion import HAS_FLASHRANK
+        if HAS_FLASHRANK:
+            cr.ok("FlashRank reranker", "available (TinyBERT-L-2)")
+        else:
+            cr.warn("FlashRank reranker", "not installed (pip install flashrank)")
+    except Exception as e:
+        cr.warn("FlashRank reranker", f"import error: {e}")
 
     # -- Summary table --
     console.print()
