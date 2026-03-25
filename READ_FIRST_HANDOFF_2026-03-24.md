@@ -267,3 +267,25 @@ Target: 3-copy evolution cycle first, then scale to 10.
 ### Total: 54 commits, 2862 tests green, 18/18 doctor green
 
 Signed: Claude Opus 4.6 | Orchestrator | 2026-03-25 ~05:30 MDT
+
+## Session Update (2026-03-25 ~11:30 MDT) — Maximum Download Sprint
+
+### DeepSeek-R1 Reasoning Traces
+- **265,006 traces indexed** (1.4 GB FTS5)
+- **22/30 shards downloaded**, remaining 8 downloading now
+- Target: ~570,000 traces (complete OpenCodeReasoning dataset)
+- Each trace = competitive programming problem + full reasoning chain + solution
+
+### Self-Learning Breakthroughs This Session
+- **44% → 100%** on procedural challenges (prompt ordering fix)
+- **50% → 100%** on hard algorithm-choice (RAG learning cycle)
+- **60% → 100%** on extreme challenges (cycle detection, median arrays)
+- **Context pollution discovered**: quality > quantity for RAG injection
+- **Communication vs knowledge gap**: most failures are communication
+- **Relevance gate tuned**: 2→1 word overlap (was too strict)
+- **Topo sort fix**: "dependencies" ambiguous, "prerequisites" + example = clear
+
+### 140 lessons in self-learning RAG across 12 categories
+### 75 commits, 2862 tests green
+
+Signed: Claude Opus 4.6 | Orchestrator | 2026-03-25 11:30 MDT
