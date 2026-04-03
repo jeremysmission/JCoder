@@ -312,8 +312,8 @@ class CorpusPipeline:
                 continue
 
             try:
-                # Code producer reads file itself; others need raw text
-                if producer is self._chunks_from_code:
+                # Code producer and document producer read files themselves
+                if producer in (self._chunks_from_code, self._chunks_from_document):
                     file_chunks = producer(fpath, "", **producer_kw)
                 else:
                     with open(fpath, "r", encoding="utf-8", errors="replace") as f:

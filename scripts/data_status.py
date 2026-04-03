@@ -2,7 +2,7 @@
 Show JCoder data download and indexing status at a glance.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\data_status.py
 """
 from __future__ import annotations

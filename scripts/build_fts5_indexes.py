@@ -6,7 +6,7 @@ Indexes enable keyword-based code retrieval immediately while
 waiting for the BEAST hardware for vector embeddings.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/build_fts5_indexes.py [--source NAME] [--max-files N]
 """
 from __future__ import annotations

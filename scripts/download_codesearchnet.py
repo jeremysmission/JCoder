@@ -5,10 +5,10 @@ Provides function + docstring pairs across 6 languages.
 Downloads zip archives, extracts JSONL.GZ files, and converts
 entries to markdown format compatible with corpus_pipeline._chunks_from_qa.
 
-Output: D:\\JCoder_Data\\clean_source\\codesearchnet\\{language}\\
+Output: $JCODER_DATA\\clean_source\\codesearchnet\\{language}\\
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_codesearchnet.py
 """
 from __future__ import annotations

@@ -4,10 +4,10 @@ Download programming-relevant RFC documents and convert to markdown.
 Downloads individual RFC text files from rfc-editor.org and converts
 them to markdown compatible with corpus_pipeline.ingest_markdown_docs.
 
-Output: D:\\JCoder_Data\\clean_source\\rfc\\
+Output: $JCODER_DATA\\clean_source\\rfc\\
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/download_rfc.py
 """
 from __future__ import annotations

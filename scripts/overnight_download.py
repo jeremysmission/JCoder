@@ -5,7 +5,7 @@ Downloads, validates, sanitizes, and stages coding datasets
 for indexing when BEAST hardware arrives.
 
 Run this before going to sleep:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\overnight_download.py
 
 It will:
@@ -13,7 +13,7 @@ It will:
 2. Download The Stack v2 filtered subset (Python, JS) -- streaming, ~50-100 GB
 3. Sanitize everything through the existing pipeline
 4. Build FTS5 keyword indexes for immediate search
-5. Log progress to D:\\JCoder_Data\\logs\\overnight_*.log
+5. Log progress to $JCODER_DATA\\logs\\overnight_*.log
 
 Safe to interrupt and resume -- downloads are resumable.
 """
@@ -491,7 +491,7 @@ def main():
     log(f"Total time: {elapsed / 3600:.1f} hours")
     log(f"CodeSearchNet entries: {csn_count:,}")
     log(f"Stack v2 files: {stack_count:,}")
-    log(f"Disk free: {shutil.disk_usage('D:\\').free / 1e9:.0f} GB")
+    log(f"Disk free: {shutil.disk_usage(str(DATA_ROOT.resolve())).free / 1e9:.0f} GB")
     log(f"Log: {LOG_FILE}")
     log("=" * 60)
 

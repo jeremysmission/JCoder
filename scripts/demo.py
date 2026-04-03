@@ -4,7 +4,7 @@ Runs a scripted walkthrough of JCoder features using mock backends
 so it works on any machine without GPU, Ollama, or network access.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/demo.py
     python scripts/demo.py --live    # use real Ollama model (if available)
 """

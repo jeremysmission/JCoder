@@ -12,40 +12,26 @@ This module is intentionally conservative:
 
 from __future__ import annotations
 
-import ast
 import html
 import json
 import os
 import re
 import shutil
-import tarfile
-import tempfile
-import tokenize
-import zipfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from io import BytesIO
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
-
-try:
-    import pyzstd as zstd
-except Exception:  # pragma: no cover
-    zstd = None
 
 try:
     from langdetect import detect_langs
 except Exception:  # pragma: no cover
     detect_langs = None
 
-try:
-    import py7zr
-except Exception:  # pragma: no cover
-    py7zr = None
-
 from ingestion.chunker import LANGUAGE_MAP
 from ingestion.parser_registry import DOCUMENT_EXTENSIONS
+from ingestion.sanitizer_archives import ArchiveProcessorMixin
+from ingestion.sanitizer_code import CodeCommentMixin
 
 # Derive code extension->language mapping from the single source of truth.
 # Only entries with a non-None language value are code files (AST-parseable).
@@ -57,9 +43,6 @@ CODE_EXT_TO_LANG = {ext: lang for ext, lang in LANGUAGE_MAP.items() if lang is n
 _SUPPORTED_TEXT_EXTS = (
     set(LANGUAGE_MAP.keys()) | set(DOCUMENT_EXTENSIONS) | {".jsonl", ".zst"}
 )
-
-MAGIC_7Z = bytes.fromhex("377ABCAF271C")
-MAGIC_ZST = bytes.fromhex("28B52FFD")
 
 SE_LANG_TAGS = {
     "python",
@@ -229,12 +212,13 @@ def _infer_lang_from_tags(tags_field: str) -> str:
     return "unknown"
 
 
-class SanitizationPipeline:
+class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
     def __init__(self, cfg: SanitizationConfig):
         self.cfg = cfg
         self.clean_root = Path(cfg.clean_archive_dir)
         self.logs_root = self.clean_root / "_logs"
         self.runs_root = self.clean_root / "_ingest_runs"
+        self._supported_text_exts = _SUPPORTED_TEXT_EXTS
         self.clean_root.mkdir(parents=True, exist_ok=True)
         self.logs_root.mkdir(parents=True, exist_ok=True)
         self.runs_root.mkdir(parents=True, exist_ok=True)
@@ -488,282 +472,13 @@ class SanitizationPipeline:
             )
             self._write_entry(entry, lang, source, f"{fp.stem}_{idx+1}", run_dir, stats)
 
-    def _process_7z_archive(self, fp: Path, run_dir: Path, stats: SanitizationStats) -> None:
-        if py7zr is None:
-            stats.compressed_skipped += 1
-            stats.skipped_files.append(f"{fp} [missing_py7zr]")
-            return
-        try:
-            with open(fp, "rb") as f:
-                head = f.read(6)
-            if not head.startswith(MAGIC_7Z):
-                stats.compressed_skipped += 1
-                stats.skipped_files.append(f"{fp} [invalid_7z_magic:{head.hex()}]")
-                return
-        except Exception:
-            stats.compressed_skipped += 1
-            stats.skipped_files.append(f"{fp} [read_error]")
-            return
+    # Archive methods: _process_7z_archive, _process_standard_archive,
+    # _safe_member_target, _extract_zip/tar_members_safe, _reddit_line_reader
+    # → ingestion/sanitizer_archives.py (ArchiveProcessorMixin)
 
-        lower = str(fp).lower()
-        if ("stackexchange" not in lower and "stackoverflow" not in lower
-                and "serverfault" not in lower and "superuser" not in lower):
-            stats.compressed_skipped += 1
-            stats.skipped_files.append(f"{fp} [archive_not_targeted]")
-            return
-
-        tmp_dir = Path(tempfile.mkdtemp(prefix="jcoder_7z_", dir=str(self.clean_root)))
-        try:
-            with py7zr.SevenZipFile(fp, mode="r") as zf:
-                names = zf.getnames()
-                post_targets = [n for n in names if n.lower().endswith("posts.xml")]
-                if not post_targets:
-                    stats.compressed_skipped += 1
-                    stats.skipped_files.append(f"{fp} [posts_xml_not_found]")
-                    return
-                zf.extract(path=tmp_dir, targets=post_targets)
-            for rel in post_targets:
-                extracted = tmp_dir / rel
-                if extracted.exists():
-                    self._process_stackexchange_posts(extracted, run_dir, stats)
-        except Exception as e:
-            stats.compressed_skipped += 1
-            stats.errors.append(f"{fp} [7z_error] {e}")
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def _process_standard_archive(self, fp: Path, run_dir: Path, stats: SanitizationStats) -> None:
-        ext = fp.suffix.lower()
-        tmp_dir = Path(tempfile.mkdtemp(prefix="jcoder_arc_", dir=str(self.clean_root)))
-        try:
-            if ext == ".zip":
-                with zipfile.ZipFile(fp, "r") as zf:
-                    names = zf.namelist()
-                    wanted = [n for n in names if n.lower().endswith("posts.xml")]
-                    if not wanted:
-                        wanted = [n for n in names if Path(n).suffix.lower() in _SUPPORTED_TEXT_EXTS]
-                    if not wanted:
-                        stats.compressed_skipped += 1
-                        stats.skipped_files.append(f"{fp} [no_supported_members]")
-                        return
-                    self._extract_zip_members_safe(zf, wanted, tmp_dir, stats, str(fp))
-            elif ext in {".tar", ".gz", ".xz"}:
-                try:
-                    with tarfile.open(fp, "r:*") as tf:
-                        members = tf.getmembers()
-                        wanted = [m for m in members if m.isfile() and (m.name.lower().endswith("posts.xml") or Path(m.name).suffix.lower() in _SUPPORTED_TEXT_EXTS)]
-                        if not wanted:
-                            stats.compressed_skipped += 1
-                            stats.skipped_files.append(f"{fp} [no_supported_members]")
-                            return
-                        self._extract_tar_members_safe(tf, wanted, tmp_dir, stats, str(fp))
-                except tarfile.TarError:
-                    # Not a tarball; likely a single compressed stream with .gz/.xz extension.
-                    stats.compressed_skipped += 1
-                    stats.skipped_files.append(f"{fp} [non_tar_stream_unsupported]")
-                    return
-            else:
-                stats.compressed_skipped += 1
-                stats.skipped_files.append(f"{fp} [unsupported_archive]")
-                return
-
-            for extracted in self._iter_candidate_files(tmp_dir):
-                # Avoid recursive archive nesting on toaster hardware.
-                if extracted.suffix.lower() in {".7z", ".zip", ".tar", ".gz", ".xz"}:
-                    continue
-                self._process_file(extracted, run_dir, stats)
-        except Exception as e:
-            stats.compressed_skipped += 1
-            stats.errors.append(f"{fp} [archive_error] {e}")
-        finally:
-            shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    def _safe_member_target(self, root: Path, member_name: str) -> Optional[Path]:
-        normalized = (member_name or "").replace("\\", "/")
-        if not normalized:
-            return None
-        if normalized.startswith("/") or normalized.startswith("../"):
-            return None
-        if "/../" in normalized or normalized == "..":
-            return None
-        root_resolved = root.resolve()
-        target = (root / Path(normalized)).resolve()
-        if target == root_resolved:
-            return None
-        if root_resolved not in target.parents:
-            return None
-        return target
-
-    def _extract_zip_members_safe(
-        self,
-        zf: zipfile.ZipFile,
-        names: List[str],
-        dest_dir: Path,
-        stats: SanitizationStats,
-        archive_label: str,
-    ) -> None:
-        blocked = 0
-        extracted = 0
-        for name in names:
-            target = self._safe_member_target(dest_dir, name)
-            if target is None:
-                blocked += 1
-                continue
-            try:
-                info = zf.getinfo(name)
-            except KeyError:
-                continue
-            if info.is_dir():
-                target.mkdir(parents=True, exist_ok=True)
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with zf.open(info, "r") as src, open(target, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-            extracted += 1
-        if blocked:
-            stats.errors.append(f"{archive_label} [zip_path_traversal_blocked:{blocked}]")
-        if extracted == 0:
-            stats.compressed_skipped += 1
-            stats.skipped_files.append(f"{archive_label} [no_safe_supported_members]")
-
-    def _extract_tar_members_safe(
-        self,
-        tf: tarfile.TarFile,
-        members: List[tarfile.TarInfo],
-        dest_dir: Path,
-        stats: SanitizationStats,
-        archive_label: str,
-    ) -> None:
-        blocked = 0
-        extracted = 0
-        for member in members:
-            target = self._safe_member_target(dest_dir, member.name)
-            if target is None:
-                blocked += 1
-                continue
-            if not member.isfile():
-                continue
-            src = tf.extractfile(member)
-            if src is None:
-                continue
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with src, open(target, "wb") as dst:
-                shutil.copyfileobj(src, dst)
-            extracted += 1
-        if blocked:
-            stats.errors.append(f"{archive_label} [tar_path_traversal_blocked:{blocked}]")
-        if extracted == 0:
-            stats.compressed_skipped += 1
-            stats.skipped_files.append(f"{archive_label} [no_safe_supported_members]")
-
-    def _reddit_line_reader(self, fp: Path, stats: SanitizationStats):
-        ext = fp.suffix.lower()
-        if ext in {".json", ".jsonl"}:
-            def _iter_plain():
-                with open(fp, "r", encoding="utf-8", errors="replace") as f:
-                    for line in f:
-                        yield line
-            return _iter_plain()
-        if ext == ".zst":
-            if zstd is None:
-                stats.skipped_files.append(f"{fp} [missing_zstandard]")
-                return None
-            try:
-                with open(fp, "rb") as f:
-                    head = f.read(4)
-                if not head.startswith(MAGIC_ZST):
-                    stats.skipped_files.append(f"{fp} [invalid_zst_magic:{head.hex()}]")
-                    return None
-            except Exception:
-                stats.skipped_files.append(f"{fp} [read_error]")
-                return None
-
-            def _iter_zst():
-                try:
-                    with zstd.open(fp, "rt", encoding="utf-8", errors="replace") as f:
-                        for line in f:
-                            yield line
-                except Exception as e:
-                    stats.skipped_files.append(f"{fp} [zst_read_error] {e}")
-                    return
-            try:
-                return _iter_zst()
-            except Exception:
-                return None
-        return None
-
-    def _process_code_comments(self, fp: Path, run_dir: Path, stats: SanitizationStats) -> None:
-        ext = fp.suffix.lower()
-        lang = CODE_EXT_TO_LANG.get(ext, "unknown")
-        try:
-            content = fp.read_text(encoding="utf-8", errors="replace")
-        except Exception:
-            stats.skipped_files.append(f"{fp} [read_error]")
-            return
-
-        snippets: List[str] = []
-        if ext == ".py":
-            snippets.extend(self._extract_python_docstrings(content))
-            snippets.extend(self._extract_python_comments(content))
-        else:
-            snippets.extend(self._extract_generic_comments(content))
-
-        clean_snippets = []
-        for s in snippets:
-            t = _strip_markup(s)
-            t = _strip_pii(t, stats)
-            if not t:
-                continue
-            if not _is_english_or_unknown(t, self.cfg.langdetect_threshold, stats):
-                continue
-            clean_snippets.append(t)
-        if not clean_snippets:
-            stats.skipped_files.append(f"{fp} [no_clean_comments]")
-            return
-
-        entry = self._build_md_entry(
-            title=fp.name,
-            source_path=str(fp),
-            source_kind="github",
-            language=lang,
-            explanation="\n".join(f"- {x}" for x in clean_snippets[:200]),
-            code_blocks=[],
-            tags=[],
-        )
-        self._write_entry(entry, lang, "github", fp.stem, run_dir, stats)
-
-    def _extract_python_docstrings(self, text: str) -> List[str]:
-        out: List[str] = []
-        try:
-            tree = ast.parse(text)
-        except Exception:
-            return out
-        module_doc = ast.get_docstring(tree)
-        if module_doc:
-            out.append(module_doc)
-        for node in ast.walk(tree):
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                d = ast.get_docstring(node)
-                if d:
-                    out.append(d)
-        return out
-
-    def _extract_python_comments(self, text: str) -> List[str]:
-        out: List[str] = []
-        try:
-            for tok in tokenize.tokenize(BytesIO(text.encode("utf-8")).readline):
-                if tok.type == tokenize.COMMENT:
-                    out.append(tok.string.lstrip("# ").strip())
-        except Exception:
-            return out
-        return out
-
-    def _extract_generic_comments(self, text: str) -> List[str]:
-        out = []
-        out.extend([m.group(1).strip() for m in re.finditer(r"//\s*(.+)", text)])
-        out.extend([m.group(1).strip() for m in re.finditer(r"#\s*(.+)", text)])
-        out.extend([m.group(1).strip() for m in re.finditer(r"/\*\s*(.*?)\s*\*/", text, re.DOTALL)])
-        return [x for x in out if x]
+    # Code comment methods: _process_code_comments, _extract_python_docstrings,
+    # _extract_python_comments, _extract_generic_comments
+    # → ingestion/sanitizer_code.py (CodeCommentMixin)
 
     def _build_md_entry(
         self,

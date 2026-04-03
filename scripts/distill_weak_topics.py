@@ -11,7 +11,7 @@ The distilled content is written for a SMALL offline model to consume:
 - Concrete, not abstract
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/distill_weak_topics.py --results evaluation/results_local/eval_results.json
     python scripts/distill_weak_topics.py --results evaluation/results_local/eval_results.json --top 20
 """

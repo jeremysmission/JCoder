@@ -32,23 +32,114 @@ log = logging.getLogger(__name__)
 class EmbeddingEngine:
     """
     Responsible ONLY for converting text into vectors.
-    Calls vLLM's OpenAI-compatible /v1/embeddings endpoint.
+
+    Tries direct CUDA via sentence-transformers first (45x faster).
+    Falls back to Ollama/vLLM OpenAI-compatible /v1/embeddings endpoint.
 
     No indexing logic. No retrieval logic. Just embedding.
     """
+
+    # Map Ollama model names to HuggingFace IDs for direct CUDA loading.
+    # Same mapping used by HybridRAG3_Educational (vetted + QA'd).
+    _OLLAMA_TO_HF = {
+        "nomic-embed-text": "nomic-ai/nomic-embed-text-v1.5",
+        "nomic-embed-text:latest": "nomic-ai/nomic-embed-text-v1.5",
+        "nomic-embed-text-v2-moe": "nomic-ai/nomic-embed-text-v2-moe",
+        "nomic-embed-text-v2-moe:latest": "nomic-ai/nomic-embed-text-v2-moe",
+    }
 
     def __init__(self, config: ModelConfig, timeout: int = 120,
                  gate: NetworkGate = None):
         self.endpoint = config.endpoint.rstrip("/")
         self.model_name = config.name
         self.dimension = config.dimension or 768
-        self._client = make_client(timeout_s=timeout)
         self._gate = gate
+        self._direct_model = None
+        self._use_direct_cuda = False
+        self._use_onnx_cpu = False
+        self._cuda_batch_backoff = None
+
+        # Tier 1: Direct CUDA (45x faster than Ollama HTTP)
+        if os.getenv("JCODER_FORCE_OLLAMA_EMBED", "").lower() not in ("1", "true"):
+            self._try_init_direct_cuda()
+
+        # Tier 2: ONNX CPU (3-12x faster than Ollama HTTP, no GPU needed)
+        if not self._use_direct_cuda:
+            if os.getenv("JCODER_EMBED_ONNX", "").lower() in ("1", "true"):
+                self._try_init_onnx_cpu()
+
+        # Tier 3: Ollama HTTP fallback
+        self._client = make_client(timeout_s=timeout)
 
         # Ollama bug #6262: batch embedding quality degrades when
         # OLLAMA_NUM_PARALLEL > 1. Set to 1 for embedding jobs.
-        if "OLLAMA_NUM_PARALLEL" not in os.environ:
-            os.environ["OLLAMA_NUM_PARALLEL"] = "1"
+        if not self._use_direct_cuda and not self._use_onnx_cpu:
+            if "OLLAMA_NUM_PARALLEL" not in os.environ:
+                os.environ["OLLAMA_NUM_PARALLEL"] = "1"
+
+    def _try_init_direct_cuda(self) -> None:
+        """Try to load embedding model directly on GPU via sentence-transformers.
+
+        Bypasses Ollama HTTP layer entirely, eliminating ~150ms per-request
+        overhead. If torch or sentence-transformers is not installed, or no
+        CUDA GPU is available, silently falls back to Ollama HTTP path.
+        Same pattern as HybridRAG3_Educational embedder (vetted).
+        """
+        try:
+            import torch
+            if not torch.cuda.is_available():
+                log.debug("direct_cuda_skip: no CUDA GPU available")
+                return
+
+            from sentence_transformers import SentenceTransformer
+
+            hf_model = self._OLLAMA_TO_HF.get(self.model_name)
+            if not hf_model:
+                log.debug("direct_cuda_skip: no HF mapping for %s", self.model_name)
+                return
+
+            # Pin to CUDA:1 per JCoder GPU assignment (CUDA:0 = HybridRAG)
+            cuda_device = os.getenv("JCODER_EMBED_DEVICE", "cuda:1")
+            self._direct_model = SentenceTransformer(
+                hf_model, device=cuda_device, trust_remote_code=True,
+            )
+            self._use_direct_cuda = True
+            log.info(
+                "Direct CUDA embedding ready: model=%s device=%s gpu=%s",
+                hf_model, cuda_device, torch.cuda.get_device_name(
+                    int(cuda_device.split(":")[-1]) if ":" in cuda_device else 0
+                ),
+            )
+        except ImportError:
+            log.debug("direct_cuda_skip: torch or sentence-transformers not installed")
+        except Exception as exc:
+            log.warning("direct_cuda_init_failed: %s", exc)
+
+    def _try_init_onnx_cpu(self) -> None:
+        """Try ONNX CPU backend for embedding (3-12x faster than Ollama HTTP).
+
+        Ported from HybridRAG3 (commit df8563e). Uses sentence-transformers
+        with backend="onnx" and INT8 quantization. Requires onnxruntime and
+        optimum to be installed (never via sentence-transformers[onnx] extra).
+        """
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            hf_model = self._OLLAMA_TO_HF.get(self.model_name)
+            if not hf_model:
+                log.debug("onnx_cpu_skip: no HF mapping for %s", self.model_name)
+                return
+
+            self._direct_model = SentenceTransformer(
+                hf_model, backend="onnx", trust_remote_code=True,
+                model_kwargs={"provider": "CPUExecutionProvider"},
+            )
+            self._use_onnx_cpu = True
+            log.info("ONNX CPU embedding ready: model=%s", hf_model)
+        except ImportError:
+            log.debug("onnx_cpu_skip: onnxruntime or sentence-transformers not installed")
+        except Exception as exc:
+            log.warning("onnx_cpu_init_failed: %s", exc)
 
     def _post_embeddings(self, texts: List[str]) -> np.ndarray:
         """Call the embedding endpoint once and normalize the returned vectors."""
@@ -121,14 +212,57 @@ class EmbeddingEngine:
             raise last_exc
         raise RuntimeError("Embedding truncation fallback failed without an exception")
 
+    @staticmethod
+    def _pack_token_budget_batches(
+        texts: List[str],
+        token_budget: int,
+        max_batch_size: int,
+        min_batch_size: int = 8,
+    ) -> List[tuple]:
+        """Pack texts into variable-sized batches that fit a token budget.
+
+        Returns (start, end) index tuples. Each batch fills up to
+        token_budget estimated tokens, clamped to [min_batch_size,
+        max_batch_size]. Ported from HybridRAG3 (commit 0750633).
+        """
+        batches = []
+        i = 0
+        n = len(texts)
+        while i < n:
+            budget_remaining = token_budget
+            j = i
+            while j < n and (j - i) < max_batch_size:
+                est = max(1, len(texts[j]) // 4)
+                if budget_remaining - est < 0 and (j - i) >= min_batch_size:
+                    break
+                budget_remaining -= est
+                j += 1
+            if (j - i) < min_batch_size and j < n:
+                j = min(n, i + min_batch_size)
+            batches.append((i, j))
+            i = j
+        return batches
+
     def embed(self, texts: List[str]) -> np.ndarray:
         """
         Convert multiple text chunks into vector form.
         Returns an (N, dimension) numpy array of normalized embeddings.
+
+        Uses token-budget dynamic batching and OOM backoff when on
+        direct CUDA path (ported from HybridRAG3).
         """
         if not texts:
             return np.empty((0, self.dimension), dtype=np.float32)
 
+        # --- Tier 1: Direct CUDA with token-budget batching ---
+        if self._use_direct_cuda and self._direct_model is not None:
+            return self._direct_cuda_encode(texts)
+
+        # --- Tier 2: ONNX CPU (3-12x faster than Ollama HTTP) ---
+        if self._use_onnx_cpu and self._direct_model is not None:
+            return self._onnx_cpu_encode(texts)
+
+        # --- Tier 3: Ollama HTTP ---
         try:
             return self._post_embeddings(texts)
         except Exception as exc:
@@ -140,6 +274,81 @@ class EmbeddingEngine:
         )
         vectors = [self._embed_single_with_fallback(text) for text in texts]
         return np.vstack(vectors)
+
+    def _direct_cuda_encode(self, texts: List[str]) -> np.ndarray:
+        """Encode via direct CUDA with token-budget batching and OOM backoff.
+
+        Ported from HybridRAG3 (commits 0750633, afe7877). Packs texts
+        into variable-size batches to maximize GPU utilization on short
+        sequences while preventing OOM on long ones.
+        """
+        max_batch = max(32, int(os.getenv("JCODER_EMBED_BATCH", "256")))
+        token_budget = int(os.getenv("JCODER_TOKEN_BUDGET", "49152"))
+        batches = self._pack_token_budget_batches(texts, token_budget, max_batch)
+
+        all_results = []
+        for start, end in batches:
+            batch_texts = texts[start:end]
+            batch_size = max_batch
+            while True:
+                try:
+                    result = self._direct_model.encode(
+                        batch_texts,
+                        batch_size=batch_size,
+                        show_progress_bar=len(batch_texts) > 1000,
+                        convert_to_numpy=True,
+                        normalize_embeddings=True,
+                    )
+                    all_results.append(np.asarray(result, dtype=np.float32))
+                    if batch_size != max_batch:
+                        self._cuda_batch_backoff = batch_size
+                    break
+                except RuntimeError as exc:
+                    message = str(exc).lower()
+                    if "out of memory" not in message or batch_size <= 32:
+                        raise
+                    next_batch_size = max(32, batch_size // 2)
+                    log.warning(
+                        "CUDA OOM backoff: %d -> %d", batch_size, next_batch_size,
+                    )
+                    try:
+                        import torch
+                        torch.cuda.empty_cache()
+                    except Exception:
+                        pass
+                    if next_batch_size == batch_size:
+                        raise
+                    batch_size = next_batch_size
+
+        return np.vstack(all_results) if all_results else np.empty(
+            (0, self.dimension), dtype=np.float32,
+        )
+
+    def _onnx_cpu_encode(self, texts: List[str]) -> np.ndarray:
+        """Encode via ONNX CPU backend with token-budget batching.
+
+        Ported from HybridRAG3 (commit df8563e). 3-12x faster than
+        Ollama HTTP on CPU-only machines.
+        """
+        max_batch = int(os.getenv("JCODER_EMBED_BATCH", "256"))
+        token_budget = int(os.getenv("JCODER_TOKEN_BUDGET", "49152"))
+        batches = self._pack_token_budget_batches(texts, token_budget, max_batch)
+
+        all_results = []
+        for start, end in batches:
+            batch_texts = texts[start:end]
+            result = self._direct_model.encode(
+                batch_texts,
+                batch_size=max_batch,
+                show_progress_bar=len(batch_texts) > 1000,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+            )
+            all_results.append(np.asarray(result, dtype=np.float32))
+
+        return np.vstack(all_results) if all_results else np.empty(
+            (0, self.dimension), dtype=np.float32,
+        )
 
     def embed_single(self, text: str) -> np.ndarray:
         """Convert a single query into a vector."""

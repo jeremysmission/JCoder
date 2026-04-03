@@ -115,6 +115,7 @@ class TestEmbeddingEngine:
 
     def test_embed_batch_falls_back_to_individual_on_context_error(self):
         eng = EmbeddingEngine(config=_model_config())
+        eng._use_direct_cuda = False
         eng._client = MagicMock()
 
         def _post(_url, json):
@@ -133,6 +134,7 @@ class TestEmbeddingEngine:
 
     def test_embed_single_truncates_on_context_error(self):
         eng = EmbeddingEngine(config=_model_config())
+        eng._use_direct_cuda = False
         eng._client = MagicMock()
 
         def _post(_url, json):

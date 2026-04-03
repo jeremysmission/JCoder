@@ -10,7 +10,7 @@ Checks disk space before starting, reports summary at end.
 Safe to re-run (idempotent -- each sub-script has resume support).
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_all.py
 """
 from __future__ import annotations
@@ -44,13 +44,13 @@ def _check_disk_space() -> bool:
     Returns True if enough space, False otherwise.
     """
     try:
-        drive = str(DATA_ROOT)[:3]  # e.g. "D:\\"
-        usage = shutil.disk_usage(drive)
+        data_path = str(DATA_ROOT.resolve())
+        usage = shutil.disk_usage(data_path)
         free_gb = usage.free / (1024 ** 3)
         total_gb = usage.total / (1024 ** 3)
         used_pct = (usage.used / usage.total) * 100
 
-        print(f"  Drive: {drive}")
+        print(f"  Data path: {data_path}")
         print(f"  Total: {total_gb:.1f} GB")
         print(f"  Free:  {free_gb:.1f} GB")
         print(f"  Used:  {used_pct:.1f}%")

@@ -14,7 +14,7 @@ These get indexed as high-weight references that JCoder can cite
 when reviewing code or suggesting corrections.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_best_practices.py
 """
 from __future__ import annotations

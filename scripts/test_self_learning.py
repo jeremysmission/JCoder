@@ -4,7 +4,7 @@ Exercises: telemetry -> active learner -> study -> distillation -> re-test.
 Uses an outside API (GPT) as teacher and verifier.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/test_self_learning.py
     python scripts/test_self_learning.py --model gpt-4.1-mini --max-questions 10
 """

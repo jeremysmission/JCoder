@@ -5,7 +5,7 @@ Extracts Posts.xml from each archive, parses Q&A pairs (score >= 3),
 builds per-site FTS5 indexes.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\build_se_indexes.py
 
 Sites processed (programming-relevant only):

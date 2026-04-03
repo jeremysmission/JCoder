@@ -1,6 +1,6 @@
 """
 stage_for_indexing.py -- Comprehensive preprocessing, sanitization, and staging
-script that prepares ALL data sources under D:\\JCoder_Data\\clean_source for
+script that prepares ALL data sources under $JCODER_DATA\\clean_source for
 vector indexing.
 
 Phases:

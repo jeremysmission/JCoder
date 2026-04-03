@@ -10,7 +10,7 @@ Datasets (ordered by size, smallest first):
   7. nvidia/OpenCodeReasoning-2 -- 2.5M (reasoning traces + critiques)
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_new_datasets_2026_03_10.py
     .venv\\Scripts\\python scripts\\download_new_datasets_2026_03_10.py --only debugbench
     .venv\\Scripts\\python scripts\\download_new_datasets_2026_03_10.py --only cruxeval,bigcodebench,leetcode

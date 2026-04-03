@@ -4,7 +4,7 @@ Sends each question to the API with optional RAG context from
 federated search, scores using AgentEvalRunner's deterministic scorer.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/run_eval_api.py --model gpt-4.1-mini --max 5
     python scripts/run_eval_api.py --model gpt-5.4 --rag
     python scripts/run_eval_api.py --model gpt-5.4 --rag --category python

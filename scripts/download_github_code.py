@@ -8,7 +8,7 @@ This dataset is ungated and contains ~1.7 GB of permissively-licensed code
 across many programming languages.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_github_code.py
 
 Safe to interrupt and resume -- Parquet files are cached, progress tracked.

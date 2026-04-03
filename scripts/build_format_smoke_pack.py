@@ -7,8 +7,8 @@ Creates a small corpus with representative formats:
 - Markdown/HTML code-block text
 
 Usage:
-  `D:\\JCoder\\.venv\\Scripts\\python scripts\\build_format_smoke_pack.py`
-  `D:\\JCoder\\.venv\\Scripts\\python scripts\\build_format_smoke_pack.py --out D:\\JCoder\\data\\format_smoke_pack`
+  `.venv\\Scripts\\python scripts\\build_format_smoke_pack.py`
+  `.venv\\Scripts\\python scripts\\build_format_smoke_pack.py --out data\\format_smoke_pack`
 """
 
 from __future__ import annotations

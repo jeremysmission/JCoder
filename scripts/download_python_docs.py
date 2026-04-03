@@ -5,10 +5,10 @@ Source: Official Python 3.13.3 text docs archive (tar.bz2).
 Converts .txt doc files to markdown with module headers and preserved
 code examples, compatible with corpus_pipeline.ingest_markdown_docs.
 
-Output: D:\\JCoder_Data\\clean_source\\python_docs\\
+Output: $JCODER_DATA\\clean_source\\python_docs\\
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_python_docs.py
 """
 from __future__ import annotations

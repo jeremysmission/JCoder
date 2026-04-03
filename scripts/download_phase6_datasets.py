@@ -12,7 +12,7 @@ Categories (in priority order):
   E. Project Structure & DevOps
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_phase6_datasets.py
     .venv\\Scripts\\python scripts\\download_phase6_datasets.py --category A
     .venv\\Scripts\\python scripts\\download_phase6_datasets.py --only swesmith_traj,openhands_traj

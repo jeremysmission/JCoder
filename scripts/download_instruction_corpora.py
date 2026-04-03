@@ -14,7 +14,7 @@ Datasets:
   7. TIGER-Lab/MathInstruct -- Math+code reasoning pairs
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_instruction_corpora.py [--only DATASET]
 """
 from __future__ import annotations

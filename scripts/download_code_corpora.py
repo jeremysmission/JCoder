@@ -14,7 +14,7 @@ Datasets:
   7. teknium/OpenHermes-2.5         -- 0.8 GB, mixed instruction set (filter for code)
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_code_corpora.py [--only DATASET]
 
 Safe to interrupt and resume -- Parquet files cached, progress tracked.

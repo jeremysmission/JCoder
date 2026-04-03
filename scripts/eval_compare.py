@@ -1,7 +1,7 @@
 """Compare two eval result sets and generate an A/B report.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/eval_compare.py \\
         --baseline evaluation/results_local/eval_results.json \\
         --candidate evaluation/results_api_gpt-4_1-mini/eval_results.json

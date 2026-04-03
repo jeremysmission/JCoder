@@ -17,7 +17,7 @@ Datasets:
  11. LDJnr/Capybara                        -- Multi-turn reasoning conversations
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_expansion_tier1.py [--only NAME]
 """
 from __future__ import annotations

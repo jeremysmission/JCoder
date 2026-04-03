@@ -6,7 +6,7 @@ Sources: Awesome-Self-Evolving-Agents survey (120+ papers).
 Downloads abstracts + full text where available via arXiv API.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\download_arxiv_agentic.py
 """
 from __future__ import annotations

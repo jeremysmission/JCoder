@@ -4,7 +4,7 @@ Sends each question directly to the model, scores the response
 using AgentEvalRunner's deterministic scorer.
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     python scripts/run_eval_local.py
     python scripts/run_eval_local.py --model phi4-mini --max 10
     python scripts/run_eval_local.py --eval-set evaluation/agent_eval_set.json

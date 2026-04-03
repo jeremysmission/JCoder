@@ -16,7 +16,7 @@ Sources:
 Outputs to: research_feed.fts5.db (searchable knowledge base)
 
 Usage:
-    cd D:\\JCoder
+    cd C:\\Users\\jerem\\JCoder
     .venv\\Scripts\\python scripts\\research_scanner.py [--days 30]
 
 Safe to re-run -- deduplicates by paper ID / URL.
