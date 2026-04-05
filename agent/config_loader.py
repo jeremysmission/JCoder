@@ -70,10 +70,10 @@ class AgentConfig:
 
     # Embedder (optional -- enables dense vector search alongside FTS5)
     embedder_enabled: bool = False
-    embedder_endpoint: str = "http://localhost:8000/v1"
-    embedder_model: str = "nomic-embed-text"
+    embedder_endpoint: str = "http://localhost:11434/v1"
+    embedder_model: str = "nomic-embed-text-v2-moe"
     embedder_code_model: str = ""   # e.g. nomic-embed-code (empty = use primary)
-    embedder_text_model: str = ""   # e.g. nomic-embed-text (empty = use primary)
+    embedder_text_model: str = ""   # e.g. nomic-embed-text-v2-moe (empty = use primary)
     embedder_dimension: int = 768
     embedder_timeout: int = 120
 
@@ -133,8 +133,8 @@ def load_agent_config(config_dir: Optional[str] = None) -> AgentConfig:
         dedup_threshold=memory_raw.get("dedup_threshold", 0.95),
         # Embedder (from memory.yaml)
         embedder_enabled=emb_raw.get("enabled", False),
-        embedder_endpoint=emb_raw.get("endpoint", "http://localhost:8000/v1"),
-        embedder_model=emb_raw.get("model", "nomic-embed-text"),
+        embedder_endpoint=emb_raw.get("endpoint", "http://localhost:11434/v1"),
+        embedder_model=emb_raw.get("model", "nomic-embed-text-v2-moe"),
         embedder_code_model=emb_raw.get("code_model", ""),
         embedder_text_model=emb_raw.get("text_model", ""),
         embedder_dimension=emb_raw.get("dimension", 768),

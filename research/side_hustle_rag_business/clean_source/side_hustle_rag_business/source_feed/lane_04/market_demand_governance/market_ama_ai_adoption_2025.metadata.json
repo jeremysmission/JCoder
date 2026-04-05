@@ -1,0 +1,9 @@
+{
+  "category": "market_demand_governance",
+  "error": "RuntimeError: Playwright is not installed. Install with: pip install playwright && playwright install chromium",
+  "id": "market_ama_ai_adoption_2025",
+  "lane": "lane_04",
+  "saved_at_utc": "2026-03-22T03:22:18.496680+00:00",
+  "status": "failed",
+  "url": "https://www.ama-assn.org/press-center/ama-press-releases/ama-physician-enthusiasm-grows-health-care-ai"
+}

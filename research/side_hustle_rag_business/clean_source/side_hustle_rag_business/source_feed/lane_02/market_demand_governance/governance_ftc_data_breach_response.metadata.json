@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.ftc.gov/business-guidance/resources/data-breach-response-guide-business",
+  "id": "governance_ftc_data_breach_response",
+  "lane": "lane_02",
+  "notes": "Incident-response and breach handling baseline for small businesses.",
+  "saved_at_utc": "2026-03-22T03:22:17.781326+00:00",
+  "saved_relpath": "lane_02/market_demand_governance/governance_ftc_data_breach_response.html",
+  "sha256": "4a4bc187cbe8ad0bf17212cc3ee16777e7ff33708945ffc4349c56f11e4baecf",
+  "size_bytes": 1008068,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.ftc.gov/business-guidance/resources/data-breach-response-guide-business"
+}

@@ -17,7 +17,6 @@ gracefully and uses a single model for everything.
 
 import logging
 import os
-import re
 from typing import List, Optional
 
 import httpx
@@ -25,6 +24,7 @@ import numpy as np
 
 from .config import ModelConfig
 from .http_factory import make_client
+from .embedding_support import detect_content_type, pack_token_budget_batches
 from .network_gate import NetworkGate
 log = logging.getLogger(__name__)
 
@@ -212,37 +212,6 @@ class EmbeddingEngine:
             raise last_exc
         raise RuntimeError("Embedding truncation fallback failed without an exception")
 
-    @staticmethod
-    def _pack_token_budget_batches(
-        texts: List[str],
-        token_budget: int,
-        max_batch_size: int,
-        min_batch_size: int = 8,
-    ) -> List[tuple]:
-        """Pack texts into variable-sized batches that fit a token budget.
-
-        Returns (start, end) index tuples. Each batch fills up to
-        token_budget estimated tokens, clamped to [min_batch_size,
-        max_batch_size]. Ported from HybridRAG3 (commit 0750633).
-        """
-        batches = []
-        i = 0
-        n = len(texts)
-        while i < n:
-            budget_remaining = token_budget
-            j = i
-            while j < n and (j - i) < max_batch_size:
-                est = max(1, len(texts[j]) // 4)
-                if budget_remaining - est < 0 and (j - i) >= min_batch_size:
-                    break
-                budget_remaining -= est
-                j += 1
-            if (j - i) < min_batch_size and j < n:
-                j = min(n, i + min_batch_size)
-            batches.append((i, j))
-            i = j
-        return batches
-
     def embed(self, texts: List[str]) -> np.ndarray:
         """
         Convert multiple text chunks into vector form.
@@ -284,7 +253,7 @@ class EmbeddingEngine:
         """
         max_batch = max(32, int(os.getenv("JCODER_EMBED_BATCH", "256")))
         token_budget = int(os.getenv("JCODER_TOKEN_BUDGET", "49152"))
-        batches = self._pack_token_budget_batches(texts, token_budget, max_batch)
+        batches = pack_token_budget_batches(texts, token_budget, max_batch)
 
         all_results = []
         for start, end in batches:
@@ -332,7 +301,7 @@ class EmbeddingEngine:
         """
         max_batch = int(os.getenv("JCODER_EMBED_BATCH", "256"))
         token_budget = int(os.getenv("JCODER_TOKEN_BUDGET", "49152"))
-        batches = self._pack_token_budget_batches(texts, token_budget, max_batch)
+        batches = pack_token_budget_batches(texts, token_budget, max_batch)
 
         all_results = []
         for start, end in batches:
@@ -363,44 +332,6 @@ class EmbeddingEngine:
 
     def __exit__(self, *args):
         self.close()
-
-
-# -----------------------------------------------------------------------
-# Code-pattern heuristic for auto-detection
-# -----------------------------------------------------------------------
-
-# Compiled once at import time -- matches common code constructs.
-_CODE_INDICATORS = re.compile(
-    r"""
-    (?:^|\s) (?:def|class|import|from|return|raise|async|await) \s  # Python
-    | (?:^|\s) (?:function|const|let|var|export|require) [\s(]      # JS/TS
-    | =>                                                             # arrow fn
-    | [{}]                                                           # braces
-    | \b\w+\(.*\)                                                    # func call
-    | ^\s*(?://|/\*|\#!)                                             # comment leaders
-    | ^\s*@\w+                                                       # decorator
-    | \b(?:if|else|for|while|switch|try|catch)\s*[\({]               # control flow
-    """,
-    re.VERBOSE | re.MULTILINE,
-)
-
-# Threshold: at least this fraction of lines must look like code
-_CODE_LINE_THRESHOLD = 0.3
-
-
-def detect_content_type(text: str) -> str:
-    """Return 'code' or 'text' based on lightweight heuristics.
-
-    Scans lines for common programming constructs.  If >= 30% of
-    non-blank lines match, returns 'code'; otherwise 'text'.
-    """
-    lines = text.splitlines()
-    non_blank = [ln for ln in lines if ln.strip()]
-    if not non_blank:
-        return "text"
-    hits = sum(1 for ln in non_blank if _CODE_INDICATORS.search(ln))
-    ratio = hits / len(non_blank)
-    return "code" if ratio >= _CODE_LINE_THRESHOLD else "text"
 
 
 # -----------------------------------------------------------------------

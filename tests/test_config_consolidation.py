@@ -79,7 +79,7 @@ class TestEmbedderConsistency:
             f"Dimension mismatch: models.yaml={models_dim}, memory.yaml={memory_dim}"
 
     def test_nomic_embed_text_configured(self):
-        """Embedder should be nomic-embed-text (available in Ollama)."""
+        """Embedder should use the nomic-embed-text family in Ollama."""
         cfg = yaml.safe_load((_CONFIG_DIR / "models.yaml").read_text(encoding="utf-8"))
         name = cfg.get("embedder", {}).get("name", "")
         assert "nomic-embed-text" in name, f"Expected nomic-embed-text, got {name}"

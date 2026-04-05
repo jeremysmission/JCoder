@@ -1,0 +1,15 @@
+{
+  "category": "legal_confidentiality_ai",
+  "content_type": "text/html",
+  "final_url": "https://www.americanbar.org/groups/law_practice/resources/tech-report/2024/2024-cloud-computing-techreport/",
+  "id": "legal_aba_cloud_techreport_2024",
+  "lane": "lane_03",
+  "notes": "Law-firm cloud adoption and confidentiality concerns.",
+  "saved_at_utc": "2026-03-22T03:22:18.496680+00:00",
+  "saved_relpath": "lane_03/legal_confidentiality_ai/legal_aba_cloud_techreport_2024.html",
+  "sha256": "651d05a03875c4edde6eb832db955793465d9daf823d18fb0e0f70574d60dd40",
+  "size_bytes": 152264,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.americanbar.org/groups/law_practice/resources/tech-report/2024/2024-cloud-computing-techreport/"
+}

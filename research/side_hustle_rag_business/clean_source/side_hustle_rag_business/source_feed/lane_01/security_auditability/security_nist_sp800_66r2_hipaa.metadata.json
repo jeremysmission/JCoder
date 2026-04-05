@@ -1,0 +1,15 @@
+{
+  "category": "security_auditability",
+  "content_type": "text/html; charset=utf-8",
+  "final_url": "https://csrc.nist.gov/pubs/sp/800/66/r2/final",
+  "id": "security_nist_sp800_66r2_hipaa",
+  "lane": "lane_01",
+  "notes": "NIST implementation guide for HIPAA Security Rule. Maps HIPAA safeguards to concrete technical controls. Critical for control matrix work.",
+  "saved_at_utc": "2026-03-22T03:22:16.703036+00:00",
+  "saved_relpath": "lane_01/security_auditability/security_nist_sp800_66r2_hipaa.html",
+  "sha256": "ee75a7441f459692740e0313be153950a7dc77259f6644529f98b96fe3147b26",
+  "size_bytes": 45148,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://csrc.nist.gov/pubs/sp/800/66/r2/final"
+}

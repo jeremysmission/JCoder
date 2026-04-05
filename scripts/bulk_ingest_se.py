@@ -439,7 +439,7 @@ def main():
         help="Embedding server endpoint (default: Ollama)",
     )
     parser.add_argument(
-        "--embed-model", default="nomic-embed-text",
+        "--embed-model", default="nomic-embed-text-v2-moe",
         help="Embedding model name",
     )
     parser.add_argument(
@@ -515,4 +515,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

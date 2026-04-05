@@ -18,6 +18,13 @@ from core.embedding_engine import (
 from core.config import ModelConfig
 
 
+@pytest.fixture(autouse=True)
+def _force_mocked_embedding_path(monkeypatch):
+    """Keep unit tests off direct CUDA/ONNX paths for deterministic behavior."""
+    monkeypatch.setenv("JCODER_FORCE_OLLAMA_EMBED", "1")
+    monkeypatch.delenv("JCODER_EMBED_ONNX", raising=False)
+
+
 def _model_config(**kwargs):
     defaults = {
         "name": "nomic-embed-text",

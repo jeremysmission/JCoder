@@ -12,7 +12,6 @@ This module is intentionally conservative:
 
 from __future__ import annotations
 
-import html
 import json
 import os
 import re
@@ -21,7 +20,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional
 
 try:
     from langdetect import detect_langs
@@ -32,6 +31,16 @@ from ingestion.chunker import LANGUAGE_MAP
 from ingestion.parser_registry import DOCUMENT_EXTENSIONS
 from ingestion.sanitizer_archives import ArchiveProcessorMixin
 from ingestion.sanitizer_code import CodeCommentMixin
+from ingestion.sanitizer_text import (
+    PII_PATTERNS,
+    _extract_code_blocks,
+    _infer_lang_from_tags,
+    _is_english_or_unknown,
+    _normalize_lang,
+    _strip_code_regions,
+    _strip_markup,
+    _strip_pii,
+)
 
 # Derive code extension->language mapping from the single source of truth.
 # Only entries with a non-None language value are code files (AST-parseable).
@@ -43,45 +52,6 @@ CODE_EXT_TO_LANG = {ext: lang for ext, lang in LANGUAGE_MAP.items() if lang is n
 _SUPPORTED_TEXT_EXTS = (
     set(LANGUAGE_MAP.keys()) | set(DOCUMENT_EXTENSIONS) | {".jsonl", ".zst"}
 )
-
-SE_LANG_TAGS = {
-    "python",
-    "javascript",
-    "typescript",
-    "java",
-    "go",
-    "rust",
-    "c",
-    "c++",
-    "c#",
-    "ruby",
-    "php",
-    "kotlin",
-    "sql",
-    "bash",
-    "powershell",
-    "html",
-    "css",
-}
-
-PII_PATTERNS = [
-    re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
-    re.compile(r"https?://\S+"),
-    re.compile(r"www\.\S+"),
-    re.compile(r"(?<!\w)@\w+"),
-]
-
-NAMEISH_PATTERNS = [
-    re.compile(r"\bby\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b"),
-    re.compile(r"\bsigned[, ]+[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2}\b", re.IGNORECASE),
-]
-
-BACKTICK_BLOCK_RE = re.compile(r"```([a-zA-Z0-9_+-]*)\n(.*?)```", re.DOTALL)
-INLINE_BACKTICK_RE = re.compile(r"`([^`\n]{3,})`")
-CODE_TAG_RE = re.compile(r"<code>(.*?)</code>", re.DOTALL | re.IGNORECASE)
-TAG_RE = re.compile(r"<[^>]+>")
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\)")
-
 
 @dataclass
 class SanitizationStats:
@@ -110,106 +80,10 @@ def _utc_now_iso() -> str:
 
 
 def _safe_slug(text: str) -> str:
+    import re
+
     s = re.sub(r"[^a-zA-Z0-9._-]+", "_", text.strip())
     return s[:120] or "item"
-
-
-def _extract_code_blocks(text: str) -> List[Tuple[str, str]]:
-    blocks: List[Tuple[str, str]] = []
-    for m in BACKTICK_BLOCK_RE.finditer(text):
-        lang = (m.group(1) or "").strip().lower()
-        blocks.append((lang, m.group(2).strip()))
-    for m in CODE_TAG_RE.finditer(text):
-        code = html.unescape(m.group(1)).strip()
-        if code:
-            blocks.append(("", code))
-    for m in INLINE_BACKTICK_RE.finditer(text):
-        code = m.group(1).strip()
-        if "\n" not in code:
-            blocks.append(("", code))
-    unique = []
-    seen = set()
-    for lang, code in blocks:
-        key = (lang, code)
-        if code and key not in seen:
-            seen.add(key)
-            unique.append((lang, code))
-    return unique
-
-
-def _strip_code_regions(text: str) -> str:
-    out = BACKTICK_BLOCK_RE.sub(" ", text)
-    out = CODE_TAG_RE.sub(" ", out)
-    out = INLINE_BACKTICK_RE.sub(" ", out)
-    return out
-
-
-def _strip_markup(text: str) -> str:
-    out = MARKDOWN_LINK_RE.sub(r"\1", text)
-    out = TAG_RE.sub(" ", out)
-    out = html.unescape(out)
-    out = out.replace("&nbsp;", " ")
-    out = re.sub(r"[*_~>#-]+", " ", out)
-    out = re.sub(r"\s+", " ", out).strip()
-    return out
-
-
-def _strip_pii(text: str, stats: SanitizationStats) -> str:
-    out = text
-    for pat in PII_PATTERNS:
-        out2, n = pat.subn(" ", out)
-        if n:
-            stats.pii_replacements += n
-        out = out2
-    for pat in NAMEISH_PATTERNS:
-        out2, n = pat.subn(" ", out)
-        if n:
-            stats.pii_replacements += n
-        out = out2
-    out = re.sub(r"\s+", " ", out).strip()
-    return out
-
-
-def _is_english_or_unknown(text: str, threshold: float, stats: SanitizationStats) -> bool:
-    if not text:
-        return False
-    if detect_langs is None:
-        return True
-    try:
-        candidates = detect_langs(text[:5000])
-    except Exception:
-        return True
-    if not candidates:
-        return True
-    top = candidates[0]
-    if top.lang == "en":
-        return True
-    if top.prob >= threshold:
-        stats.non_english_removed += 1
-        return False
-    return True
-
-
-def _normalize_lang(tag: str) -> str:
-    t = (tag or "").strip().lower()
-    if t in ("c++", "cpp"):
-        return "cpp"
-    if t in ("c#", "csharp", "c_sharp"):
-        return "csharp"
-    if t in ("js",):
-        return "javascript"
-    if t in ("ts",):
-        return "typescript"
-    return t
-
-
-def _infer_lang_from_tags(tags_field: str) -> str:
-    tags = re.findall(r"<([^>]+)>", tags_field or "")
-    for t in tags:
-        norm = _normalize_lang(t)
-        if norm in {_normalize_lang(x) for x in SE_LANG_TAGS}:
-            return norm
-    return "unknown"
 
 
 class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
@@ -304,7 +178,9 @@ class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
                 return
             expl = _strip_markup(_strip_code_regions(text))
             expl = _strip_pii(expl, stats)
-            if not _is_english_or_unknown(expl, self.cfg.langdetect_threshold, stats):
+            if not _is_english_or_unknown(
+                expl, self.cfg.langdetect_threshold, stats, detect_langs,
+            ):
                 expl = ""
             entry = self._build_md_entry(
                 title=fp.stem,
@@ -374,7 +250,9 @@ class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
                     continue
                 expl = _strip_markup(_strip_code_regions(body))
                 expl = _strip_pii(expl, stats)
-                if not _is_english_or_unknown(expl, self.cfg.langdetect_threshold, stats):
+                if not _is_english_or_unknown(
+                    expl, self.cfg.langdetect_threshold, stats, detect_langs,
+                ):
                     expl = ""
                 normalized.append({
                     "id": int(ans["id"]),
@@ -435,6 +313,8 @@ class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
                 obj = json.loads(line)
             except Exception:
                 continue
+            if not isinstance(obj, dict):
+                continue
             if idx < 5:
                 stats.reddit_format_samples.append({
                     "file": str(fp),
@@ -448,7 +328,9 @@ class SanitizationPipeline(ArchiveProcessorMixin, CodeCommentMixin):
                 continue
             expl = _strip_markup(_strip_code_regions(merged))
             expl = _strip_pii(expl, stats)
-            if not _is_english_or_unknown(expl, self.cfg.langdetect_threshold, stats):
+            if not _is_english_or_unknown(
+                expl, self.cfg.langdetect_threshold, stats, detect_langs,
+            ):
                 expl = ""
 
             lang = "unknown"

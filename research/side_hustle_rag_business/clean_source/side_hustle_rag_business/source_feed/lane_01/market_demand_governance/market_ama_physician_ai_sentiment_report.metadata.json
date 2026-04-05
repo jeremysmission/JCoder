@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "application/pdf",
+  "deduped_to": "lane_03/market_demand_governance/market_ama_physician_ai_sentiment_report.pdf",
+  "final_url": "https://www.ama-assn.org/system/files/physician-ai-sentiment-report.pdf",
+  "id": "market_ama_physician_ai_sentiment_report",
+  "lane": "lane_01",
+  "saved_at_utc": "2026-03-22T03:22:17.242222+00:00",
+  "saved_relpath": "lane_03/market_demand_governance/market_ama_physician_ai_sentiment_report.pdf",
+  "sha256": "42c07d577bb7f7b64ae0769becc1132dd9dd4a50f96c431dafc81c9162840b3b",
+  "size_bytes": 541418,
+  "status": "deduplicated",
+  "status_code": 200,
+  "url": "https://www.ama-assn.org/system/files/physician-ai-sentiment-report.pdf"
+}

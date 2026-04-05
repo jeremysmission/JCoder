@@ -1,0 +1,15 @@
+{
+  "category": "security_auditability",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://coag.gov/resources/colorado-privacy-act/",
+  "id": "security_colorado_data_privacy_act",
+  "lane": "lane_03",
+  "notes": "Colorado state privacy law effective July 2023. Applies to businesses processing Colorado residents' data. Must understand obligations for local clinic and law-firm clients.",
+  "saved_at_utc": "2026-03-22T03:22:17.623151+00:00",
+  "saved_relpath": "lane_03/security_auditability/security_colorado_data_privacy_act.html",
+  "sha256": "edeb220e0115280f4678618ddd0e54b710ba29245220a82c587963157a04f757",
+  "size_bytes": 134313,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://coag.gov/resources/colorado-privacy-act/"
+}

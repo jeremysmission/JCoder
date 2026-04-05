@@ -363,7 +363,7 @@ class AnthropicBackend(LLMBackend):
 def create_backend(
     backend_type: str = "openai",
     endpoint: str = "http://localhost:11434/v1",
-    model: str = "devstral-small-2:24b",
+    model: str = "phi4:14b-q4_K_M",
     api_key: str = "",
     timeout_s: float = 300.0,
 ) -> LLMBackend:
@@ -382,7 +382,7 @@ def create_backend(
                        api_key=os.environ["OPENROUTER_API_KEY"])
 
     For local Ollama:
-        create_backend("ollama", model="devstral-small-2:24b")
+        create_backend("ollama", model="phi4:14b-q4_K_M")
 
     For direct Anthropic:
         create_backend("anthropic",

@@ -7,11 +7,11 @@ memory:
   dedup_threshold: 0.95  # skip if similar memory exists
 
 embedder:
-  enabled: true  # Ollama is running with nomic-embed-text
+  enabled: true  # Ollama is running with nomic-embed-text-v2-moe
   endpoint: "http://localhost:11434/v1"
-  model: "nomic-embed-text"
-  code_model: "nomic-embed-text"  # use nomic-embed-text for both code and text
-  text_model: "nomic-embed-text"  # specialized for documentation
+  model: "nomic-embed-text-v2-moe"
+  code_model: "nomic-embed-text-v2-moe"  # use v2-moe for both code and text
+  text_model: "nomic-embed-text-v2-moe"  # specialized for documentation
   dimension: 768
   timeout: 120
 

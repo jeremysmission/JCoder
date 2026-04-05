@@ -1,15 +1,15 @@
 {
   "category": "legal_confidentiality_ai",
   "content_type": "application/pdf",
+  "deduped_to": null,
   "final_url": "https://www.americanbar.org/content/dam/aba/administrative/professional_responsibility/ethics-opinions/aba-formal-opinion-512.pdf",
   "id": "legal_aba_formal_opinion_512",
   "lane": "lane_04",
-  "notes": "Generative AI ethics guidance for lawyers.",
-  "saved_at_utc": "2026-03-21T07:54:41.105496+00:00",
+  "saved_at_utc": "2026-03-22T03:22:18.416929+00:00",
   "saved_relpath": "lane_04/legal_confidentiality_ai/legal_aba_formal_opinion_512.pdf",
   "sha256": "f6c42f21ad74128c882c21cec9230b7be1b12c009ee25f8bf7848ffcb3ff031f",
   "size_bytes": 370904,
-  "status": "success",
+  "status": "deduplicated",
   "status_code": 200,
   "url": "https://www.americanbar.org/content/dam/aba/administrative/professional_responsibility/ethics-opinions/aba-formal-opinion-512.pdf"
 }

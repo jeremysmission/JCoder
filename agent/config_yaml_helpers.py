@@ -59,7 +59,7 @@ def _resolve_backend_defaults(agent_raw: dict) -> tuple:
 
     # Auto-fill from backend-specific defaults when not explicitly set
     if backend == "ollama" or (backend == "openai" and not endpoint and not model):
-        model = model or agent_raw.get("ollama_model", "devstral-small-2:24b")
+        model = model or agent_raw.get("ollama_model", "phi4:14b-q4_K_M")
         endpoint = endpoint or agent_raw.get("ollama_endpoint", "http://localhost:11434/v1")
         api_key_env = ""
     elif backend == "anthropic":

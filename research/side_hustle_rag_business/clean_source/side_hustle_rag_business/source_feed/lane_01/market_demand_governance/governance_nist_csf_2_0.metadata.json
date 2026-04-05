@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "application/pdf",
+  "deduped_to": "lane_03/market_demand_governance/governance_nist_csf_2_0.pdf",
+  "final_url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1300.pdf",
+  "id": "governance_nist_csf_2_0",
+  "lane": "lane_01",
+  "saved_at_utc": "2026-03-22T03:22:17.035786+00:00",
+  "saved_relpath": "lane_03/market_demand_governance/governance_nist_csf_2_0.pdf",
+  "sha256": "1e77c1bd63d1e15c48c870b7c17b7c9a2edf6bd5103b0940e72828515c9f1881",
+  "size_bytes": 934230,
+  "status": "deduplicated",
+  "status_code": 200,
+  "url": "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.1300.pdf"
+}

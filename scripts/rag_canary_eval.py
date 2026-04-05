@@ -11,7 +11,7 @@ Test categories:
   4. CODING: Hard coding challenges (compare offline AI vs Claude)
 
 Usage:
-    python scripts/rag_canary_eval.py [--model devstral-small-2:24b]
+    python scripts/rag_canary_eval.py [--model phi4:14b-q4_K_M]
 """
 
 import json
@@ -23,7 +23,7 @@ from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
-def query_ollama(prompt: str, model: str = "devstral-small-2:24b",
+def query_ollama(prompt: str, model: str = "phi4:14b-q4_K_M",
                  system: str = "", timeout: int = 120) -> str:
     """Query local Ollama model."""
     import urllib.request
@@ -224,7 +224,7 @@ def score_answer(answer: str, test: dict) -> dict:
     }
 
 
-def run_eval(model: str = "devstral-small-2:24b"):
+def run_eval(model: str = "phi4:14b-q4_K_M"):
     """Run full RAG canary evaluation."""
     all_tests = CANARY_TESTS + TRICK_TESTS + INJECTION_TESTS + CODING_TESTS
     results = []
@@ -323,7 +323,7 @@ def run_eval(model: str = "devstral-small-2:24b"):
 
 
 def main():
-    model = "devstral-small-2:24b"
+    model = "phi4:14b-q4_K_M"
     for i, arg in enumerate(sys.argv[1:]):
         if arg == "--model" and i + 1 < len(sys.argv) - 1:
             model = sys.argv[i + 2]

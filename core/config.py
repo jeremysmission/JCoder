@@ -116,12 +116,12 @@ class PoliciesConfig:
 class JCoderConfig:
     """Top-level config aggregating all subsystems."""
     llm: ModelConfig = field(default_factory=lambda: ModelConfig(
-        name="Qwen/Qwen3-Coder-Next-80B",
-        endpoint="http://localhost:8000/v1",
+        name="phi4:14b-q4_K_M",
+        endpoint="http://localhost:11434/v1",
     ))
     embedder: ModelConfig = field(default_factory=lambda: ModelConfig(
-        name="nomic-ai/nomic-embed-code-v1",
-        endpoint="http://localhost:8001/v1",
+        name="nomic-embed-text-v2-moe",
+        endpoint="http://localhost:11434/v1",
         dimension=768,
     ))
     reranker: ModelConfig = field(default_factory=lambda: ModelConfig(

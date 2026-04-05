@@ -22,6 +22,7 @@ class CodeCommentMixin:
     def _process_code_comments(self, fp: Path, run_dir: Path, stats: SanitizationStats) -> None:
         from ingestion.sanitizer import (
             CODE_EXT_TO_LANG, _strip_markup, _strip_pii, _is_english_or_unknown,
+            detect_langs,
         )
 
         ext = fp.suffix.lower()
@@ -45,7 +46,9 @@ class CodeCommentMixin:
             t = _strip_pii(t, stats)
             if not t:
                 continue
-            if not _is_english_or_unknown(t, self.cfg.langdetect_threshold, stats):
+            if not _is_english_or_unknown(
+                t, self.cfg.langdetect_threshold, stats, detect_langs,
+            ):
                 continue
             clean_snippets.append(t)
         if not clean_snippets:

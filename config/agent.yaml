@@ -1,7 +1,7 @@
 agent:
-  backend: openai
+  backend: ollama
   model: "phi4:14b-q4_K_M"
-  endpoint: "https://api.openai.com/v1"
+  endpoint: "http://localhost:11434/v1"
   max_iterations: 50
   max_tokens_budget: 500000
   working_dir: "."

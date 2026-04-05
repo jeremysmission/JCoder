@@ -21,6 +21,13 @@ from core.embedding_engine import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _force_mocked_embedding_path(monkeypatch):
+    """Keep these tests on the mocked HTTP path instead of live CUDA backends."""
+    monkeypatch.setenv("JCODER_FORCE_OLLAMA_EMBED", "1")
+    monkeypatch.delenv("JCODER_EMBED_ONNX", raising=False)
+
+
 # -------------------------------------------------------------------
 # Helpers
 # -------------------------------------------------------------------

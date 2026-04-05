@@ -33,7 +33,7 @@ from core.config import load_config
 
 
 EMBED_ENDPOINT = "http://localhost:11434/v1/embeddings"
-EMBED_MODEL = "nomic-embed-text"
+EMBED_MODEL = "nomic-embed-text-v2-moe"
 DIM = 768
 
 

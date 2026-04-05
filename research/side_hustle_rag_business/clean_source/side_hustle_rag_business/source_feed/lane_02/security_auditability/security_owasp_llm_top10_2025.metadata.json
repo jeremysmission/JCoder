@@ -1,0 +1,15 @@
+{
+  "category": "security_auditability",
+  "content_type": "text/html; charset=utf-8",
+  "final_url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/",
+  "id": "security_owasp_llm_top10_2025",
+  "lane": "lane_02",
+  "notes": "Definitive prompt-injection, exfiltration, and LLM attack taxonomy. Required for Sprint 27 test suite design.",
+  "saved_at_utc": "2026-03-22T03:22:17.242222+00:00",
+  "saved_relpath": "lane_02/security_auditability/security_owasp_llm_top10_2025.html",
+  "sha256": "162d9547a08ee55693e685ba7fd9c8b5fbf8fe2276f0586d78c672ce312d0778",
+  "size_bytes": 42270,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+}

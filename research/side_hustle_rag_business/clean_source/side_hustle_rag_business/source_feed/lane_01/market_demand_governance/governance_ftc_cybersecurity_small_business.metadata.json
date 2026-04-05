@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.ftc.gov/business-guidance/small-businesses/cybersecurity",
+  "id": "governance_ftc_cybersecurity_small_business",
+  "lane": "lane_01",
+  "notes": "Small-business cybersecurity baseline and risk framing.",
+  "saved_at_utc": "2026-03-22T03:22:19.013596+00:00",
+  "saved_relpath": "lane_01/market_demand_governance/governance_ftc_cybersecurity_small_business.html",
+  "sha256": "ce371d282cd7712a40aab25d71198863ebf8f913d32981053a60e84767d37a8e",
+  "size_bytes": 1031196,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.ftc.gov/business-guidance/small-businesses/cybersecurity"
+}

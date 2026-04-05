@@ -1,0 +1,9 @@
+{
+  "category": "startup_local_setup",
+  "error": "RuntimeError: Playwright is not installed. Install with: pip install playwright && playwright install chromium",
+  "id": "startup_el_paso_business_resources",
+  "lane": "lane_01",
+  "saved_at_utc": "2026-03-22T03:22:16.671222+00:00",
+  "status": "failed",
+  "url": "https://admin.elpasoco.com/economic-development/business-incentives/business-resources/"
+}

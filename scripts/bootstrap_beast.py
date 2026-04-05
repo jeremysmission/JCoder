@@ -42,8 +42,8 @@ REQUIRED_MODELS: List[Dict[str, str]] = [
         "min_vram_gb": 9,
     },
     {
-        "name": "nomic-embed-text",
-        "description": "Code/text embedder (768-dim, Apache 2.0)",
+        "name": "nomic-embed-text-v2-moe",
+        "description": "Primary code/text embedder (768-dim, MoE upgrade)",
         "min_vram_gb": 1,
     },
 ]

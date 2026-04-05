@@ -1,6 +1,6 @@
 """
 Build FAISS vector indexes from existing FTS5 databases.
-Uses Ollama nomic-embed-text for 768-dim embeddings.
+Uses Ollama nomic-embed-text-v2-moe for 768-dim embeddings.
 
 Processes FTS5 databases that don't yet have a corresponding .faiss file.
 Resumable — saves progress after every batch.
@@ -21,7 +21,7 @@ import numpy as np
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
-def embed_batch(texts: list, model: str = "nomic-embed-text") -> np.ndarray:
+def embed_batch(texts: list, model: str = "nomic-embed-text-v2-moe") -> np.ndarray:
     """Embed a batch of texts using Ollama /v1/embeddings with retry logic.
 
     Uses the OpenAI-compatible batch endpoint for much higher throughput.
@@ -104,7 +104,7 @@ def load_fts5_chunks(db_path: str, max_chunks: int = 50000) -> list:
 
 
 def build_faiss_index(db_name: str, index_dir: str, batch_size: int = 32,
-                      max_chunks: int = 50000, embed_model: str = "nomic-embed-text"):
+                      max_chunks: int = 50000, embed_model: str = "nomic-embed-text-v2-moe"):
     """Build FAISS index from an FTS5 database."""
     import faiss
 
@@ -202,7 +202,7 @@ def main():
     index_dir = os.environ.get("JCODER_INDEX_DIR", "data/indexes")
     batch_size = int(os.environ.get("JCODER_FAISS_BATCH", "32"))
     max_chunks = int(os.environ.get("JCODER_FAISS_MAX_CHUNKS", "50000"))
-    embed_model = os.environ.get("JCODER_EMBED_MODEL", "nomic-embed-text")
+    embed_model = os.environ.get("JCODER_EMBED_MODEL", "nomic-embed-text-v2-moe")
     target_db = None
 
     args = sys.argv[1:]

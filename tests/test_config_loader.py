@@ -158,7 +158,7 @@ class TestResolveBackendDefaults:
             {"backend": "ollama"}
         )
         assert backend == "ollama"
-        assert model == "devstral-small-2:24b"
+        assert model == "phi4:14b-q4_K_M"
         assert endpoint == "http://localhost:11434/v1"
         assert api_key_env == ""
 
@@ -216,7 +216,7 @@ class TestResolveBackendDefaults:
             {"backend": "openai"}
         )
         assert backend == "openai"
-        assert model == "devstral-small-2:24b"
+        assert model == "phi4:14b-q4_K_M"
         assert endpoint == "http://localhost:11434/v1"
 
     def test_missing_backend_key_defaults_to_openai(self):
@@ -308,7 +308,7 @@ class TestLoadAgentConfig:
 
         cfg = load_agent_config(config_dir=str(tmp_path))
         # openai with no model/endpoint falls through to ollama defaults
-        assert cfg.model == "devstral-small-2:24b"
+        assert cfg.model == "phi4:14b-q4_K_M"
         assert cfg.max_iterations == 50
         assert cfg.memory_index_name == "agent_memory"
 
@@ -788,8 +788,8 @@ class TestEmbedderConfig:
         """Embedder is disabled by default."""
         cfg = AgentConfig()
         assert cfg.embedder_enabled is False
-        assert cfg.embedder_endpoint == "http://localhost:8000/v1"
-        assert cfg.embedder_model == "nomic-embed-text"
+        assert cfg.embedder_endpoint == "http://localhost:11434/v1"
+        assert cfg.embedder_model == "nomic-embed-text-v2-moe"
         assert cfg.embedder_code_model == ""
         assert cfg.embedder_text_model == ""
         assert cfg.embedder_dimension == 768
@@ -838,7 +838,7 @@ class TestEmbedderConfig:
 
         cfg = load_agent_config(config_dir=str(tmp_path))
         assert cfg.embedder_enabled is False
-        assert cfg.embedder_model == "nomic-embed-text"
+        assert cfg.embedder_model == "nomic-embed-text-v2-moe"
 
 
 class TestBuildEmbedder:
@@ -878,8 +878,8 @@ class TestBuildEmbedder:
         from agent.config_loader import _build_embedder
         cfg = AgentConfig(
             embedder_enabled=True,
-            embedder_endpoint="http://localhost:8000/v1",
-            embedder_model="nomic-embed-text",
+            embedder_endpoint="http://localhost:11434/v1",
+            embedder_model="nomic-embed-text-v2-moe",
             embedder_code_model="nomic-embed-code",
         )
 
@@ -904,7 +904,7 @@ class TestBuildEmbedder:
         from agent.config_loader import _build_embedder
         cfg = AgentConfig(
             embedder_enabled=True,
-            embedder_endpoint="http://localhost:8000/v1",
+            embedder_endpoint="http://localhost:11434/v1",
         )
 
         mock_engine = MagicMock()

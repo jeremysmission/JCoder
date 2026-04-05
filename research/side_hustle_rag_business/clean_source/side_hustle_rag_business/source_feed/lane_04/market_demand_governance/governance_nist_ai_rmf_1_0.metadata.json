@@ -1,0 +1,15 @@
+{
+  "category": "market_demand_governance",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10",
+  "id": "governance_nist_ai_rmf_1_0",
+  "lane": "lane_04",
+  "notes": "Trustworthy AI governance baseline.",
+  "saved_at_utc": "2026-03-22T03:22:18.655455+00:00",
+  "saved_relpath": "lane_04/market_demand_governance/governance_nist_ai_rmf_1_0.html",
+  "sha256": "714a0c0e510227057de7503448727e4dc1cec0e75d80134a2e6a8a532dd60298",
+  "size_bytes": 80256,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10"
+}

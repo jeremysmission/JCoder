@@ -3,7 +3,7 @@
 # Ollama mode (current): uses Ollama model names via OpenAI-compatible API
 # vLLM mode: swap to HuggingFace IDs when vLLM stack is running
 #   llm.name: "Qwen/Qwen3-Coder-Next-80B"
-#   embedder.name: "nomic-ai/nomic-embed-code-v1"
+#   embedder.name: "nomic-ai/nomic-embed-text-v2-moe"
 #   reranker.name: "Qwen/Qwen3-Reranker-4B"
 # Switched back to phi4: 10x faster than devstral, higher eval scores
 # (59% vs 35% overall, 5/5 coding vs 0/5). See evaluation/results_local/model_comparison_2026-03-23.md

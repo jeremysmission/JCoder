@@ -1,0 +1,15 @@
+{
+  "category": "productivity_and_roi",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.ama-assn.org/press-center/ama-press-releases/ama-survey-indicates-prior-authorization-wreaks-havoc-patient-care",
+  "id": "productivity_ama_prior_auth_burden_2022",
+  "lane": "lane_05",
+  "notes": "Clinic-specific: 12-14 hrs/week on prior auth, 45 PAs per physician per week. Shows the document-heavy workflow burden our RAG solves.",
+  "saved_at_utc": "2026-03-22T03:22:18.719588+00:00",
+  "saved_relpath": "lane_05/productivity_and_roi/productivity_ama_prior_auth_burden_2022.html",
+  "sha256": "35b2b857d6a2b22542c57871b28edf67dc521efaaba037e15259a0ce6176c357",
+  "size_bytes": 268761,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.ama-assn.org/press-center/ama-press-releases/ama-survey-indicates-prior-authorization-wreaks-havoc-patient-care"
+}

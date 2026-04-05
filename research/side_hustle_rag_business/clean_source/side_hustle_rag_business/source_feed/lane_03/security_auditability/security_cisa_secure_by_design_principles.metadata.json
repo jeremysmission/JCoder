@@ -1,0 +1,15 @@
+{
+  "category": "security_auditability",
+  "content_type": "text/html; charset=UTF-8",
+  "final_url": "https://www.cisa.gov/securebydesign",
+  "id": "security_cisa_secure_by_design_principles",
+  "lane": "lane_03",
+  "notes": "Federal secure-by-design guidance for software vendors. Useful for framing our security posture in proposals without overclaiming. Supports defensible narrative in doc 09.",
+  "saved_at_utc": "2026-03-22T03:22:18.082545+00:00",
+  "saved_relpath": "lane_03/security_auditability/security_cisa_secure_by_design_principles.html",
+  "sha256": "a415ea72ea678fe1e653d3c6f5d5e224c641a3412159564b92251b18c855abfb",
+  "size_bytes": 66939,
+  "status": "success",
+  "status_code": 200,
+  "url": "https://www.cisa.gov/securebydesign"
+}

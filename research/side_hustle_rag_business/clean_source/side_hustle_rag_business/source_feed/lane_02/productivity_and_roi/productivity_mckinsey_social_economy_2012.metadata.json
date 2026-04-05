@@ -1,0 +1,9 @@
+{
+  "category": "productivity_and_roi",
+  "error": "RemoteDisconnected: Remote end closed connection without response",
+  "id": "productivity_mckinsey_social_economy_2012",
+  "lane": "lane_02",
+  "saved_at_utc": "2026-03-22T03:23:43.036867+00:00",
+  "status": "failed",
+  "url": "https://www.mckinsey.com/industries/technology-media-and-telecommunications/our-insights/the-social-economy"
+}
