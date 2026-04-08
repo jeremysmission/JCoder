@@ -1,5 +1,10 @@
 # JCoder Sprint Status -- 2026-03-19
 
+Status note (2026-04-08):
+- This file remains the historical status record for the 2026-03-19 session.
+- The current forward sprint queue now lives in `docs/SPRINT_STATUS_2026-04-08.md`.
+- The current demo-first plan now lives in `docs/SPRINT_PLAN_R28_R32_2026-04-08.md`.
+
 Last updated: 2026-03-19 (QA + Sprint R12-R17 execution session)
 
 ## Session Summary

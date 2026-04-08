@@ -2,6 +2,11 @@
 
 Last updated: 2026-03-13 America/Denver
 
+Status note (2026-04-08):
+- This document remains the historical completion spine from the 2026-03-13 planning state.
+- The current demo-readiness queue is `docs/SPRINT_PLAN_R28_R32_2026-04-08.md`.
+- The current sprint status board is `docs/SPRINT_STATUS_2026-04-08.md`.
+
 This document is the canonical execution spine from the current JCoder state
 to project completion. It resolves the undefined Sprint `17-20` gap and breaks
 the remaining work into concrete slices with explicit exit gates.

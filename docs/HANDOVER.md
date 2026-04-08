@@ -1,5 +1,10 @@
 # JCoder Handover -- Updated 2026-03-17
 
+Status note (2026-04-08):
+- This handover captures the 2026-03-17 state and should be treated as historical context.
+- The current sprint status board is `docs/SPRINT_STATUS_2026-04-08.md`.
+- The current forward sprint plan is `docs/SPRINT_PLAN_R28_R32_2026-04-08.md`.
+
 ## What JCoder Is
 Fully local, offline CLI AI coding assistant. Ingests codebases, builds hybrid vector+keyword indexes (FAISS + FTS5 + RRF fusion), answers questions using local LLMs (vLLM / Ollama). Supports GPT-4o and Phi-4:14b for testing. Self-learning pipeline with 26 product sprints, 10 repair sprints.
 
