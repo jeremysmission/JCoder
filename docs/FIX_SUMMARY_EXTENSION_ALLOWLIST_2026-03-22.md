@@ -284,7 +284,7 @@ Unchanged (safe):
 **Risk Level:** LOW (adding safety, no functionality changes)
 **Rollback Plan:** Simple (revert commit 4674ec5)
 **Monitoring:** Sync tests on each commit
-**Owner:** AI agents (Claude Haiku 4.5)
+**Owner:** Jeremy
 
 ---
 

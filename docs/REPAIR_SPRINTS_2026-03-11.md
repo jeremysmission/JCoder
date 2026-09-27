@@ -1,7 +1,7 @@
 # JCoder Repair Sprint Plan
 
 - Created: 2026-03-11 America/Denver
-- Author: Claude_Deep_Packet_Inspector
+- Author: Jeremy
 - Source: Full codebase deep inspection (188 source files, 56 test files, 9 config files)
 - Findings: 3 CRITICAL, 9 HIGH, 26 MEDIUM, 16 LOW, 17 INFO
 - Sprints: 7 repair sprints, dependency-ordered

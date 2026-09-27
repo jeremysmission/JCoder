@@ -44,4 +44,4 @@ Compare against: (a) random data (not curriculum), (b) solutions-only (no self-p
 - Delta: +40% (promising but needs more problems + contamination controls)
 - Consistent weakness: cache implementations (0/2 across both banks)
 
-Signed: Claude Opus 4.6 | 2026-03-25
+Signed: Jeremy

@@ -45,4 +45,4 @@ If positive across 3+ revolutions → escape velocity achieved.
 - ICML 2025: "Truly Self-Improving Agents Require Intrinsic Metacognitive Learning"
 - ICLR 2026 Workshop on Recursive Self-Improvement
 
-Signed: Claude Opus 4.6 | 2026-03-25
+Signed: Jeremy

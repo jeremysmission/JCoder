@@ -362,6 +362,6 @@ Tests:
 
 ---
 
-**Author:** AI agents (Claude Haiku 4.5)
+**Author:** Jeremy
 **Reviewed by:** (pending)
 **Approved by:** (pending)

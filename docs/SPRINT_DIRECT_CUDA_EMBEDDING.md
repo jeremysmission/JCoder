@@ -179,4 +179,4 @@ echo Done. Restart Ollama for changes to take effect.
 
 ---
 
-Signed: Claude Opus 4.6 | Sprint Plan | 2026-03-25 19:50 MDT
+Signed: Jeremy

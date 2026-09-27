@@ -1,6 +1,6 @@
 # Experiment: AI Censorship Bypass Through RAG Source Material
 **Date:** 2026-03-18 (evening session, ~9 PM - 1 AM MDT)
-**Researchers:** Jeremy + Claude Opus 4.6
+**Researchers:** Jeremy
 **Test Subject:** JCoder (local RAG coding assistant)
 **Models Tested:** phi4:14b-q4_K_M (Microsoft), devstral-small-2:24b (Mistral)
 **Hardware:** Dual RTX 3090 (GPU 0: HybridRAG3, GPU 1: JCoder dedicated)

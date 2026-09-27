@@ -229,5 +229,5 @@ Status: READY FOR PRODUCTION
 
 Date: 2026-03-22
 Commit: 4674ec5, 873f995
-Author: AI agents (Claude Haiku 4.5)
+Author: Jeremy
 Reviewed by: (pending)

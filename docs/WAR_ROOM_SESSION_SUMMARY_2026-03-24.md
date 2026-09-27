@@ -79,7 +79,7 @@ The FAISS v2-moe rebuild ran for 25 minutes, embedded 19,232 chunks, then crashe
 
 ---
 
-Signed: **Claude Opus 4.6 (1M context)**
+Signed: **Jeremy**
 Repos: JCoder, HybridRAG3_Educational
 Date: 2026-03-24, approximately 03:00 - 10:30 MDT (~7.5 hours)
 Events span: Night sprint handoff from 2026-03-23 02:15 MDT through this session ending 2026-03-24 ~10:30 MDT

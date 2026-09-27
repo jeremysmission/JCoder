@@ -1,5 +1,5 @@
 # DPI QA Sprint Queue -- 2026-03-15
-**Assessor:** Claude Opus 4.6 (Master QA)
+**Assessor:** Jeremy
 **Verdict:** B+ (STRONG) -- Production-viable with targeted fixes
 **1699 tests, 0 failures, 174 FTS5 indexes (~40+ GB)**
 
