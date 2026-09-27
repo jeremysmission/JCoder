@@ -43,5 +43,5 @@ Before demo or retuning:
 
 Assume people will skim. Read-first files and duplicate notes were intentionally placed in multiple locations because critical recovery rules must survive skimming.
 
-Signed: General Codex
+Signed: Jeremy
 Date: 2026-03-22

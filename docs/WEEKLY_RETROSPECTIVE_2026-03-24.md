@@ -30,7 +30,7 @@ Past week covered by this note: 2026-03-17 through 2026-03-24.
 
 The main shift this week was from cleanup and repair into measurable throughput work. The codebase now has clearer boundaries, the retrieval harness can actually score the intended corpus, and the ingest path can survive long-running stress without losing state.
 
-Signed: Codex
+Signed: Jeremy
 Repo: JCoder
 Date: 2026-03-24
 Time: 08:30 MDT

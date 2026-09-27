@@ -118,5 +118,5 @@ Containment happened first. Durability comes next.
 
 The next crew should prefer truth, verification, and recovery order over speed.
 
-Signed: General Codex
+Signed: Jeremy
 Date: 2026-03-22

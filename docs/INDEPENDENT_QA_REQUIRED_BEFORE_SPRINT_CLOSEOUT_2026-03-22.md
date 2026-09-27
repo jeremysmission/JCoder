@@ -76,5 +76,5 @@ Before sprint closeout, someone must explicitly state:
 
 If that statement cannot be truthfully made, sprint closeout is not complete.
 
-Signed: General Codex
+Signed: Jeremy
 Date: 2026-03-22
